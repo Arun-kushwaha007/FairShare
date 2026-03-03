@@ -1,0 +1,4 @@
+
+> backend@1.0.0 build D:\ak\project\FairShare\apps\backend
+> tsc -p tsconfig.build.json
+

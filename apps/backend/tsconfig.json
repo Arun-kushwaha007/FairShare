@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "./dist",
+    "incremental": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "@fairshare/shared-types": ["../../packages/shared-types/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts"]
+}

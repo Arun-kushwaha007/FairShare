@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SUPABASE_DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(uuid())
+  email            String        @unique
+  name             String
+  passwordHash     String?
+  googleId         String?       @unique
+  refreshTokenHash String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  memberships      GroupMember[]
+  expenses         Expense[]
+  splits           Split[]
+  settlementsFrom  Settlement[]  @relation("settlement_from")
+  settlementsTo    Settlement[]  @relation("settlement_to")
+  balancesFrom     Balance[]     @relation("balance_from")
+  balancesTo       Balance[]     @relation("balance_to")
+  receipts         Receipt[]
+}
+
+model Group {
+  id          String        @id @default(uuid())
+  name        String
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  members     GroupMember[]
+  expenses    Expense[]
+  balances    Balance[]
+  settlements Settlement[]
+}
+
+model GroupMember {
+  id        String    @id @default(uuid())
+  groupId   String
+  userId    String
+  role      String    @default("member")
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  group     Group     @relation(fields: [groupId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+model Expense {
+  id            String    @id @default(uuid())
+  groupId        String
+  paidByUserId   String
+  description    String
+  amountCents    BigInt
+  currency       String    @default("USD")
+  incurredAt     DateTime
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  group          Group     @relation(fields: [groupId], references: [id])
+  paidBy         User      @relation(fields: [paidByUserId], references: [id])
+  splits         Split[]
+  receipt        Receipt?
+}
+
+model Split {
+  id           String    @id @default(uuid())
+  expenseId     String
+  userId        String
+  amountCents   BigInt
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+  expense       Expense   @relation(fields: [expenseId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@index([expenseId])
+}
+
+model Balance {
+  id            String    @id @default(uuid())
+  groupId        String
+  fromUserId     String
+  toUserId       String
+  amountCents    BigInt
+  asOf           DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  group          Group     @relation(fields: [groupId], references: [id])
+  fromUser       User      @relation("balance_from", fields: [fromUserId], references: [id])
+  toUser         User      @relation("balance_to", fields: [toUserId], references: [id])
+
+  @@index([groupId])
+}
+
+model Settlement {
+  id            String    @id @default(uuid())
+  groupId        String
+  fromUserId     String
+  toUserId       String
+  amountCents    BigInt
+  settledAt      DateTime
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  group          Group     @relation(fields: [groupId], references: [id])
+  fromUser       User      @relation("settlement_from", fields: [fromUserId], references: [id])
+  toUser         User      @relation("settlement_to", fields: [toUserId], references: [id])
+
+  @@index([groupId])
+}
+
+model Receipt {
+  id            String    @id @default(uuid())
+  expenseId      String    @unique
+  userId         String
+  s3Key          String
+  uploadedAt     DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+  expense        Expense   @relation(fields: [expenseId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
+}

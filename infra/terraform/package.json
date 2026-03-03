@@ -1,0 +1,11 @@
+{
+  "name": "infra-terraform",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo \"Terraform has no build step\"",
+    "dev": "echo \"Terraform has no dev step\"",
+    "lint": "echo \"Add terraform fmt/validate here\"",
+    "test": "echo \"No tests yet\""
+  }
+}

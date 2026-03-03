@@ -1,0 +1,23 @@
+{
+    "name":  "web",
+    "version":  "1.0.0",
+    "private":  true,
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "tsc --noEmit",
+                    "start":  "next start",
+                    "lint":  "tsc --noEmit",
+                    "test":  "echo \"No tests yet\""
+                },
+    "dependencies":  {
+                         "next":  "15.2.0",
+                         "react":  "19.0.0",
+                         "react-dom":  "19.0.0"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^22.10.2",
+                            "@types/react":  "^19.0.7",
+                            "@types/react-dom":  "^19.0.3",
+                            "typescript":  "^5.7.3"
+                        }
+}
