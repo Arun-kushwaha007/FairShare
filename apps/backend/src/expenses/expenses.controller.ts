@@ -27,12 +27,12 @@ export class ExpensesController {
   }
 
   @Patch('expenses/:id')
-  update(@Param('id') id: string, @Body() dto: UpdateExpenseDto) {
-    return this.expensesService.update(id, dto);
+  update(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: UpdateExpenseDto) {
+    return this.expensesService.update(id, user.sub, dto);
   }
 
   @Delete('expenses/:id')
-  remove(@Param('id') id: string) {
-    return this.expensesService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.expensesService.remove(id, user.sub);
   }
 }

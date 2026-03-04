@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
 import { RedisService } from '../redis/redis.service';
+import { ActivityService } from '../activity/activity.service';
 import { assertMoneyEquality, sumMoney } from '../common/utils/money.util';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -15,6 +16,7 @@ export class ExpensesService {
     private readonly prisma: PrismaService,
     private readonly balancesService: BalancesService,
     private readonly redis: RedisService,
+    private readonly activityService: ActivityService,
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
@@ -83,6 +85,19 @@ export class ExpensesService {
           delta.delta,
         );
       }
+
+      await tx.activity.create({
+        data: {
+          groupId,
+          actorUserId,
+          type: 'expense_created',
+          entityId: createdExpense.id,
+          metadata: {
+            payerId: dto.payerId,
+            totalAmountCents: totalAmount.toString(),
+          },
+        },
+      });
 
       return tx.expense.findUniqueOrThrow({
         where: { id: createdExpense.id },
@@ -156,13 +171,21 @@ export class ExpensesService {
     };
   }
 
-  async update(id: string, dto: UpdateExpenseDto): Promise<ExpenseDto> {
+  async update(id: string, actorUserId: string, dto: UpdateExpenseDto): Promise<ExpenseDto> {
     const expense = await this.prisma.expense.update({
       where: { id },
       data: {
         description: dto.description,
       },
       include: { splits: true },
+    });
+
+    await this.activityService.log({
+      groupId: expense.groupId,
+      actorUserId,
+      type: 'expense_updated',
+      entityId: expense.id,
+      metadata: { description: dto.description ?? null },
     });
 
     return {
@@ -182,7 +205,7 @@ export class ExpensesService {
     };
   }
 
-  async remove(id: string): Promise<{ success: true }> {
+  async remove(id: string, actorUserId: string): Promise<{ success: true }> {
     const expense = await this.prisma.expense.findUnique({ where: { id } });
     if (!expense) {
       throw new NotFoundException('Expense not found');
@@ -191,6 +214,17 @@ export class ExpensesService {
     await this.prisma.$transaction(async (tx) => {
       await tx.split.deleteMany({ where: { expenseId: id } });
       await tx.expense.delete({ where: { id } });
+      await tx.activity.create({
+        data: {
+          groupId: expense.groupId,
+          actorUserId,
+          type: 'expense_deleted',
+          entityId: expense.id,
+          metadata: {
+            totalAmountCents: expense.totalAmountCents.toString(),
+          },
+        },
+      });
     });
 
     await this.redis.invalidateGroupCache(expense.groupId);

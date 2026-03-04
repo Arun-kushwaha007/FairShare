@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { GroupDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
@@ -27,6 +27,16 @@ export class GroupsService {
           groupId: created.id,
           userId,
           role: 'OWNER',
+        },
+      });
+
+      await tx.activity.create({
+        data: {
+          groupId: created.id,
+          actorUserId: userId,
+          type: 'member_joined',
+          entityId: created.id,
+          metadata: { role: 'OWNER' },
         },
       });
 
@@ -97,7 +107,19 @@ export class GroupsService {
     return response;
   }
 
-  async invite(groupId: string, dto: InviteMemberDto): Promise<{ success: true }> {
+  async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
+    const actorMembership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: actorUserId,
+        },
+      },
+    });
+    if (!actorMembership) {
+      throw new ForbiddenException('Actor is not a group member');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -116,12 +138,27 @@ export class GroupsService {
       throw new ConflictException('User is already a group member');
     }
 
-    await this.prisma.groupMember.create({
-      data: {
-        groupId,
-        userId: user.id,
-        role: 'MEMBER',
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.groupMember.create({
+        data: {
+          groupId,
+          userId: user.id,
+          role: 'MEMBER',
+        },
+      });
+
+      await tx.activity.create({
+        data: {
+          groupId,
+          actorUserId,
+          type: 'member_invited',
+          entityId: user.id,
+          metadata: {
+            invitedUserId: user.id,
+            invitedEmail: user.email,
+          },
+        },
+      });
     });
 
     await this.redis.invalidateGroupCache(groupId);
@@ -129,3 +166,4 @@ export class GroupsService {
     return { success: true };
   }
 }
+

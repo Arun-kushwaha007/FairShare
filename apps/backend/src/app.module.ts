@@ -13,6 +13,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './common/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { S3Module } from './s3/s3.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { S3Module } from './s3/s3.module';
     PrismaModule,
     RedisModule,
     S3Module,
+    ActivityModule,
     AuthModule,
     UsersModule,
     GroupsModule,

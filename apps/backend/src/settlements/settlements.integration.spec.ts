@@ -13,6 +13,9 @@ describe('Settlement Flow (integration-ish)', () => {
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
         }),
       },
+      activity: {
+        create: jest.fn(),
+      },
       balance: {
         findUnique: jest.fn().mockResolvedValue(null),
         update: jest.fn(),
@@ -36,6 +39,7 @@ describe('Settlement Flow (integration-ish)', () => {
     expect(prisma.groupMember.findMany).toHaveBeenCalled();
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(tx.settlement.create).toHaveBeenCalled();
+    expect(tx.activity.create).toHaveBeenCalled();
     expect(balancesService.adjustBalance).toHaveBeenCalledTimes(2);
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
   });

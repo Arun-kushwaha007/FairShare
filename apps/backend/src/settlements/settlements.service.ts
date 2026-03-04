@@ -62,6 +62,20 @@ export class SettlementsService {
         -amount,
       );
 
+      await tx.activity.create({
+        data: {
+          groupId,
+          actorUserId,
+          type: 'settlement_created',
+          entityId: created.id,
+          metadata: {
+            payerId: dto.payerId,
+            receiverId: dto.receiverId,
+            amountCents: amount.toString(),
+          },
+        },
+      });
+
       return created;
     });
 
@@ -77,3 +91,4 @@ export class SettlementsService {
     };
   }
 }
+

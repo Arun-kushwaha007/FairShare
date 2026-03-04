@@ -125,3 +125,21 @@ export interface SimplifySuggestionDto {
   toUserId: string;
   amountCents: string;
 }
+
+export type ActivityType =
+  | 'expense_created'
+  | 'expense_updated'
+  | 'expense_deleted'
+  | 'settlement_created'
+  | 'member_joined'
+  | 'member_invited';
+
+export interface ActivityDto {
+  id: string;
+  groupId: string;
+  actorUserId: string;
+  type: ActivityType;
+  entityId: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}

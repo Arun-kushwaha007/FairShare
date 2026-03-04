@@ -19,6 +19,9 @@ describe('Create Expense Flow (integration-ish)', () => {
       split: {
         createMany: jest.fn(),
       },
+      activity: {
+        create: jest.fn(),
+      },
       balance: {
         findUnique: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
@@ -41,7 +44,8 @@ describe('Create Expense Flow (integration-ish)', () => {
       invalidateGroupCache: jest.fn().mockResolvedValue(undefined),
     };
 
-    const service = new ExpensesService(prisma, balancesService, redis);
+    const activityService: any = { log: jest.fn().mockResolvedValue(undefined) };
+    const service = new ExpensesService(prisma, balancesService, redis, activityService);
 
     await service.create('g1', 'u1', {
       payerId: 'u1',
@@ -58,6 +62,7 @@ describe('Create Expense Flow (integration-ish)', () => {
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(tx.expense.create).toHaveBeenCalled();
     expect(tx.split.createMany).toHaveBeenCalled();
+    expect(tx.activity.create).toHaveBeenCalled();
     expect(balancesService.adjustBalance).toHaveBeenCalledTimes(2);
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
   });

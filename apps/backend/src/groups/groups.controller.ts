@@ -27,7 +27,7 @@ export class GroupsController {
   }
 
   @Post(':id/invite')
-  invite(@Param('id') id: string, @Body() dto: InviteMemberDto) {
-    return this.groupsService.invite(id, dto);
+  invite(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: InviteMemberDto) {
+    return this.groupsService.invite(id, user.sub, dto);
   }
 }
