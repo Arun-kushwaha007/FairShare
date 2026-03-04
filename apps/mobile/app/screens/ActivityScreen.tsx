@@ -6,7 +6,8 @@ import type { ActivityDto, ActivityType } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
 import { EmptyState } from '../components/ui/EmptyState';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { SkeletonList } from '../components/ui/SkeletonList';
+import { spacing } from '../theme/spacing';
 
 const PAGE_SIZE = 12;
 
@@ -93,11 +94,12 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   const visibleItems = React.useMemo(() => events.slice(0, visibleCount), [events, visibleCount]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <SkeletonList rows={8} />;
   }
 
   return (
     <FlatList
+      contentContainerStyle={{ paddingBottom: spacing.lg }}
       data={visibleItems}
       keyExtractor={(item) => item.id}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadEvents(); }} />}
@@ -107,18 +109,18 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
           setVisibleCount((count) => count + PAGE_SIZE);
         }
       }}
-      ListHeaderComponent={<Text variant="headlineSmall" style={{ padding: 16 }}>Activity</Text>}
+      ListHeaderComponent={<Text variant="headlineSmall" style={{ padding: spacing.md }}>Activity</Text>}
       ListEmptyComponent={<EmptyState title="No activity yet" />}
       renderItem={({ item }) => {
         const amountCents = extractAmountCents(item);
-        const amountText = amountCents ? ` Ã‚Â· $${(Number(amountCents) / 100).toFixed(2)}` : '';
+        const amountText = amountCents ? ` · $${(Number(amountCents) / 100).toFixed(2)}` : '';
 
         return (
           <List.Item
             title={actionText(item)}
             description={`${relativeTime(item.createdAt)}${amountText}`}
             left={() => (
-              <View style={{ justifyContent: 'center', paddingLeft: 12 }}>
+              <View style={{ justifyContent: 'center', paddingLeft: spacing.sm }}>
                 <MaterialCommunityIcons name={iconByType[item.type]} size={22} />
               </View>
             )}
@@ -128,5 +130,3 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
     />
   );
 }
-
-

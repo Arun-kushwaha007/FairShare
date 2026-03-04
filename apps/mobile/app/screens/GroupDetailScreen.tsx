@@ -1,13 +1,16 @@
 import React from 'react';
 import { ScrollView } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { FAB, Button, Text } from 'react-native-paper';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
-import { MoneyText } from '../components/ui/MoneyText';
 import { useExpenseStore } from '../store/expenseStore';
 import { useToastStore } from '../store/toastStore';
+import { EmptyState } from '../components/ui/EmptyState';
+import { SkeletonList } from '../components/ui/SkeletonList';
+import { spacing } from '../theme/spacing';
 
 export function GroupDetailScreen({ route, navigation }: { route: { params: { groupId: string } }; navigation: { navigate: (route: string, params?: any) => void } }) {
+  const [loading, setLoading] = React.useState(true);
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const expenses = useExpenseStore((state) => state.expensesByGroup[route.params.groupId] ?? []);
   const setExpenses = useExpenseStore((state) => state.setExpenses);
@@ -23,6 +26,8 @@ export function GroupDetailScreen({ route, navigation }: { route: { params: { gr
       setBalances(balanceData);
     } catch {
       toast('Failed to load group details');
+    } finally {
+      setLoading(false);
     }
   }, [route.params.groupId, setExpenses, toast]);
 
@@ -30,26 +35,44 @@ export function GroupDetailScreen({ route, navigation }: { route: { params: { gr
     void load();
   }, [load]);
 
+  if (loading) {
+    return <SkeletonList rows={5} />;
+  }
+
   return (
-    <ScrollView style={{ padding: 16 }}>
-      <Text variant="headlineSmall" style={{ marginBottom: 12 }}>Group Detail</Text>
-      <Button mode="contained" onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}>Add Expense</Button>
-      <Button style={{ marginTop: 8 }} onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}>Settle Up</Button>
+    <>
+      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}>
+        <Text variant="headlineSmall" style={{ marginBottom: spacing.sm }}>Group Detail</Text>
+        <Button mode="contained" onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}>Add Expense</Button>
+        <Button style={{ marginTop: spacing.sm }} onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}>Settle Up</Button>
 
-      <Text variant="titleMedium" style={{ marginTop: 16 }}>Expenses</Text>
-      {expenses.map((expense) => (
-        <Button key={expense.id} onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}>
-          {expense.description} - ${(Number(expense.totalAmountCents) / 100).toFixed(2)}
-        </Button>
-      ))}
+        <Text variant="titleMedium" style={{ marginTop: spacing.md }}>Expenses</Text>
+        {expenses.length === 0 ? (
+          <EmptyState title="No expenses yet" />
+        ) : (
+          expenses.map((expense) => (
+            <Button key={expense.id} onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}>
+              {expense.description} - ${(Number(expense.totalAmountCents) / 100).toFixed(2)}
+            </Button>
+          ))
+        )}
 
-      <Text variant="titleMedium" style={{ marginTop: 16 }}>Balances</Text>
-      {balances.map((balance) => (
-        <Text key={balance.id}>
-          {balance.userId} vs {balance.counterpartyUserId} <MoneyText cents={balance.amountCents} />
-        </Text>
-      ))}
-    </ScrollView>
+        <Text variant="titleMedium" style={{ marginTop: spacing.md }}>Balances</Text>
+        {balances.length === 0 ? (
+          <EmptyState title="No balances yet" />
+        ) : (
+          balances.map((balance) => (
+            <Text key={balance.id}>
+              {balance.userId} vs {balance.counterpartyUserId} ${(Number(balance.amountCents) / 100).toFixed(2)}
+            </Text>
+          ))
+        )}
+      </ScrollView>
+      <FAB
+        icon="plus-circle"
+        style={{ position: 'absolute', right: spacing.md, bottom: spacing.md }}
+        onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
+      />
+    </>
   );
 }
-

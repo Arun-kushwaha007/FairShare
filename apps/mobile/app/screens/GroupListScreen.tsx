@@ -1,12 +1,13 @@
-﻿import React from 'react';
+import React from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { FAB, Text } from 'react-native-paper';
 import { useGroupStore } from '../store/groupStore';
 import { groupService } from '../services/group.service';
 import { ListItem } from '../components/ui/ListItem';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useToastStore } from '../store/toastStore';
+import { SkeletonList } from '../components/ui/SkeletonList';
+import { spacing } from '../theme/spacing';
 
 export function GroupListScreen({ navigation }: { navigation: { navigate: (route: string, params?: any) => void } }) {
   const groups = useGroupStore((state) => state.groups);
@@ -32,15 +33,18 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
   }, [loadGroups]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <SkeletonList rows={6} />;
   }
 
   return (
     <>
-      <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadGroups(); }} />}>
-        <Text variant="headlineSmall" style={{ padding: 16 }}>Groups</Text>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: spacing.xl }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadGroups(); }} />}
+      >
+        <Text variant="headlineSmall" style={{ padding: spacing.md }}>Groups</Text>
         {groups.length === 0 ? (
-          <EmptyState title="No groups yet" />
+          <EmptyState title="No groups yet. Create your first group." />
         ) : (
           groups.map((group) => (
             <ListItem
@@ -52,7 +56,7 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
           ))
         )}
       </ScrollView>
-      <FAB icon="plus" style={{ position: 'absolute', right: 16, bottom: 16 }} onPress={() => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' })} />
+      <FAB icon="plus" style={{ position: 'absolute', right: spacing.md, bottom: spacing.md }} onPress={() => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' })} />
     </>
   );
 }
