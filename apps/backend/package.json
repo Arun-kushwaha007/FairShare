@@ -9,7 +9,8 @@
                     "lint":  "tsc --noEmit",
                     "test":  "jest --runInBand --passWithNoTests",
                     "prisma:generate":  "prisma generate",
-                    "prisma:migrate":  "prisma migrate dev"
+                    "prisma:migrate":  "prisma migrate dev",
+                    "seed":  "ts-node prisma/seed.ts"
                 },
     "dependencies":  {
                          "@fairshare/shared-types":  "workspace:*",
