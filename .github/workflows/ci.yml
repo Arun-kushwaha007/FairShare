@@ -27,11 +27,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
+      - name: Prisma Generate
+        run: pnpm --filter backend prisma:generate
+
+      - name: Typecheck
+        run: pnpm lint
+
       - name: Lint
         run: pnpm lint
 
       - name: Test
         run: pnpm test
+
+      - name: Backend Coverage
+        run: pnpm --filter backend test -- --coverage
+
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            apps/backend/coverage
+            apps/mobile/coverage
 
       - name: Build backend
         run: pnpm --filter backend build
