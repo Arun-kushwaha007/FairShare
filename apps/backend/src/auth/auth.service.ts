@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcrypt';
 import { randomUUID } from 'crypto';
+import { Response } from 'express';
 import { AuthTokensDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { AppConfigService } from '../config/app-config.service';
@@ -74,7 +75,9 @@ export class AuthService {
     });
 
     const matched = await Promise.any(
-      tokens.map(async (token) => ((await compare(refreshToken, token.tokenHash)) ? token : Promise.reject(new Error('No match')))),
+      tokens.map(async (token) =>
+        (await compare(refreshToken, token.tokenHash)) ? token : Promise.reject(new Error('No match')),
+      ),
     ).catch(() => null);
 
     if (!matched) {
@@ -87,6 +90,16 @@ export class AuthService {
     });
 
     return this.issueTokens(payload.sub, payload.email);
+  }
+
+  setRefreshTokenCookie(res: Response, refreshToken: string): void {
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/api/v1/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
   }
 
   private async issueTokens(userId: string, email: string): Promise<AuthTokensDto> {
