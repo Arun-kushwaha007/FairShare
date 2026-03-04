@@ -1,4 +1,4 @@
-﻿import { CreateGroupRequestDto, GroupDto, InviteMemberRequestDto } from '@fairshare/shared-types';
+import { CreateGroupRequestDto, GroupDto, InviteMemberRequestDto, ActivityDto } from '@fairshare/shared-types';
 import { api } from './api';
 
 export const groupService = {
@@ -8,4 +8,5 @@ export const groupService = {
   invite: async (id: string, payload: InviteMemberRequestDto) => (await api.post(`/groups/${id}/invite`, payload)).data,
   balances: async (id: string) => (await api.get(`/groups/${id}/balances`)).data,
   simplify: async (id: string) => (await api.get(`/groups/${id}/simplify`)).data,
+  activity: async (id: string) => (await api.get<ActivityDto[]>(`/groups/${id}/activity`)).data,
 };
