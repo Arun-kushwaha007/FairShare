@@ -4,8 +4,8 @@
     "private":  true,
     "scripts":  {
                     "build":  "tsc -p tsconfig.build.json",
-                    "dev":  "nest start --watch",
-                    "start":  "node dist/main.js",
+                    "dev":  "nest start --watch --entryFile apps/backend/src/main",
+                    "start":  "node dist/apps/backend/src/main.js",
                     "lint":  "tsc --noEmit",
                     "test":  "jest --runInBand --passWithNoTests",
                     "prisma:generate":  "prisma generate",
