@@ -1,13 +1,33 @@
 ﻿import React from 'react';
-import { View, Text, Button } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Button, TextInput } from 'react-native-paper';
+import { authService } from '../services/auth.service';
+import { useAuthStore } from '../store/authStore';
+import { useToastStore } from '../store/toastStore';
+
+type LoginForm = { email: string; password: string };
 
 export function LoginScreen({ navigation }: { navigation: { navigate: (route: string) => void } }) {
+  const { control, handleSubmit } = useForm<LoginForm>({ defaultValues: { email: '', password: '' } });
+  const setSession = useAuthStore((state) => state.setSession);
+  const toast = useToastStore((state) => state.show);
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const res = await authService.login(values);
+      await setSession(res.accessToken, res.refreshToken, res.user);
+    } catch {
+      toast('Login failed');
+    }
+  });
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 16 }}>
-      <Text style={{ fontSize: 24, marginBottom: 12 }}>Login</Text>
-      <Button title="Go to Register" onPress={() => navigation.navigate('Register')} />
-      <View style={{ height: 12 }} />
-      <Button title="Continue" onPress={() => navigation.navigate('GroupList')} />
-    </View>
+    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <Controller control={control} name="email" render={({ field: { value, onChange } }) => <TextInput label="Email" value={value} onChangeText={onChange} />} />
+      <Controller control={control} name="password" render={({ field: { value, onChange } }) => <TextInput secureTextEntry label="Password" value={value} onChangeText={onChange} />} />
+      <Button mode="contained" onPress={onSubmit}>Login</Button>
+      <Button onPress={() => navigation.navigate('Register')}>Create Account</Button>
+    </ScrollView>
   );
 }

@@ -1,23 +1,27 @@
-{
-    "name":  "web",
-    "version":  "1.0.0",
-    "private":  true,
-    "scripts":  {
-                    "dev":  "next dev",
-                    "build":  "tsc --noEmit",
-                    "start":  "next start",
-                    "lint":  "tsc --noEmit",
-                    "test":  "echo \"No tests yet\""
-                },
-    "dependencies":  {
-                         "next":  "15.2.0",
-                         "react":  "19.0.0",
-                         "react-dom":  "19.0.0"
-                     },
-    "devDependencies":  {
-                            "@types/node":  "^22.10.2",
-                            "@types/react":  "^19.0.7",
-                            "@types/react-dom":  "^19.0.3",
-                            "typescript":  "^5.7.3"
-                        }
+﻿{
+  "name": "web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "framer-motion": "^12.6.5",
+    "next": "15.2.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
 }

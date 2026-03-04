@@ -6,18 +6,19 @@ on:
   pull_request:
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -29,8 +30,14 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Build
-        run: pnpm build
-
       - name: Test
         run: pnpm test
+
+      - name: Build backend
+        run: pnpm --filter backend build
+
+      - name: Build mobile
+        run: pnpm --filter mobile build
+
+      - name: Build web
+        run: pnpm --filter web build

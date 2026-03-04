@@ -1,11 +1,33 @@
 ﻿import React from 'react';
-import { View, Text, Button } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
+import { Button, TextInput } from 'react-native-paper';
+import { authService } from '../services/auth.service';
+import { useAuthStore } from '../store/authStore';
+import { useToastStore } from '../store/toastStore';
 
-export function RegisterScreen({ navigation }: { navigation: { navigate: (route: string) => void } }) {
+type RegisterForm = { name: string; email: string; password: string };
+
+export function RegisterScreen() {
+  const { control, handleSubmit } = useForm<RegisterForm>({ defaultValues: { name: '', email: '', password: '' } });
+  const setSession = useAuthStore((state) => state.setSession);
+  const toast = useToastStore((state) => state.show);
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const res = await authService.register(values);
+      await setSession(res.accessToken, res.refreshToken, res.user);
+    } catch {
+      toast('Registration failed');
+    }
+  });
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 16 }}>
-      <Text style={{ fontSize: 24, marginBottom: 12 }}>Register</Text>
-      <Button title="Back to Login" onPress={() => navigation.navigate('Login')} />
-    </View>
+    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <Controller control={control} name="name" render={({ field: { value, onChange } }) => <TextInput label="Name" value={value} onChangeText={onChange} />} />
+      <Controller control={control} name="email" render={({ field: { value, onChange } }) => <TextInput label="Email" value={value} onChangeText={onChange} />} />
+      <Controller control={control} name="password" render={({ field: { value, onChange } }) => <TextInput secureTextEntry label="Password" value={value} onChangeText={onChange} />} />
+      <Button mode="contained" onPress={onSubmit}>Register</Button>
+    </ScrollView>
   );
 }

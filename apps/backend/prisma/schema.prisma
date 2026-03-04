@@ -7,124 +7,140 @@ datasource db {
   url      = env("SUPABASE_DATABASE_URL")
 }
 
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
 model User {
-  id               String        @id @default(uuid())
-  email            String        @unique
-  name             String
-  passwordHash     String?
-  googleId         String?       @unique
-  refreshTokenHash String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  deletedAt        DateTime?
-  memberships      GroupMember[]
-  expenses         Expense[]
-  splits           Split[]
-  settlementsFrom  Settlement[]  @relation("settlement_from")
-  settlementsTo    Settlement[]  @relation("settlement_to")
-  balancesFrom     Balance[]     @relation("balance_from")
-  balancesTo       Balance[]     @relation("balance_to")
-  receipts         Receipt[]
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  memberships  GroupMember[]
+  createdGroups Group[]      @relation("group_creator")
+  expenses     Expense[]     @relation("expense_payer")
+  splits       Split[]
+  settlementsPaid     Settlement[] @relation("settlement_payer")
+  settlementsReceived Settlement[] @relation("settlement_receiver")
+  balances     Balance[]     @relation("balance_user")
+  counterpartyBalances Balance[] @relation("balance_counterparty")
+  refreshTokens RefreshToken[]
+
+  @@map("users")
 }
 
 model Group {
   id          String        @id @default(uuid())
   name        String
-  createdById String
+  createdBy   String
+  currency    String
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?
+  creator     User          @relation("group_creator", fields: [createdBy], references: [id])
   members     GroupMember[]
   expenses    Expense[]
   balances    Balance[]
   settlements Settlement[]
+
+  @@index([createdBy])
+  @@map("groups")
 }
 
 model GroupMember {
-  id        String    @id @default(uuid())
-  groupId   String
-  userId    String
-  role      String    @default("member")
-  createdAt DateTime  @default(now())
-  deletedAt DateTime?
-  group     Group     @relation(fields: [groupId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  id       String    @id @default(uuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+  group    Group     @relation(fields: [groupId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
+  @@map("group_members")
 }
 
 model Expense {
-  id            String    @id @default(uuid())
-  groupId        String
-  paidByUserId   String
-  description    String
-  amountCents    BigInt
-  currency       String    @default("USD")
-  incurredAt     DateTime
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-  group          Group     @relation(fields: [groupId], references: [id])
-  paidBy         User      @relation(fields: [paidByUserId], references: [id])
-  splits         Split[]
-  receipt        Receipt?
+  id               String   @id @default(uuid())
+  groupId          String
+  payerId          String
+  description      String
+  totalAmountCents BigInt
+  currency         String
+  createdAt        DateTime @default(now())
+  group            Group    @relation(fields: [groupId], references: [id])
+  payer            User     @relation("expense_payer", fields: [payerId], references: [id])
+  splits           Split[]
+  receipt          Receipt?
+
+  @@index([groupId])
+  @@map("expenses")
 }
 
 model Split {
-  id           String    @id @default(uuid())
-  expenseId     String
-  userId        String
-  amountCents   BigInt
-  createdAt     DateTime  @default(now())
-  deletedAt     DateTime?
-  expense       Expense   @relation(fields: [expenseId], references: [id])
-  user          User      @relation(fields: [userId], references: [id])
+  id             String @id @default(uuid())
+  expenseId      String
+  userId         String
+  owedAmountCents BigInt
+  paidAmountCents BigInt
+  expense        Expense @relation(fields: [expenseId], references: [id])
+  user           User    @relation(fields: [userId], references: [id])
 
   @@index([expenseId])
+  @@map("splits")
 }
 
 model Balance {
-  id            String    @id @default(uuid())
-  groupId        String
-  fromUserId     String
-  toUserId       String
-  amountCents    BigInt
-  asOf           DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-  group          Group     @relation(fields: [groupId], references: [id])
-  fromUser       User      @relation("balance_from", fields: [fromUserId], references: [id])
-  toUser         User      @relation("balance_to", fields: [toUserId], references: [id])
+  id                 String @id @default(uuid())
+  groupId            String
+  userId             String
+  counterpartyUserId String
+  amountCents        BigInt
+  group              Group  @relation(fields: [groupId], references: [id])
+  user               User   @relation("balance_user", fields: [userId], references: [id])
+  counterpartyUser   User   @relation("balance_counterparty", fields: [counterpartyUserId], references: [id])
 
+  @@unique([groupId, userId, counterpartyUserId])
   @@index([groupId])
+  @@map("balances")
 }
 
 model Settlement {
-  id            String    @id @default(uuid())
-  groupId        String
-  fromUserId     String
-  toUserId       String
-  amountCents    BigInt
-  settledAt      DateTime
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-  group          Group     @relation(fields: [groupId], references: [id])
-  fromUser       User      @relation("settlement_from", fields: [fromUserId], references: [id])
-  toUser         User      @relation("settlement_to", fields: [toUserId], references: [id])
+  id          String   @id @default(uuid())
+  groupId     String
+  payerId     String
+  receiverId  String
+  amountCents BigInt
+  createdAt   DateTime @default(now())
+  group       Group    @relation(fields: [groupId], references: [id])
+  payer       User     @relation("settlement_payer", fields: [payerId], references: [id])
+  receiver    User     @relation("settlement_receiver", fields: [receiverId], references: [id])
 
   @@index([groupId])
+  @@map("settlements")
 }
 
 model Receipt {
-  id            String    @id @default(uuid())
-  expenseId      String    @unique
-  userId         String
-  s3Key          String
-  uploadedAt     DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  deletedAt      DateTime?
-  expense        Expense   @relation(fields: [expenseId], references: [id])
-  user           User      @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  expenseId String   @unique
+  fileKey   String
+  createdAt DateTime @default(now())
+  expense   Expense  @relation(fields: [expenseId], references: [id])
+
+  @@map("receipts")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }

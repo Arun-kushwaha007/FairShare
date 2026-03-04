@@ -1,15 +1,25 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true,
-    "types": ["react", "react-native"],
-    "baseUrl": ".",
-    "paths": {
-      "@fairshare/shared-types": ["../../packages/shared-types/src/index.ts"]
-    }
-  },
-  "include": ["app", "App.tsx", "index.ts"]
+    "extends":  "../../tsconfig.base.json",
+    "compilerOptions":  {
+                            "jsx":  "react-jsx",
+                            "module":  "ESNext",
+                            "moduleResolution":  "Node",
+                            "allowSyntheticDefaultImports":  true,
+                            "types":  [
+                                          "react",
+                                          "react-native",
+                                          "jest"
+                                      ],
+                            "baseUrl":  ".",
+                            "paths":  {
+                                          "@fairshare/shared-types":  [
+                                                                          "../../packages/shared-types/src/index.ts"
+                                                                      ]
+                                      }
+                        },
+    "include":  [
+                    "app",
+                    "App.tsx",
+                    "index.ts"
+                ]
 }
