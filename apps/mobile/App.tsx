@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { Platform } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -64,7 +65,9 @@ export default function App() {
       <SafeAreaProvider>
         <PaperProvider theme={appTheme}>
           <StatusBar style="dark" />
-          <AppNavigator />
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
