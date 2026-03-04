@@ -1,163 +1,85 @@
-# FairShare Project Documentation
+# FairShare Beta Documentation
 
-## Overview
-FairShare is a pnpm workspace + Turborepo monorepo with:
-- Mobile app: Expo React Native + TypeScript
-- Backend API: NestJS + TypeScript
-- Web app: Next.js + TypeScript
-- Database: PostgreSQL (Supabase compatible) via Prisma
+## 1. Project Overview
+FairShare is a pnpm + Turborepo monorepo for shared-expense management with:
+- Mobile: Expo React Native (TypeScript strict)
+- Backend: NestJS (TypeScript strict)
+- Web: Next.js (marketing + auth entry pages)
+- Database: PostgreSQL (Supabase-compatible) via Prisma
 - Cache: Redis
 - Storage: AWS S3 (presigned upload URLs)
+- Monitoring: Sentry (backend + mobile)
 
-Core rules implemented:
-- TypeScript strict mode
-- Shared contracts via `packages/shared-types`
-- Money in cents as `BigInt` in database
-- Backend handles balance computation
-- Transactional writes for expense and settlement flows
+Core architecture guarantees:
+- Shared DTO contracts from `packages/shared-types`
+- All money persisted as `BigInt` cents in DB
+- Backend-only balance computation
+- Transactional writes for critical financial flows
 
 ---
 
-## Monorepo Structure
-- `apps/backend`: NestJS API
-- `apps/mobile`: Expo React Native app
-- `apps/web`: Next.js marketing site
-- `packages/shared-types`: Shared DTO contracts
-- `infra/terraform`: Terraform placeholders
-- `.github/workflows/ci.yml`: CI pipeline
+## 2. Monorepo Layout
+- `apps/backend`
+- `apps/mobile`
+- `apps/web`
+- `packages/shared-types`
+- `infra/terraform`
+- `.github/workflows`
+- `scripts`
 
-Workspace and build orchestration:
+Key root files:
 - `pnpm-workspace.yaml`
 - `turbo.json`
+- `tsconfig.base.json`
+- `doc.md`
 
 ---
 
-## Shared Types (`packages/shared-types`)
-Single source of DTO contracts used by backend and mobile, including:
-- Auth DTOs (`RegisterRequestDto`, `LoginRequestDto`, `GoogleLoginRequestDto`, `AuthTokensDto`)
-- Group DTOs (`CreateGroupRequestDto`, `InviteMemberRequestDto`, `GroupDto`)
-- Expense DTOs (`CreateExpenseRequestDto`, `CreateExpenseSplitDto`, `UpdateExpenseRequestDto`, `ExpenseDto`)
-- Balance DTO (`BalanceDto`)
-- Settlement DTOs (`CreateSettlementRequestDto`, `SettlementDto`)
-- Receipts and simplify DTOs (`PresignedReceiptUrlResponseDto`, `SimplifySuggestionDto`)
+## 3. Shared Types (`packages/shared-types`)
+Centralized contracts used by backend and mobile:
+- Auth DTOs
+- Group and membership DTOs
+- Expense and split DTOs
+- Paginated expense response DTO (`items`, `nextCursor`)
+- Balance DTOs
+- Settlement DTOs
+- Receipt URL DTOs
+- Activity DTOs + activity type union
+- Push token registration DTO
+
+No DTO duplication across apps.
 
 ---
 
-## Backend (`apps/backend`)
+## 4. Backend (NestJS)
 
-### Framework and Core Setup
-- Nest app with global config
-- Global validation pipe (`whitelist`, `forbidNonWhitelisted`, `transform`)
-- CORS enabled with env-based origins
+### 4.1 Core Runtime
 - Global API prefix: `/api/v1`
-- JWT auth guard and `CurrentUser` decorator
+- Global validation pipe enabled
+- CORS configured from env
+- Helmet enabled
+- Compression + cookie-parser enabled
+- Throttling enabled globally via `@nestjs/throttler`
+  - Limit: 100 requests / 60 seconds / IP
 
-### Modules Implemented
-- `auth`
-- `users`
-- `groups`
-- `expenses`
-- `balances`
-- `settlements`
-- `simplify`
-- `receipts`
-- `redis`
-- `s3`
-- `common` (Prisma service/module)
+### 4.2 Security
+- JWT auth with access + refresh tokens
+- Refresh token rotation persisted in DB (`refresh_tokens`)
+- Refresh cookie set with:
+  - `httpOnly: true`
+  - `secure` in production
+  - `sameSite: 'lax'`
+  - path-scoped to auth refresh route
+- Rate limiting guard active globally
 
-### Auth Features
-Endpoints:
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/google`
+### 4.3 Observability
+- Backend Sentry integration via `@sentry/node`
+- Captures:
+  - unhandled rejections
+  - uncaught exceptions
 
-Behavior:
-- Email/password auth with bcrypt hashing
-- JWT access token issuance
-- Refresh token rotation storage in `refresh_tokens` table (hashed)
-- Google login endpoint (payload-driven MVP flow)
-
-### Groups Features
-Endpoints:
-- `POST /api/v1/groups`
-- `GET /api/v1/groups`
-- `GET /api/v1/groups/:id`
-- `POST /api/v1/groups/:id/invite`
-
-Behavior:
-- Group creation with owner membership in a transaction
-- Group listing by membership
-- Group detail with member list caching
-- Invite by email (upsert membership)
-
-### Expenses Features
-Endpoints:
-- `POST /api/v1/groups/:id/expenses`
-- `GET /api/v1/groups/:id/expenses`
-- `GET /api/v1/expenses/:id`
-- `PATCH /api/v1/expenses/:id`
-- `DELETE /api/v1/expenses/:id`
-
-Behavior:
-- Expense creation in DB transaction:
-  1. Insert expense
-  2. Insert splits
-  3. Update balances
-- Balance logic implemented per rule:
-  - If A paid and B owes, store:
-    - `B -> A` negative amount
-    - `A -> B` positive amount
-- Cache invalidation after mutating operations
-
-### Balances Features
-Endpoint:
-- `GET /api/v1/groups/:id/balances`
-
-Behavior:
-- Reads and returns group balances
-- Redis cache for group balances
-
-### Settlements Features
-Endpoint:
-- `POST /api/v1/groups/:id/settlements`
-
-Behavior:
-- Settlement creation in transaction
-- Reverse-adjust balance records between payer and receiver
-- Cache invalidation after creation
-
-### Simplify Features
-Endpoint:
-- `GET /api/v1/groups/:id/simplify`
-
-Behavior:
-- Greedy debt simplification algorithm:
-  - Compute net balance per user
-  - Split into debtors and creditors
-  - Generate settlement suggestions
-
-### Receipts Features
-Endpoint:
-- `POST /api/v1/expenses/:id/receipt-url`
-
-Behavior:
-- Generates S3 presigned upload URL
-- File path pattern:
-  - `receipts/{groupId}/{expenseId}/{uuid}.{ext}`
-- Stores/upserts `Receipt` record with `fileKey`
-
-### Redis Features
-Cached keys:
-- `group:{groupId}:balances`
-- `group:{groupId}:members`
-
-Invalidation:
-- On expense create/delete/update effects
-- On settlement create
-- On invite/member-affecting operations
-
-### Prisma Schema
-`apps/backend/prisma/schema.prisma` models:
+### 4.4 Prisma Schema (beta)
+Models:
 - `User`
 - `Group`
 - `GroupMember`
@@ -167,141 +89,310 @@ Invalidation:
 - `Settlement`
 - `Receipt`
 - `RefreshToken`
+- `Activity`
+- `PushToken`
 
-Money fields use `BigInt`:
-- `Expense.totalAmountCents`
-- `Split.owedAmountCents`
-- `Split.paidAmountCents`
-- `Balance.amountCents`
-- `Settlement.amountCents`
+Important indexes:
+- `GroupMember.groupId`
+- `GroupMember.userId`
+- `Expense.groupId`
+- `Expense.createdAt`
+- `Expense(groupId, createdAt)` composite
+- `Split.expenseId`
+- `Balance.groupId`
+- `Balance.userId`
+- `Settlement.groupId`
 
-### Backend Tests
-Unit/integration-style tests include:
-- Split/balance delta calculation
-- Simplify algorithm
-- Expense transaction flow
-- Settlement transaction flow
-- Module service existence smoke tests
+### 4.5 Modules and Features
+Implemented modules:
+- `auth`
+- `users`
+- `groups`
+- `expenses`
+- `balances`
+- `settlements`
+- `simplify`
+- `receipts`
+- `activity`
+- `notifications`
+- `redis`
+- `s3`
+- `common`
+
+#### Auth endpoints
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/google`
+- `POST /api/v1/auth/refresh`
+
+#### Groups endpoints
+- `POST /api/v1/groups`
+- `GET /api/v1/groups`
+- `GET /api/v1/groups/:id`
+- `POST /api/v1/groups/:id/invite`
+
+#### Expenses endpoints
+- `POST /api/v1/groups/:id/expenses`
+- `GET /api/v1/groups/:id/expenses?page=1&limit=20`
+- `GET /api/v1/expenses/:id`
+- `PATCH /api/v1/expenses/:id`
+- `DELETE /api/v1/expenses/:id`
+
+#### Balances endpoint
+- `GET /api/v1/groups/:id/balances`
+
+#### Settlements endpoint
+- `POST /api/v1/groups/:id/settlements`
+
+#### Receipts endpoint
+- `POST /api/v1/expenses/:id/receipt-url`
+
+#### Activity endpoint
+- `GET /api/v1/groups/:id/activity`
+  - returns latest 50 events sorted by `createdAt DESC`
+
+#### Users endpoint
+- `POST /api/v1/users/push-token`
+
+### 4.6 Financial Integrity Rules
+Expense creation safety checks:
+- total amount must be positive
+- split sum must exactly equal `totalAmountCents`
+- actor must be group member
+- payer must be group member
+- all split users must be group members
+
+Settlement safety checks:
+- amount must be positive
+- actor must be group member
+- payer/receiver must be group members
+
+Invite safety checks:
+- actor membership required
+- duplicate invite/member creation blocked
+
+### 4.7 Transactional Flows
+Expense create transaction:
+1. insert expense
+2. insert split rows
+3. update balances
+4. insert activity event
+
+Settlement create transaction:
+1. insert settlement
+2. update balances
+3. insert activity event
+
+### 4.8 Balance Logic
+For payer A and owing user B:
+- `B -> A` negative amount
+- `A -> B` positive amount
+
+### 4.9 Simplification Algorithm
+`SimplifyService`:
+- fetch balances by group
+- compute net position per user
+- separate debtors/creditors
+- greedy matching for settlement suggestions
+
+### 4.10 Activity Feed Events
+Supported types:
+- `expense_created`
+- `expense_updated`
+- `expense_deleted`
+- `settlement_created`
+- `member_joined`
+- `member_invited`
+
+Logged inside group/expense/settlement flows.
+
+### 4.11 Notifications Infrastructure
+- `NotificationsService.sendPushNotification(userIds, payload)` abstraction
+- currently logs payload (stub for real push provider)
+- triggered for:
+  - new expense
+  - settlement
+  - group invite
+
+### 4.12 Redis Caching
+Cached keys (TTL 120s):
+- group balances
+- group members
+- group expense summary
+
+Invalidation on expense/settlement/invite mutations.
+
+### 4.13 S3 Receipts
+- Presigned upload URL generation
+- File key pattern:
+  - `receipts/{groupId}/{expenseId}/{uuid}.{ext}`
 
 ---
 
-## Mobile (`apps/mobile`)
+## 5. Mobile (Expo)
 
-### Stack and UX Libraries
+### 5.1 Stack
 - Expo SDK 54
-- React Navigation (native stack + bottom tabs)
+- React Navigation (stack + tabs)
 - Zustand stores
 - React Hook Form
-- React Native Paper
+- Axios API layer
+- React Native Paper UI
 - Reanimated + Gesture Handler
 - Expo Haptics
-- Expo Linear Gradient
-- Lottie (ready)
-- Expo Secure Store
+- Expo Notifications
+- Expo Image
+- Sentry Expo
+- Skeleton placeholder support
 
-### Theme System (`app/theme`)
+### 5.2 Theme System
+`app/theme`:
 - `colors.ts`
 - `spacing.ts`
 - `typography.ts`
 - `theme.ts`
 
-Configured design tokens:
-- Primary: `#4F46E5`
-- Background: `#F8FAFC`
-- Font intent: Inter
+Primary styles:
+- primary color `#4F46E5`
+- background `#F8FAFC`
 
-### Reusable UI Components (`app/components/ui`)
-- `Button.tsx`
-- `Card.tsx`
-- `Avatar.tsx`
-- `ListItem.tsx`
-- `MoneyText.tsx`
-- `EmptyState.tsx`
-- `LoadingSpinner.tsx`
-- `GlobalToast.tsx`
+### 5.3 Reusable UI Components
+`app/components/ui` includes:
+- `Button`
+- `Card`
+- `Avatar`
+- `ListItem`
+- `MoneyText`
+- `EmptyState`
+- `LoadingSpinner`
+- `GlobalToast`
+- `SkeletonList`
 
-### Navigation
-- Auth stack:
-  - `LoginScreen`
-  - `RegisterScreen`
-- Main bottom tabs:
-  - `Home`
-  - `Groups`
-  - `Activity`
-  - `Profile`
-- Additional screens:
-  - `GroupDetailScreen`
-  - `AddExpenseScreen`
-  - `ExpenseDetailScreen`
-  - `SettleUpScreen`
-  - `SettingsScreen`
+### 5.4 Navigation
+Auth stack:
+- `LoginScreen`
+- `RegisterScreen`
 
-### API Layer (`app/services`)
-- `api.ts` axios instance with auth token interceptor
+Main tabs:
+- `Home`
+- `Groups`
+- `Activity`
+- `Profile`
+
+Additional screens:
+- `GroupDetailScreen`
+- `AddExpenseScreen`
+- `ExpenseDetailScreen`
+- `SettleUpScreen`
+- `SettingsScreen`
+
+### 5.5 Mobile Services
+`app/services`:
+- `api.ts` (axios + auth header interceptor)
 - `auth.service.ts`
 - `group.service.ts`
 - `expense.service.ts`
 - `settlement.service.ts`
+- `user.service.ts` (push token registration)
 
-### State Management (`app/store`)
+### 5.6 State Stores
 - `authStore`
 - `groupStore`
 - `expenseStore`
 - `toastStore`
 
-### UX Improvements Included
-- Pull-to-refresh
-- Loading indicators
-- Snackbar error/info toast handling
-- Haptic feedback on key actions
-- Subtle reanimated transitions on home
+### 5.7 UX Features
+- pull-to-refresh
+- loading states
+- empty states (groups/expenses/activity)
+- haptics
+- toasts
+- subtle reanimated effects
+- FAB on group detail (`plus-circle`)
+- infinite scroll on activity screen
+- receipt preview + full-screen modal image viewer
 
-### Mobile Tests
-- Basic render test: `LoginScreen.spec.tsx`
+### 5.8 Push Registration
+On authenticated app usage:
+- request notification permissions
+- fetch Expo push token
+- post token to backend `/users/push-token`
+
+### 5.9 Mobile Monitoring
+- `sentry-expo` initialized in `App.tsx`
 
 ---
 
-## Web (`apps/web`)
+## 6. Web (Next.js)
 
-### Stack
-- Next.js (App Router)
+### 6.1 Stack
+- Next.js App Router
 - Tailwind CSS
 - Framer Motion
 
-### Pages Implemented
-- `/` (hero, product section, features grid, how it works, testimonials, CTA/footer)
+### 6.2 Pages
+- `/` landing page with:
+  - hero
+  - screenshots section
+  - animated feature cards
+  - feature comparison table
+  - FAQ
+  - newsletter signup block
+  - footer CTA links
 - `/features`
 - `/pricing`
 - `/about`
 - `/login`
 
-Files:
-- `app/layout.tsx`
-- `app/globals.css`
-- page files under `app/*/page.tsx`
-- `tailwind.config.ts`
-- `postcss.config.js`
+### 6.3 SEO
+`app/layout.tsx` includes metadata:
+- title
+- description
+- keywords
+- Open Graph basics
 
 ---
 
-## CI Pipeline
+## 7. CI/CD
 Workflow: `.github/workflows/ci.yml`
 
-Steps:
-1. Checkout
-2. Setup pnpm
-3. Setup Node
-4. Install dependencies
-5. Run lint
-6. Run tests
-7. Build backend
-8. Build mobile
-9. Build web
+Pipeline includes:
+1. checkout
+2. pnpm setup
+3. node setup (with pnpm cache)
+4. install dependencies
+5. prisma generate (backend)
+6. typecheck (via lint command)
+7. lint
+8. tests
+9. backend coverage run
+10. coverage artifact upload
+11. build backend/mobile/web
 
 ---
 
-## Environment Variables
-Defined in `.env.example`:
+## 8. Developer Tooling
+
+### 8.1 Seed Script
+- Root command: `pnpm seed`
+- Backend command: `pnpm --filter backend seed`
+- Seed file: `apps/backend/prisma/seed.ts`
+
+Seed creates:
+- 3 users
+- 2 groups
+- 10 expenses
+- baseline balances
+- activity rows
+
+### 8.2 Prisma Commands
+- `pnpm --filter backend prisma:generate`
+- `pnpm --filter backend prisma:migrate --name <migration_name>`
+
+---
+
+## 9. Environment Variables
+From `.env.example`:
 - `SUPABASE_DATABASE_URL`
 - `JWT_SECRET`
 - `JWT_REFRESH_SECRET`
@@ -312,59 +403,59 @@ Defined in `.env.example`:
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_REGION`
 - `S3_BUCKET`
+- `SENTRY_DSN`
+- `EXPO_PUBLIC_SENTRY_DSN`
 
 ---
 
-## Scripts
+## 10. Commands
 
-### Root (`package.json`)
-- `pnpm dev` -> `turbo run dev --parallel`
-- `pnpm build` -> `turbo run build`
-- `pnpm lint` -> `turbo run lint`
-- `pnpm test` -> `turbo run test`
-- `pnpm format` -> `turbo run format`
+Install:
+```bash
+pnpm install
+```
 
-### Backend (`apps/backend/package.json`)
-- `pnpm --filter backend dev`
-- `pnpm --filter backend build`
-- `pnpm --filter backend lint`
-- `pnpm --filter backend test`
-- `pnpm --filter backend prisma:generate`
-- `pnpm --filter backend prisma:migrate`
+Development:
+```bash
+pnpm dev
+```
 
-### Mobile (`apps/mobile/package.json`)
-- `pnpm --filter mobile dev`
-- `pnpm --filter mobile build`
-- `pnpm --filter mobile lint`
-- `pnpm --filter mobile test`
+Build:
+```bash
+pnpm build
+```
 
-### Web (`apps/web/package.json`)
-- `pnpm --filter web dev`
-- `pnpm --filter web build`
-- `pnpm --filter web lint`
-- `pnpm --filter web test`
+Test:
+```bash
+pnpm test
+```
 
----
+Seed:
+```bash
+pnpm seed
+```
 
-## Local Run Checklist
-1. Install deps:
-   - `pnpm install`
-2. Set env vars (`.env`)
-3. Generate Prisma client:
-   - `pnpm --filter backend prisma:generate`
-4. Run DB migration:
-   - `pnpm --filter backend prisma:migrate --name mvp_schema`
-5. Start all apps:
-   - `pnpm dev`
-
-Quality commands:
-- `pnpm lint`
-- `pnpm build`
-- `pnpm test`
+Backend Prisma bootstrap:
+```bash
+pnpm --filter backend prisma:generate
+pnpm --filter backend prisma:migrate --name beta_update
+```
 
 ---
 
-## Current Status Notes
-- MVP architecture and core features are implemented.
-- Prisma migration command is ready; it requires `SUPABASE_DATABASE_URL` to be set.
-- Backend tests pass, mobile test passes, workspace lint/build/test pass in current setup.
+## 11. Current Status
+FairShare is now at production-ready beta scaffold level with:
+- hardened backend validation and security
+- activity feed system (backend + mobile UI)
+- push notification infrastructure
+- pagination + caching improvements
+- receipt viewing UX
+- Sentry integration
+- improved web marketing experience
+- stronger CI and dev tooling
+
+Remaining future production work can focus on:
+- real push dispatch provider integration
+- live receipt upload flow and signed download URLs
+- deeper integration/e2e tests
+- stronger domain authorization policies per endpoint
