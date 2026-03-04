@@ -32,7 +32,8 @@
                          "react-native-screens":  "^4.16.0",
                          "zustand":  "^5.0.3",
                          "expo-notifications":  "~0.29.14",
-                         "expo-image":  "~2.4.0"
+                         "expo-image":  "~2.4.0",
+                         "sentry-expo":  "^7.2.0"
                      },
     "devDependencies":  {
                             "@testing-library/react-native":  "^13.3.3",

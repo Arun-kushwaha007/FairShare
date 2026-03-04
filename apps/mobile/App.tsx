@@ -6,10 +6,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
+import * as Sentry from 'sentry-expo';
 import { AppNavigator } from './app/navigation/AppNavigator';
 import { appTheme } from './app/theme/theme';
 import { useAuthStore } from './app/store/authStore';
 import { userService } from './app/services/user.service';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enableInExpoDevelopment: true,
+  debug: false,
+});
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
