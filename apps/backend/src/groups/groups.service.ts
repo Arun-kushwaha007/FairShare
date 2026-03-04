@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { GroupDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
@@ -103,15 +103,21 @@ export class GroupsService {
       throw new NotFoundException('User not found');
     }
 
-    await this.prisma.groupMember.upsert({
+    const existingMembership = await this.prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
           groupId,
           userId: user.id,
         },
       },
-      update: {},
-      create: {
+    });
+
+    if (existingMembership) {
+      throw new ConflictException('User is already a group member');
+    }
+
+    await this.prisma.groupMember.create({
+      data: {
         groupId,
         userId: user.id,
         role: 'MEMBER',

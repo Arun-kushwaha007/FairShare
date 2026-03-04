@@ -59,6 +59,8 @@ model GroupMember {
   user     User      @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
+  @@index([groupId])
+  @@index([userId])
   @@map("group_members")
 }
 
@@ -76,6 +78,8 @@ model Expense {
   receipt          Receipt?
 
   @@index([groupId])
+  @@index([createdAt])
+  @@index([groupId, createdAt])
   @@map("expenses")
 }
 
@@ -104,6 +108,7 @@ model Balance {
 
   @@unique([groupId, userId, counterpartyUserId])
   @@index([groupId])
+  @@index([userId])
   @@map("balances")
 }
 

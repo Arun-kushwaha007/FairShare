@@ -1,5 +1,7 @@
-﻿import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtPayload } from '../auth/types/auth.types';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -10,8 +12,8 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Post('groups/:id/expenses')
-  create(@Param('id') groupId: string, @Body() dto: CreateExpenseDto) {
-    return this.expensesService.create(groupId, dto);
+  create(@Param('id') groupId: string, @CurrentUser() user: JwtPayload, @Body() dto: CreateExpenseDto) {
+    return this.expensesService.create(groupId, user.sub, dto);
   }
 
   @Get('groups/:id/expenses')

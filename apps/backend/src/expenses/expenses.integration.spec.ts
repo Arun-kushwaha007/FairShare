@@ -1,4 +1,4 @@
-﻿import { ExpensesService } from '../expenses/expenses.service';
+import { ExpensesService } from '../expenses/expenses.service';
 
 describe('Create Expense Flow (integration-ish)', () => {
   it('creates expense and updates balances via transaction', async () => {
@@ -27,6 +27,9 @@ describe('Create Expense Flow (integration-ish)', () => {
     };
 
     const prisma: any = {
+      groupMember: {
+        findMany: jest.fn().mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]),
+      },
       $transaction: jest.fn().mockImplementation(async (cb: (client: any) => unknown) => cb(tx)),
     };
 
@@ -40,7 +43,7 @@ describe('Create Expense Flow (integration-ish)', () => {
 
     const service = new ExpensesService(prisma, balancesService, redis);
 
-    await service.create('g1', {
+    await service.create('g1', 'u1', {
       payerId: 'u1',
       description: 'Dinner',
       totalAmountCents: '1000',
@@ -51,6 +54,7 @@ describe('Create Expense Flow (integration-ish)', () => {
       ],
     });
 
+    expect(prisma.groupMember.findMany).toHaveBeenCalled();
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(tx.expense.create).toHaveBeenCalled();
     expect(tx.split.createMany).toHaveBeenCalled();

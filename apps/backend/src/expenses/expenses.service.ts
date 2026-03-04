@@ -1,9 +1,10 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ExpenseDto } from '@fairshare/shared-types';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
 import { RedisService } from '../redis/redis.service';
+import { assertMoneyEquality, sumMoney } from '../common/utils/money.util';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { calculateBalanceDeltas } from './expense-calculator';
@@ -16,14 +17,49 @@ export class ExpensesService {
     private readonly redis: RedisService,
   ) {}
 
-  async create(groupId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
+  async create(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
+    const totalAmount = BigInt(dto.totalAmountCents);
+    if (totalAmount <= 0n) {
+      throw new BadRequestException('Expense amount must be positive');
+    }
+
+    const owedSum = sumMoney(dto.splits.map((split) => split.owedAmountCents));
+    try {
+      assertMoneyEquality(owedSum, totalAmount, 'Split sum must equal total amount');
+    } catch {
+      throw new BadRequestException('Split sum must equal total amount');
+    }
+
+    const memberIds = new Set<string>([actorUserId, dto.payerId, ...dto.splits.map((split) => split.userId)]);
+    const memberships = await this.prisma.groupMember.findMany({
+      where: {
+        groupId,
+        userId: { in: Array.from(memberIds) },
+      },
+      select: { userId: true },
+    });
+    const memberSet = new Set(memberships.map((member) => member.userId));
+
+    if (!memberSet.has(actorUserId)) {
+      throw new ForbiddenException('Actor is not a group member');
+    }
+
+    if (!memberSet.has(dto.payerId)) {
+      throw new BadRequestException('Payer must be a group member');
+    }
+
+    const invalidSplitUsers = dto.splits.filter((split) => !memberSet.has(split.userId));
+    if (invalidSplitUsers.length > 0) {
+      throw new BadRequestException('All split users must be group members');
+    }
+
     const expense = await this.prisma.$transaction(async (tx) => {
       const createdExpense = await tx.expense.create({
         data: {
           groupId,
           payerId: dto.payerId,
           description: dto.description,
-          totalAmountCents: BigInt(dto.totalAmountCents),
+          totalAmountCents: totalAmount,
           currency: dto.currency,
         },
       });
@@ -39,7 +75,13 @@ export class ExpensesService {
 
       const deltas = calculateBalanceDeltas(dto.payerId, dto.splits);
       for (const delta of deltas) {
-        await this.balancesService.adjustBalance(tx as unknown as Prisma.TransactionClient, groupId, delta.userId, delta.counterpartyUserId, delta.delta);
+        await this.balancesService.adjustBalance(
+          tx as unknown as Prisma.TransactionClient,
+          groupId,
+          delta.userId,
+          delta.counterpartyUserId,
+          delta.delta,
+        );
       }
 
       return tx.expense.findUniqueOrThrow({
