@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ScrollView } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { groupService } from '../services/group.service';
@@ -19,7 +19,7 @@ export function GroupDetailScreen({ route, navigation }: { route: { params: { gr
         expenseService.list(route.params.groupId),
         groupService.balances(route.params.groupId),
       ]);
-      setExpenses(route.params.groupId, expenseData);
+      setExpenses(route.params.groupId, expenseData.items);
       setBalances(balanceData);
     } catch {
       toast('Failed to load group details');
@@ -52,3 +52,4 @@ export function GroupDetailScreen({ route, navigation }: { route: { params: { gr
     </ScrollView>
   );
 }
+

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/types/auth.types';
@@ -17,8 +17,8 @@ export class ExpensesController {
   }
 
   @Get('groups/:id/expenses')
-  listByGroup(@Param('id') groupId: string) {
-    return this.expensesService.listByGroup(groupId);
+  listByGroup(@Param('id') groupId: string, @Query('page') page = '1', @Query('limit') limit = '20') {
+    return this.expensesService.listByGroup(groupId, Number(page), Number(limit));
   }
 
   @Get('expenses/:id')

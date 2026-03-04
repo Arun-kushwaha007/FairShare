@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ExpenseDto } from '@fairshare/shared-types';
+import { ExpenseDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
@@ -109,52 +109,45 @@ export class ExpensesService {
 
     await this.redis.invalidateGroupCache(groupId);
 
-    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } })).map((member) => member.userId);
+    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } })).map(
+      (member) => member.userId,
+    );
     await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
       title: 'New expense added',
       body: dto.description,
       data: { groupId, expenseId: expense.id },
     });
 
-    return {
-      id: expense.id,
-      groupId: expense.groupId,
-      payerId: expense.payerId,
-      description: expense.description,
-      totalAmountCents: expense.totalAmountCents.toString(),
-      currency: expense.currency as 'USD' | 'EUR' | 'INR',
-      createdAt: expense.createdAt.toISOString(),
-      splits: expense.splits.map((split) => ({
-        id: split.id,
-        userId: split.userId,
-        owedAmountCents: split.owedAmountCents.toString(),
-        paidAmountCents: split.paidAmountCents.toString(),
-      })),
-    };
+    return this.toExpenseDto(expense);
   }
 
-  async listByGroup(groupId: string): Promise<ExpenseDto[]> {
-    const expenses = await this.prisma.expense.findMany({
-      where: { groupId },
-      include: { splits: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listByGroup(groupId: string, page = 1, limit = 20): Promise<PaginatedExpensesResponseDto> {
+    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
 
-    return expenses.map((expense) => ({
-      id: expense.id,
-      groupId: expense.groupId,
-      payerId: expense.payerId,
-      description: expense.description,
-      totalAmountCents: expense.totalAmountCents.toString(),
-      currency: expense.currency as 'USD' | 'EUR' | 'INR',
-      createdAt: expense.createdAt.toISOString(),
-      splits: expense.splits.map((split) => ({
-        id: split.id,
-        userId: split.userId,
-        owedAmountCents: split.owedAmountCents.toString(),
-        paidAmountCents: split.paidAmountCents.toString(),
-      })),
-    }));
+    const cachedSummary = await this.redis.getGroupExpenseSummaryCache(groupId);
+    let expenses: ExpenseDto[];
+
+    if (cachedSummary) {
+      expenses = JSON.parse(cachedSummary) as ExpenseDto[];
+    } else {
+      const rows = await this.prisma.expense.findMany({
+        where: { groupId },
+        include: { splits: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      expenses = rows.map((row) => this.toExpenseDto(row));
+      await this.redis.setGroupExpenseSummaryCache(groupId, JSON.stringify(expenses));
+    }
+
+    const start = (safePage - 1) * safeLimit;
+    const end = start + safeLimit;
+    const items = expenses.slice(start, end);
+
+    return {
+      items,
+      nextCursor: end < expenses.length ? safePage + 1 : null,
+    };
   }
 
   async getById(id: string): Promise<ExpenseDto> {
@@ -163,21 +156,7 @@ export class ExpensesService {
       throw new NotFoundException('Expense not found');
     }
 
-    return {
-      id: expense.id,
-      groupId: expense.groupId,
-      payerId: expense.payerId,
-      description: expense.description,
-      totalAmountCents: expense.totalAmountCents.toString(),
-      currency: expense.currency as 'USD' | 'EUR' | 'INR',
-      createdAt: expense.createdAt.toISOString(),
-      splits: expense.splits.map((split) => ({
-        id: split.id,
-        userId: split.userId,
-        owedAmountCents: split.owedAmountCents.toString(),
-        paidAmountCents: split.paidAmountCents.toString(),
-      })),
-    };
+    return this.toExpenseDto(expense);
   }
 
   async update(id: string, actorUserId: string, dto: UpdateExpenseDto): Promise<ExpenseDto> {
@@ -197,21 +176,9 @@ export class ExpensesService {
       metadata: { description: dto.description ?? null },
     });
 
-    return {
-      id: expense.id,
-      groupId: expense.groupId,
-      payerId: expense.payerId,
-      description: expense.description,
-      totalAmountCents: expense.totalAmountCents.toString(),
-      currency: expense.currency as 'USD' | 'EUR' | 'INR',
-      createdAt: expense.createdAt.toISOString(),
-      splits: expense.splits.map((split) => ({
-        id: split.id,
-        userId: split.userId,
-        owedAmountCents: split.owedAmountCents.toString(),
-        paidAmountCents: split.paidAmountCents.toString(),
-      })),
-    };
+    await this.redis.invalidateGroupCache(expense.groupId);
+
+    return this.toExpenseDto(expense);
   }
 
   async remove(id: string, actorUserId: string): Promise<{ success: true }> {
@@ -239,5 +206,37 @@ export class ExpensesService {
     await this.redis.invalidateGroupCache(expense.groupId);
 
     return { success: true };
+  }
+
+  private toExpenseDto(expense: {
+    id: string;
+    groupId: string;
+    payerId: string;
+    description: string;
+    totalAmountCents: bigint;
+    currency: string;
+    createdAt: Date;
+    splits: Array<{
+      id: string;
+      userId: string;
+      owedAmountCents: bigint;
+      paidAmountCents: bigint;
+    }>;
+  }): ExpenseDto {
+    return {
+      id: expense.id,
+      groupId: expense.groupId,
+      payerId: expense.payerId,
+      description: expense.description,
+      totalAmountCents: expense.totalAmountCents.toString(),
+      currency: expense.currency as 'USD' | 'EUR' | 'INR',
+      createdAt: expense.createdAt.toISOString(),
+      splits: expense.splits.map((split) => ({
+        id: split.id,
+        userId: split.userId,
+        owedAmountCents: split.owedAmountCents.toString(),
+        paidAmountCents: split.paidAmountCents.toString(),
+      })),
+    };
   }
 }

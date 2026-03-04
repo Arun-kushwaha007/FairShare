@@ -92,6 +92,11 @@ export interface ExpenseDto {
   splits?: SplitDto[];
 }
 
+export interface PaginatedExpensesResponseDto {
+  items: ExpenseDto[];
+  nextCursor: number | null;
+}
+
 export interface BalanceDto {
   id: string;
   groupId: string;
