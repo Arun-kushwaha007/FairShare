@@ -2,6 +2,7 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { GroupDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 
@@ -10,6 +11,7 @@ export class GroupsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, dto: CreateGroupDto): Promise<GroupDto> {
@@ -161,9 +163,14 @@ export class GroupsService {
       });
     });
 
+    await this.notificationsService.sendPushNotification([user.id], {
+      title: 'You were invited',
+      body: 'You have been added to a FairShare group.',
+      data: { groupId },
+    });
+
     await this.redis.invalidateGroupCache(groupId);
 
     return { success: true };
   }
 }
-

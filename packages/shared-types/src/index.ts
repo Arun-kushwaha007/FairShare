@@ -143,3 +143,8 @@ export interface ActivityDto {
   metadata: Record<string, unknown>;
   createdAt: string;
 }
+
+export interface RegisterPushTokenRequestDto {
+  token: string;
+  deviceType: 'ios' | 'android' | 'web';
+}

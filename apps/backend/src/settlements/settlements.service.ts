@@ -4,6 +4,7 @@ import { SettlementDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
 import { RedisService } from '../redis/redis.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateSettlementDto } from './dto/create-settlement.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class SettlementsService {
     private readonly prisma: PrismaService,
     private readonly balancesService: BalancesService,
     private readonly redis: RedisService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateSettlementDto): Promise<SettlementDto> {
@@ -81,6 +83,16 @@ export class SettlementsService {
 
     await this.redis.invalidateGroupCache(groupId);
 
+    await this.notificationsService.sendPushNotification([dto.receiverId], {
+      title: 'Settlement recorded',
+      body: `${dto.payerId} settled with you`,
+      data: {
+        groupId,
+        settlementId: settlement.id,
+        amountCents: dto.amountCents,
+      },
+    });
+
     return {
       id: settlement.id,
       groupId: settlement.groupId,
@@ -91,4 +103,3 @@ export class SettlementsService {
     };
   }
 }
-

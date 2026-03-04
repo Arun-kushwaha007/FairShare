@@ -5,6 +5,7 @@ import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
 import { RedisService } from '../redis/redis.service';
 import { ActivityService } from '../activity/activity.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { assertMoneyEquality, sumMoney } from '../common/utils/money.util';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -17,6 +18,7 @@ export class ExpensesService {
     private readonly balancesService: BalancesService,
     private readonly redis: RedisService,
     private readonly activityService: ActivityService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
@@ -106,6 +108,13 @@ export class ExpensesService {
     });
 
     await this.redis.invalidateGroupCache(groupId);
+
+    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } })).map((member) => member.userId);
+    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
+      title: 'New expense added',
+      body: dto.description,
+      data: { groupId, expenseId: expense.id },
+    });
 
     return {
       id: expense.id,

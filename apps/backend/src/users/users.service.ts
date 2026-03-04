@@ -1,6 +1,7 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuthUserDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
+import { RegisterPushTokenDto } from './dto/register-push-token.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,5 +15,22 @@ export class UsersService {
       name: user.name,
       avatarUrl: user.avatarUrl,
     };
+  }
+
+  async registerPushToken(userId: string, dto: RegisterPushTokenDto): Promise<{ success: true }> {
+    await this.prisma.pushToken.upsert({
+      where: { token: dto.token },
+      update: {
+        userId,
+        deviceType: dto.deviceType,
+      },
+      create: {
+        userId,
+        token: dto.token,
+        deviceType: dto.deviceType,
+      },
+    });
+
+    return { success: true };
   }
 }

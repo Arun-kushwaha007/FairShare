@@ -39,6 +39,7 @@ model User {
   counterpartyBalances Balance[] @relation("balance_counterparty")
   refreshTokens RefreshToken[]
   activities   Activity[]
+  pushTokens   PushToken[]
 
   @@map("users")
 }
@@ -175,4 +176,16 @@ model Activity {
   @@index([groupId])
   @@index([createdAt])
   @@map("activities")
+}
+
+model PushToken {
+  id         String   @id @default(uuid())
+  userId     String
+  token      String   @unique
+  deviceType String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("push_tokens")
 }
