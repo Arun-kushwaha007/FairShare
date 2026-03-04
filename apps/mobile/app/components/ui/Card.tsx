@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card as PaperCard, CardProps } from 'react-native-paper';
+import { Card as PaperCard } from 'react-native-paper';
 
-export function Card(props: CardProps) {
-  return <PaperCard mode="contained" {...props} />;
+export function Card(props: any) {
+  return <PaperCard {...props} />;
 }

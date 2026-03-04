@@ -1,5 +1,13 @@
 
 > mobile@1.0.0 test D:\ak\project\FairShare\apps\mobile
-> echo "No tests yet"
+> jest --runInBand --passWithNoTests
 
-"No tests yet"
+PASS app/screens/LoginScreen.spec.tsx (22.257 s)
+  LoginScreen
+    √ renders login action (2896 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        22.878 s
+Ran all test suites.

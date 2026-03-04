@@ -2,14 +2,3 @@
 > mobile@1.0.0 lint D:\ak\project\FairShare\apps\mobile
 > tsc --noEmit
 
-app/components/ui/Card.tsx(5,11): error TS2322: Type '{ ref?: Ref<View> | undefined; children: ReactNode; hitSlop?: number | Insets | null | undefined; id?: string | undefined; needsOffscreenAlphaCompositing?: boolean | undefined; ... 97 more ...; contentStyle?: StyleProp<...>; }' is not assignable to type 'IntrinsicAttributes & ((Omit<OutlinedCardProps & $Omit<Omit<Props, "ref"> & RefAttributes<View>, "mode"> & { ...; }, "ref"> | Omit<...> | Omit<...>) & RefAttributes<...>)'.
-  Type '{ ref?: Ref<View> | undefined; children: ReactNode; hitSlop?: number | Insets | null | undefined; id?: string | undefined; needsOffscreenAlphaCompositing?: boolean | undefined; ... 97 more ...; contentStyle?: StyleProp<...>; }' is not assignable to type 'Omit<ContainedCardProps & $Omit<Omit<Props, "ref"> & RefAttributes<View>, "mode"> & { mode?: Mode | undefined; ... 12 more ...; accessible?: boolean | undefined; }, "ref">'.
-    Types of property 'elevation' are incompatible.
-      Type '(Elevation & (0 | 2 | 1 | Value | 3 | 4 | 5)) | undefined' is not assignable to type 'undefined'.
-        Type '0' is not assignable to type 'undefined'.
-app/components/ui/GlobalToast.tsx(3,31): error TS2307: Cannot find module '../store/toastStore' or its corresponding type declarations.
-app/screens/LoginScreen.spec.tsx(6,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
-app/screens/LoginScreen.spec.tsx(7,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
-app/screens/LoginScreen.spec.tsx(10,46): error TS2708: Cannot use namespace 'jest' as a value.
-app/screens/LoginScreen.spec.tsx(14,5): error TS2304: Cannot find name 'expect'.
- ELIFECYCLE  Command failed with exit code 2.

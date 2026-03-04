@@ -2,4 +2,25 @@
 > backend@1.0.0 test D:\ak\project\FairShare\apps\backend
 > jest --runInBand --passWithNoTests
 
-No tests found, exiting with code 0
+PASS src/expenses/expenses.integration.spec.ts (13.138 s)
+PASS src/settlements/settlements.integration.spec.ts
+PASS src/simplify/simplify.service.spec.ts
+PASS src/expenses/expense-calculator.spec.ts
+PASS src/settlements/settlements.service.spec.ts
+(node:16276) NOTE: The AWS SDK for JavaScript (v2) has reached end-of-support.
+It will no longer receive updates or releases.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/receipts/receipts.service.spec.ts
+PASS src/expenses/expenses.service.spec.ts
+PASS src/balances/balances.service.spec.ts
+PASS src/groups/groups.service.spec.ts
+PASS src/users/users.service.spec.ts
+
+Test Suites: 10 passed, 10 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        18.024 s
+Ran all test suites.
