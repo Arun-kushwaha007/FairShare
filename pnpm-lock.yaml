@@ -156,6 +156,9 @@ importers:
       expo-haptics:
         specifier: ~14.0.1
         version: 14.0.1(expo@54.0.33)
+      expo-image:
+        specifier: ~2.4.0
+        version: 2.4.1(expo@54.0.33)(react-native@0.81.4)(react@19.1.0)
       expo-linear-gradient:
         specifier: ~14.1.5
         version: 14.1.5(expo@54.0.33)(react-native@0.81.4)(react@19.1.0)
@@ -5402,6 +5405,22 @@ packages:
       expo: '*'
     dependencies:
       expo: 54.0.33(@babel/core@7.29.0)(react-native@0.81.4)(react@19.1.0)
+    dev: false
+
+  /expo-image@2.4.1(expo@54.0.33)(react-native@0.81.4)(react@19.1.0):
+    resolution: {integrity: sha512-yHp0Cy4ylOYyLR21CcH6i70DeRyLRPc0yAIPFPn4BT/BpkJNaX5QMXDppcHa58t4WI3Bb8QRJRLuAQaeCtDF8A==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
+    dependencies:
+      expo: 54.0.33(@babel/core@7.29.0)(react-native@0.81.4)(react@19.1.0)
+      react: 19.1.0
+      react-native: 0.81.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.0)
     dev: false
 
   /expo-keep-awake@15.0.8(expo@54.0.33)(react@19.1.0):
