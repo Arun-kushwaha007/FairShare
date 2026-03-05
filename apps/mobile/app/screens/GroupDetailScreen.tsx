@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { Avatar } from '../components/ui/Avatar';
 import { spacing } from '../theme/spacing';
+import { endScreenLoad, startScreenLoad } from '../utils/perf';
 
 export function GroupDetailScreen({
   route,
@@ -36,6 +37,7 @@ export function GroupDetailScreen({
   const currentUserId = useAuthStore((state) => state.user?.id);
 
   const load = React.useCallback(async () => {
+    startScreenLoad('GroupDetail');
     try {
       const [expenseData, balanceData, memberData] = await Promise.all([
         expenseService.list(route.params.groupId),
@@ -55,6 +57,7 @@ export function GroupDetailScreen({
       toast('Failed to load group details');
     } finally {
       setLoading(false);
+      endScreenLoad('GroupDetail');
     }
   }, [route.params.groupId, setExpenses, toast]);
 

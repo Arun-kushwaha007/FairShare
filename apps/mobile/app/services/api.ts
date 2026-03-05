@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import * as Sentry from 'sentry-expo';
 import { ApiError } from '../types/api-error';
 import { offlineQueue } from '../utils/offlineQueue';
+import { trackApiLatency } from '../utils/perf';
 
 type ExpoConstantsDevHostShape = {
   manifest2?: {
@@ -53,6 +54,7 @@ if (__DEV__) {
 }
 
 api.interceptors.request.use(async (config) => {
+  (config as typeof config & { metadata?: { startTs: number } }).metadata = { startTs: Date.now() };
   const token = await SecureStore.getItemAsync('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -67,12 +69,21 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (response) => {
+    const startTs = (response.config as typeof response.config & { metadata?: { startTs: number } }).metadata?.startTs;
+    if (startTs) {
+      trackApiLatency(response.config.url, response.config.method, Date.now() - startTs);
+    }
     if (__DEV__) {
       console.log('[api] response:', response.status, response.config.url);
     }
     return response;
   },
   (error) => {
+    const startTs = (error?.config as { metadata?: { startTs: number } } | undefined)?.metadata?.startTs;
+    if (startTs) {
+      trackApiLatency(error?.config?.url, error?.config?.method, Date.now() - startTs);
+    }
+
     const method = String(error?.config?.method ?? '').toUpperCase();
     const url = String(error?.config?.url ?? '');
     const retryMarked = error?.config?.headers?.['x-offline-retry'] === '1';

@@ -5,6 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
 import { spacing } from '../theme/spacing';
+import { startScreenLoad, endScreenLoad } from '../utils/perf';
 
 export function HomeScreen({ navigation }: { navigation: { navigate: (route: string, params?: any) => void } }) {
   const [firstGroupId, setFirstGroupId] = React.useState<string>('');
@@ -12,6 +13,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
   const toast = useToastStore((state) => state.show);
 
   React.useEffect(() => {
+    startScreenLoad('Dashboard');
     const load = async () => {
       try {
         const groups = await groupService.list();
@@ -26,6 +28,8 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
         }
       } catch {
         toast('Failed to load dashboard');
+      } finally {
+        endScreenLoad('Dashboard');
       }
     };
 
