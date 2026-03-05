@@ -23,13 +23,13 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Home: undefined;
   Groups: undefined;
   Activity: undefined;
   Profile: undefined;
 };
 
 export type RootStackParamList = {
+  Dashboard: undefined;
   Tabs: undefined;
   GroupDetail: { groupId: string };
   GroupMembers: { groupId: string };
@@ -50,7 +50,6 @@ function MainTabs() {
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
           const iconByRoute: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-            Home: 'home',
             Groups: 'account-group',
             Activity: 'history',
             Profile: 'account',
@@ -59,7 +58,6 @@ function MainTabs() {
         },
       })}
     >
-      <Tabs.Screen name="Home" component={HomeScreen} />
       <Tabs.Screen name="Groups" component={GroupListScreen} />
       <Tabs.Screen name="Activity" component={ActivityScreen} />
       <Tabs.Screen name="Profile" component={ProfileScreen} />
@@ -70,6 +68,7 @@ function MainTabs() {
 function AppStack() {
   return (
     <RootStack.Navigator>
+      <RootStack.Screen name="Dashboard" component={HomeScreen} options={{ headerShown: false }} />
       <RootStack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
       <RootStack.Screen name="GroupDetail" component={GroupDetailScreen} />
       <RootStack.Screen name="GroupMembers" component={GroupMembersScreen} />
@@ -100,5 +99,3 @@ export function AppNavigator() {
     </>
   );
 }
-
-
