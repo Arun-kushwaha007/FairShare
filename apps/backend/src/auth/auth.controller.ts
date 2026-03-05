@@ -1,4 +1,5 @@
 import { Body, Controller, Logger, Post, Req, Res } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -12,6 +13,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     this.logger.log(`POST /auth/register email=${dto.email.toLowerCase()}`);
     const payload = await this.authService.register(dto);
@@ -20,6 +22,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     this.logger.log(`POST /auth/login email=${dto.email.toLowerCase()}`);
     const payload = await this.authService.login(dto);

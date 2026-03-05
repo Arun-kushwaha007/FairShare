@@ -14,6 +14,8 @@ import { calculateBalanceDeltas } from './expense-calculator';
 
 @Injectable()
 export class ExpensesService {
+  private static readonly MAX_EXPENSE_CENTS = 100_000_000n;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly balancesService: BalancesService,
@@ -27,6 +29,9 @@ export class ExpensesService {
     const totalAmount = BigInt(dto.totalAmountCents);
     if (totalAmount <= 0n) {
       throw new BadRequestException('Expense amount must be positive');
+    }
+    if (totalAmount > ExpensesService.MAX_EXPENSE_CENTS) {
+      throw new BadRequestException('Expense amount exceeds maximum allowed');
     }
 
     const owedSum = sumMoney(dto.splits.map((split) => split.owedAmountCents));

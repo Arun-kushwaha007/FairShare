@@ -1,4 +1,5 @@
-﻿import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/types/auth.types';
@@ -37,6 +38,7 @@ export class GroupsController {
   }
 
   @Post(':id/invite')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   invite(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: InviteMemberDto) {
     return this.groupsService.invite(id, user.sub, dto);
   }
