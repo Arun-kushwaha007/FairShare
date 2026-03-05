@@ -1,6 +1,15 @@
 import axios from 'axios';
 
 export function getErrorMessage(error: unknown, fallback: string): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as { message?: unknown }).message === 'string'
+  ) {
+    return (error as { message: string }).message;
+  }
+
   if (axios.isAxiosError(error)) {
     const apiMessage = (error.response?.data as { message?: string | string[] } | undefined)?.message;
     if (typeof apiMessage === 'string' && apiMessage.length > 0) {

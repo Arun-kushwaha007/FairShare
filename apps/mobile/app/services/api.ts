@@ -1,6 +1,8 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import * as Sentry from 'sentry-expo';
+import { ApiError } from '../types/api-error';
 
 type ExpoConstantsDevHostShape = {
   manifest2?: {
@@ -69,9 +71,29 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const wrapped: ApiError = {
+      code: String(error?.response?.status ?? 'NETWORK_ERROR'),
+      message:
+        (error?.response?.data?.message as string | undefined) ??
+        (typeof error?.message === 'string' ? error.message : 'Request failed'),
+      context: {
+        status: error?.response?.status,
+        url: error?.config?.url,
+        method: error?.config?.method,
+        responseData: error?.response?.data,
+      },
+    };
+
     if (__DEV__) {
-      console.log('[api] error:', error?.response?.status, error?.config?.url, error?.response?.data ?? error?.message);
+      console.log('[api] error:', wrapped);
     }
-    return Promise.reject(error);
+
+    if (wrapped.context.status && wrapped.context.status >= 500) {
+      Sentry.Native.captureException(new Error(wrapped.message), {
+        extra: wrapped.context,
+      });
+    }
+
+    return Promise.reject(wrapped);
   },
 );

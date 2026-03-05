@@ -3,9 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import { NextFunction, Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 async function bootstrap(): Promise<void> {
   Sentry.init({
@@ -24,10 +26,12 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule);
   const config = app.get(AppConfigService);
+  const requestLogger = new RequestLoggerMiddleware();
 
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());
+  app.use((req: Request, res: Response, next: NextFunction) => requestLogger.use(req, res, next));
 
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
