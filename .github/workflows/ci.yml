@@ -6,9 +6,103 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  typecheck:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            node_modules/.cache/turbo
+          key: turbo-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ github.ref_name }}-
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Prisma Generate
+        run: pnpm --filter backend prisma:generate
+
+      - name: Typecheck
+        run: pnpm lint
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Lint
+        run: pnpm lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Run Unit Tests
+        run: pnpm test
+
+      - name: Backend Coverage
+        run: pnpm --filter backend test -- --coverage
+
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            apps/backend/coverage
+            apps/mobile/coverage
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,26 +123,6 @@ jobs:
 
       - name: Prisma Generate
         run: pnpm --filter backend prisma:generate
-
-      - name: Typecheck
-        run: pnpm lint
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test
-
-      - name: Backend Coverage
-        run: pnpm --filter backend test -- --coverage
-
-      - name: Upload Coverage Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: |
-            apps/backend/coverage
-            apps/mobile/coverage
 
       - name: Build backend
         run: pnpm --filter backend build
