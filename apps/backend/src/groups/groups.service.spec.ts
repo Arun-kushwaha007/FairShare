@@ -96,7 +96,7 @@ describe('GroupsService', () => {
     expect(result).toEqual({ success: true });
     expect(notificationsService.sendPushNotification).toHaveBeenCalledWith(
       ['u2'],
-      expect.objectContaining({ data: { groupId: 'g1' } }),
+      expect.objectContaining({ type: 'group_invite', data: { groupId: 'g1', notificationType: 'group_invite' } }),
     );
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
   });
@@ -108,5 +108,11 @@ describe('GroupsService', () => {
     prisma.user.findUnique.mockResolvedValueOnce({ id: 'u2', email: 'test@example.com' });
 
     await expect(service.invite('g1', 'u1', { email: 'test@example.com' })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('blocks invite when actor is not a member', async () => {
+    prisma.groupMember.findUnique.mockResolvedValueOnce(null);
+
+    await expect(service.invite('g1', 'u9', { email: 'test@example.com' })).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

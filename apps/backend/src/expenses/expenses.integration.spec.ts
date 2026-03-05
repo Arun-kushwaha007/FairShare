@@ -66,6 +66,12 @@ describe('Create Expense Flow (integration-ish)', () => {
     expect(tx.activity.create).toHaveBeenCalled();
     expect(balancesService.adjustBalance).toHaveBeenCalledTimes(2);
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
+    expect(notificationsService.sendPushNotification).toHaveBeenCalledWith(
+      ['u2'],
+      expect.objectContaining({
+        type: 'expense_created',
+      }),
+    );
   });
 });
 
