@@ -1,7 +1,8 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { Modal, ScrollView, View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Text, TextInput } from 'react-native-paper';
+import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import type { GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
@@ -30,6 +31,7 @@ export function AddExpenseScreen({
   const [exactByUser, setExactByUser] = React.useState<Record<string, string>>({});
   const [percentagesByUser, setPercentagesByUser] = React.useState<Record<string, string>>({});
   const [inlineError, setInlineError] = React.useState<string>('');
+  const [successOpen, setSuccessOpen] = React.useState(false);
   const toast = useToastStore((state) => state.show);
 
   React.useEffect(() => {
@@ -101,56 +103,70 @@ export function AddExpenseScreen({
         })),
       });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      toast('Expense created');
-      navigation.goBack();
+      setSuccessOpen(true);
+      setTimeout(() => {
+        setSuccessOpen(false);
+        toast('Expense created');
+        navigation.goBack();
+      }, 700);
     } catch {
       toast('Failed to create expense');
     }
   });
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
-      <Controller
-        control={control}
-        name="description"
-        render={({ field: { value, onChange } }) => <TextInput label="Description" value={value} onChangeText={onChange} />}
-      />
-      <Controller
-        control={control}
-        name="amountCents"
-        render={({ field: { value, onChange } }) => (
-          <TextInput label="Amount (cents)" value={value} onChangeText={onChange} keyboardType="numeric" />
-        )}
-      />
+    <>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+        <Controller
+          control={control}
+          name="description"
+          render={({ field: { value, onChange } }) => <TextInput label="Description" value={value} onChangeText={onChange} />}
+        />
+        <Controller
+          control={control}
+          name="amountCents"
+          render={({ field: { value, onChange } }) => (
+            <TextInput label="Amount (cents)" value={value} onChangeText={onChange} keyboardType="numeric" />
+          )}
+        />
 
-      <Text variant="titleMedium">Payer</Text>
-      {members.map((member) => (
-        <Button
-          key={member.memberId}
-          mode={payerId === member.userId ? 'contained' : 'outlined'}
-          onPress={() => setPayerId(member.userId)}
-        >
-          {member.name}
+        <Text variant="titleMedium">Payer</Text>
+        {members.map((member) => (
+          <Button
+            key={member.memberId}
+            mode={payerId === member.userId ? 'contained' : 'outlined'}
+            onPress={() => setPayerId(member.userId)}
+          >
+            {member.name}
+          </Button>
+        ))}
+
+        <SplitSelector
+          members={members}
+          splitType={splitType}
+          selectedParticipantIds={selectedParticipantIds}
+          exactByUser={exactByUser}
+          percentagesByUser={percentagesByUser}
+          onSplitTypeChange={setSplitType}
+          onParticipantsChange={setSelectedParticipantIds}
+          onExactChange={(userId, value) => setExactByUser((state) => ({ ...state, [userId]: value }))}
+          onPercentageChange={(userId, value) => setPercentagesByUser((state) => ({ ...state, [userId]: value }))}
+        />
+
+        {inlineError ? <Text style={{ color: '#b91c1c' }}>{inlineError}</Text> : null}
+
+        <Button mode="contained" onPress={onSubmit}>
+          Create Expense
         </Button>
-      ))}
+      </ScrollView>
 
-      <SplitSelector
-        members={members}
-        splitType={splitType}
-        selectedParticipantIds={selectedParticipantIds}
-        exactByUser={exactByUser}
-        percentagesByUser={percentagesByUser}
-        onSplitTypeChange={setSplitType}
-        onParticipantsChange={setSelectedParticipantIds}
-        onExactChange={(userId, value) => setExactByUser((state) => ({ ...state, [userId]: value }))}
-        onPercentageChange={(userId, value) => setPercentagesByUser((state) => ({ ...state, [userId]: value }))}
-      />
-
-      {inlineError ? <Text style={{ color: '#b91c1c' }}>{inlineError}</Text> : null}
-
-      <Button mode="contained" onPress={onSubmit}>
-        Create Expense
-      </Button>
-    </ScrollView>
+      <Modal visible={successOpen} transparent>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }}>
+          <View style={{ width: 180, height: 180, backgroundColor: '#fff', borderRadius: 12 }}>
+            <LottieView source={require('../assets/animations/expense-success.json')} autoPlay loop={false} />
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }

@@ -142,11 +142,11 @@ export function GroupDetailScreen({
       >
         <Button onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, width: '100%' }}>
-            <Avatar name={payer?.name ?? 'U'} />
+            <Avatar name={payer?.name ?? 'U'} avatarUrl={payer?.avatarUrl} />
             <View style={{ flex: 1 }}>
               <Text>{expense.description}</Text>
               <Text>
-                {payer?.name ?? expense.payerId} • {participantCount} participants •{' '}
+                {payer?.name ?? expense.payerId} â€¢ {participantCount} participants â€¢{' '}
                 {new Date(expense.createdAt).toLocaleDateString()}
               </Text>
             </View>
@@ -196,7 +196,7 @@ export function GroupDetailScreen({
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
           {members.slice(0, 6).map((member) => (
             <Button key={member.memberId} compact onPress={() => showMemberSummary(member)}>
-              <Avatar name={member.name} />
+              <Avatar name={member.name} avatarUrl={member.avatarUrl} />
             </Button>
           ))}
         </View>

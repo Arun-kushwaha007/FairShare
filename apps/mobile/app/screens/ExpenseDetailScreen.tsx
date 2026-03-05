@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { Button, Text, ActivityIndicator } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { expenseService } from '../services/expense.service';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { SkeletonList } from '../components/ui/SkeletonList';
 import { useToastStore } from '../store/toastStore';
 
 export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: string } } }) {
@@ -28,7 +28,7 @@ export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: s
   }, [route.params.expenseId, toast]);
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <SkeletonList rows={4} />;
   }
 
   return (
