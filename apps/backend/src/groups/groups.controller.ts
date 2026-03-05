@@ -22,8 +22,13 @@ export class GroupsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
-    return this.groupsService.getById(id);
+  getById(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.groupsService.getById(id, user.sub);
+  }
+
+  @Get(':id/members')
+  members(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.groupsService.members(id, user.sub);
   }
 
   @Post(':id/invite')

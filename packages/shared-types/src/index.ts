@@ -47,6 +47,15 @@ export interface GroupMemberDto {
   joinedAt: string;
 }
 
+export interface GroupMemberSummaryDto {
+  memberId: string;
+  userId: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  role: 'OWNER' | 'MEMBER';
+}
+
 export interface GroupDto {
   id: string;
   name: string;

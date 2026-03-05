@@ -8,6 +8,7 @@ import { RegisterScreen } from '../screens/RegisterScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { GroupListScreen } from '../screens/GroupListScreen';
 import { GroupDetailScreen } from '../screens/GroupDetailScreen';
+import { GroupMembersScreen } from '../screens/GroupMembersScreen';
 import { AddExpenseScreen } from '../screens/AddExpenseScreen';
 import { ExpenseDetailScreen } from '../screens/ExpenseDetailScreen';
 import { SettleUpScreen } from '../screens/SettleUpScreen';
@@ -31,6 +32,7 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Tabs: undefined;
   GroupDetail: { groupId: string };
+  GroupMembers: { groupId: string };
   AddExpense: { groupId: string };
   ExpenseDetail: { expenseId: string };
   SettleUp: { groupId: string };
@@ -70,6 +72,7 @@ function AppStack() {
     <RootStack.Navigator>
       <RootStack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
       <RootStack.Screen name="GroupDetail" component={GroupDetailScreen} />
+      <RootStack.Screen name="GroupMembers" component={GroupMembersScreen} />
       <RootStack.Screen name="AddExpense" component={AddExpenseScreen} />
       <RootStack.Screen name="ExpenseDetail" component={ExpenseDetailScreen} />
       <RootStack.Screen name="SettleUp" component={SettleUpScreen} />

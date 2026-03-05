@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { GroupDto } from '@fairshare/shared-types';
+import { GroupDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -75,7 +75,9 @@ export class GroupsService {
     }));
   }
 
-  async getById(id: string): Promise<GroupDto> {
+  async getById(id: string, actorUserId: string): Promise<GroupDto> {
+    await this.assertMembership(id, actorUserId);
+
     const cached = await this.redis.getGroupMembersCache(id);
     if (cached) {
       return JSON.parse(cached) as GroupDto;
@@ -109,18 +111,27 @@ export class GroupsService {
     return response;
   }
 
-  async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
-    const actorMembership = await this.prisma.groupMember.findUnique({
-      where: {
-        groupId_userId: {
-          groupId,
-          userId: actorUserId,
-        },
-      },
+  async members(groupId: string, actorUserId: string): Promise<GroupMemberSummaryDto[]> {
+    await this.assertMembership(groupId, actorUserId);
+
+    const members = await this.prisma.groupMember.findMany({
+      where: { groupId },
+      include: { user: true },
+      orderBy: { joinedAt: 'asc' },
     });
-    if (!actorMembership) {
-      throw new ForbiddenException('Actor is not a group member');
-    }
+
+    return members.map((member) => ({
+      memberId: member.id,
+      userId: member.userId,
+      name: member.user.name,
+      email: member.user.email,
+      avatarUrl: member.user.avatarUrl,
+      role: member.role,
+    }));
+  }
+
+  async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
+    await this.assertMembership(groupId, actorUserId);
 
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (!user) {
@@ -172,5 +183,20 @@ export class GroupsService {
     await this.redis.invalidateGroupCache(groupId);
 
     return { success: true };
+  }
+
+  private async assertMembership(groupId: string, userId: string): Promise<void> {
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Actor is not a group member');
+    }
   }
 }
