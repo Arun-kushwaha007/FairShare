@@ -5,6 +5,7 @@ import { Button, TextInput } from 'react-native-paper';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
+import { getErrorMessage } from '../utils/error';
 
 type RegisterForm = { name: string; email: string; password: string };
 
@@ -17,8 +18,10 @@ export function RegisterScreen() {
     try {
       const res = await authService.register(values);
       await setSession(res.accessToken, res.refreshToken, res.user);
-    } catch {
-      toast('Registration failed');
+    } catch (error) {
+      const message = getErrorMessage(error, 'Registration failed');
+      console.log('[auth] registration failed:', message, error);
+      toast(message);
     }
   });
 

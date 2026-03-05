@@ -1,15 +1,72 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
+
+type ExpoConstantsDevHostShape = {
+  manifest2?: {
+    extra?: {
+      expoClient?: {
+        hostUri?: string;
+      };
+    };
+  };
+  manifest?: {
+    debuggerHost?: string;
+  };
+};
+
+function resolveApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
+  const constants = Constants as unknown as ExpoConstantsDevHostShape;
+  const hostUri = constants.manifest2?.extra?.expoClient?.hostUri ?? constants.manifest?.debuggerHost;
+  const host = hostUri?.split(':')[0];
+
+  if (host) {
+    return `http://${host}:3001/api/v1`;
+  }
+
+  return 'http://localhost:3001/api/v1';
+}
+
+const baseURL = resolveApiBaseUrl();
 
 export const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1',
+  baseURL,
   timeout: 15000,
 });
+
+if (__DEV__) {
+  // Helps debug real-device failures where localhost is unreachable.
+  console.log('[api] baseURL:', baseURL);
+}
 
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  if (__DEV__) {
+    console.log('[api] request:', config.method?.toUpperCase(), config.url);
+  }
+
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => {
+    if (__DEV__) {
+      console.log('[api] response:', response.status, response.config.url);
+    }
+    return response;
+  },
+  (error) => {
+    if (__DEV__) {
+      console.log('[api] error:', error?.response?.status, error?.config?.url, error?.response?.data ?? error?.message);
+    }
+    return Promise.reject(error);
+  },
+);

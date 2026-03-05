@@ -5,6 +5,7 @@ import { Button, TextInput } from 'react-native-paper';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
+import { getErrorMessage } from '../utils/error';
 
 type LoginForm = { email: string; password: string };
 
@@ -17,8 +18,10 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (route: st
     try {
       const res = await authService.login(values);
       await setSession(res.accessToken, res.refreshToken, res.user);
-    } catch {
-      toast('Login failed');
+    } catch (error) {
+      const message = getErrorMessage(error, 'Login failed');
+      console.log('[auth] login failed:', message, error);
+      toast(message);
     }
   });
 

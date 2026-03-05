@@ -1,5 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { Response } from 'express';
@@ -13,6 +14,8 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -20,45 +23,68 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensDto> {
-    const passwordHash = await hash(dto.password, 10);
+    const email = dto.email.toLowerCase();
+    this.logger.log(`Register attempt email=${email}`);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email.toLowerCase(),
-        passwordHash,
-        name: dto.name,
-      },
-    });
+    try {
+      const passwordHash = await hash(dto.password, 10);
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          name: dto.name,
+        },
+      });
 
-    return this.issueTokens(user.id, user.email);
+      this.logger.log(`Register success userId=${user.id} email=${email}`);
+      return this.issueTokens(user.id, user.email);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        this.logger.warn(`Register duplicate email=${email}`);
+        throw new ConflictException('Email already registered');
+      }
+
+      this.logger.error(`Register failed email=${email}`, error instanceof Error ? error.stack : undefined);
+      throw new InternalServerErrorException('Registration failed');
+    }
   }
 
   async login(dto: LoginDto): Promise<AuthTokensDto> {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    const email = dto.email.toLowerCase();
+    this.logger.log(`Login attempt email=${email}`);
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
+      this.logger.warn(`Login failed user-not-found email=${email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const valid = await compare(dto.password, user.passwordHash);
     if (!valid) {
+      this.logger.warn(`Login failed invalid-password userId=${user.id}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    this.logger.log(`Login success userId=${user.id} email=${email}`);
     return this.issueTokens(user.id, user.email);
   }
 
   async googleLogin(dto: GoogleLoginDto): Promise<AuthTokensDto> {
+    const email = dto.email.toLowerCase();
+    this.logger.log(`Google login attempt email=${email}`);
+
     const user =
-      (await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } })) ??
+      (await this.prisma.user.findUnique({ where: { email } })) ??
       (await this.prisma.user.create({
         data: {
-          email: dto.email.toLowerCase(),
+          email,
           name: dto.name,
           avatarUrl: dto.avatarUrl,
           passwordHash: await hash(randomUUID(), 10),
         },
       }));
 
+    this.logger.log(`Google login success userId=${user.id} email=${email}`);
     return this.issueTokens(user.id, user.email);
   }
 
@@ -81,6 +107,7 @@ export class AuthService {
     ).catch(() => null);
 
     if (!matched) {
+      this.logger.warn(`Refresh failed userId=${payload.sub}`);
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -89,6 +116,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
+    this.logger.log(`Refresh success userId=${payload.sub}`);
     return this.issueTokens(payload.sub, payload.email);
   }
 
