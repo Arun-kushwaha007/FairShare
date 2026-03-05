@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { GroupDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { GroupDto, GroupMemberSummaryDto, GroupSummaryDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -130,6 +130,70 @@ export class GroupsService {
       avatarUrl: member.user.avatarUrl,
       role: member.role,
     }));
+  }
+
+  async summary(groupId: string, actorUserId: string): Promise<GroupSummaryDto> {
+    await this.assertMembership(groupId, actorUserId);
+
+    const cached = await this.redis.getGroupSummaryCache(groupId);
+    if (cached) {
+      return JSON.parse(cached) as GroupSummaryDto;
+    }
+
+    const [expenses, settlements, balances] = await Promise.all([
+      this.prisma.expense.findMany({
+        where: { groupId },
+        orderBy: { createdAt: 'desc' },
+        select: { totalAmountCents: true, payerId: true, createdAt: true },
+      }),
+      this.prisma.settlement.findMany({
+        where: { groupId },
+        select: { amountCents: true },
+      }),
+      this.prisma.balance.findMany({
+        where: { groupId },
+        select: { userId: true, amountCents: true },
+      }),
+    ]);
+
+    const perUserSpent: Record<string, bigint> = {};
+    const perUserOwed: Record<string, bigint> = {};
+
+    let totalExpenses = 0n;
+    let largestExpense: bigint | null = null;
+    expenses.forEach((expense) => {
+      totalExpenses += expense.totalAmountCents;
+      perUserSpent[expense.payerId] = (perUserSpent[expense.payerId] ?? 0n) + expense.totalAmountCents;
+      if (largestExpense === null || expense.totalAmountCents > largestExpense) {
+        largestExpense = expense.totalAmountCents;
+      }
+    });
+
+    let totalSettled = 0n;
+    settlements.forEach((settlement) => {
+      totalSettled += settlement.amountCents;
+    });
+
+    balances.forEach((balance) => {
+      if (balance.amountCents < 0n) {
+        perUserOwed[balance.userId] = (perUserOwed[balance.userId] ?? 0n) + balance.amountCents * -1n;
+      }
+    });
+
+    const topSpenderEntry = Object.entries(perUserSpent).sort((a, b) => Number(b[1] - a[1]))[0];
+
+    const response: GroupSummaryDto = {
+      totalExpensesCents: totalExpenses.toString(),
+      totalSettledCents: totalSettled.toString(),
+      perUserSpentCents: Object.fromEntries(Object.entries(perUserSpent).map(([k, v]) => [k, v.toString()])),
+      perUserOwedCents: Object.fromEntries(Object.entries(perUserOwed).map(([k, v]) => [k, v.toString()])),
+      largestExpenseCents: largestExpense !== null ? String(largestExpense) : null,
+      lastExpenseCents: expenses.length > 0 ? expenses[0].totalAmountCents.toString() : null,
+      topSpenderUserId: topSpenderEntry?.[0] ?? null,
+    };
+
+    await this.redis.setGroupSummaryCache(groupId, JSON.stringify(response), 120);
+    return response;
   }
 
   async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {

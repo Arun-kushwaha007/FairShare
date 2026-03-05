@@ -56,6 +56,16 @@ export interface GroupMemberSummaryDto {
   role: 'OWNER' | 'MEMBER';
 }
 
+export interface GroupSummaryDto {
+  totalExpensesCents: string;
+  totalSettledCents: string;
+  perUserSpentCents: Record<string, string>;
+  perUserOwedCents: Record<string, string>;
+  largestExpenseCents: string | null;
+  lastExpenseCents: string | null;
+  topSpenderUserId: string | null;
+}
+
 export interface GroupDto {
   id: string;
   name: string;

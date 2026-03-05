@@ -29,7 +29,20 @@ export class RedisService {
     await this.redis.set(`group:${groupId}:expense_summary`, payload, 'EX', ttlSeconds);
   }
 
+  async getGroupSummaryCache(groupId: string): Promise<string | null> {
+    return this.redis.get(`group:${groupId}:summary`);
+  }
+
+  async setGroupSummaryCache(groupId: string, payload: string, ttlSeconds = 120): Promise<void> {
+    await this.redis.set(`group:${groupId}:summary`, payload, 'EX', ttlSeconds);
+  }
+
   async invalidateGroupCache(groupId: string): Promise<void> {
-    await this.redis.del(`group:${groupId}:balances`, `group:${groupId}:members`, `group:${groupId}:expense_summary`);
+    await this.redis.del(
+      `group:${groupId}:balances`,
+      `group:${groupId}:members`,
+      `group:${groupId}:expense_summary`,
+      `group:${groupId}:summary`,
+    );
   }
 }

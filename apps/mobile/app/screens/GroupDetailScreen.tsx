@@ -24,6 +24,11 @@ export function GroupDetailScreen({
   const [loading, setLoading] = React.useState(true);
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
+  const [summary, setSummary] = React.useState<{
+    totalExpensesCents: string;
+    topSpenderUserId: string | null;
+    perUserOwedCents: Record<string, string>;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ExpenseDto | null>(null);
   const expenses = useExpenseStore((state) => state.expensesByGroup[route.params.groupId] ?? []);
   const setExpenses = useExpenseStore((state) => state.setExpenses);
@@ -37,9 +42,15 @@ export function GroupDetailScreen({
         groupService.balances(route.params.groupId),
         groupService.members(route.params.groupId),
       ]);
+      const summaryData = await groupService.summary(route.params.groupId);
       setExpenses(route.params.groupId, expenseData.items);
       setBalances(balanceData);
       setMembers(memberData);
+      setSummary({
+        totalExpensesCents: summaryData.totalExpensesCents,
+        topSpenderUserId: summaryData.topSpenderUserId,
+        perUserOwedCents: summaryData.perUserOwedCents,
+      });
     } catch {
       toast('Failed to load group details');
     } finally {
@@ -171,6 +182,16 @@ export function GroupDetailScreen({
         <Text variant="headlineSmall" style={{ marginBottom: spacing.sm }}>
           Group Detail
         </Text>
+        {summary ? (
+          <View style={{ padding: spacing.sm, borderRadius: 10, backgroundColor: '#EEF2FF', marginBottom: spacing.md }}>
+            <Text>Total Spending: ${(Number(summary.totalExpensesCents) / 100).toFixed(2)}</Text>
+            <Text>Top Spender: {summary.topSpenderUserId ?? 'N/A'}</Text>
+            <Text>
+              Your Balance: $
+              {currentUserId ? (Number(summary.perUserOwedCents[currentUserId] ?? '0') / 100).toFixed(2) : '0.00'}
+            </Text>
+          </View>
+        ) : null}
 
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
           {members.slice(0, 6).map((member) => (
