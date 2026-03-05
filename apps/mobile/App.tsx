@@ -7,17 +7,21 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import * as Sentry from 'sentry-expo';
 import { AppNavigator } from './app/navigation/AppNavigator';
 import { appTheme } from './app/theme/theme';
 import { useAuthStore } from './app/store/authStore';
 import { userService } from './app/services/user.service';
 
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  enableInExpoDevelopment: true,
-  debug: false,
-});
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (sentryDsn) {
+  Sentry.init({
+    dsn: sentryDsn,
+    enableInExpoDevelopment: true,
+    debug: false,
+  });
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -32,29 +36,38 @@ export default function App() {
 
   React.useEffect(() => {
     const register = async () => {
-      if (!accessToken) {
-        return;
+      try {
+        if (!accessToken) {
+          return;
+        }
+
+        const permission = await Notifications.getPermissionsAsync();
+        let status = permission.status;
+
+        if (status !== 'granted') {
+          const requested = await Notifications.requestPermissionsAsync();
+          status = requested.status;
+        }
+
+        if (status !== 'granted') {
+          return;
+        }
+
+        const projectId = Constants.easConfig?.projectId;
+        if (!projectId) {
+          return;
+        }
+
+        const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+        const deviceType = (Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'web') as
+          | 'ios'
+          | 'android'
+          | 'web';
+
+        await userService.registerPushToken(token, deviceType);
+      } catch (error) {
+        console.warn('Push token registration skipped:', error);
       }
-
-      const permission = await Notifications.getPermissionsAsync();
-      let status = permission.status;
-
-      if (status !== 'granted') {
-        const requested = await Notifications.requestPermissionsAsync();
-        status = requested.status;
-      }
-
-      if (status !== 'granted') {
-        return;
-      }
-
-      const token = (await Notifications.getExpoPushTokenAsync()).data;
-      const deviceType = (Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'web') as
-        | 'ios'
-        | 'android'
-        | 'web';
-
-      await userService.registerPushToken(token, deviceType);
     };
 
     void register();

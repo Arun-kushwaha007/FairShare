@@ -17,6 +17,7 @@
                          "@react-navigation/native-stack":  "^7.14.2",
                          "axios":  "^1.8.2",
                          "expo":  "^54.0.33",
+                         "expo-constants":  "~18.0.10",
                          "expo-haptics":  "~14.0.1",
                          "expo-linear-gradient":  "~14.1.5",
                          "expo-secure-store":  "^15.0.8",

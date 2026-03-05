@@ -159,6 +159,9 @@ importers:
       expo:
         specifier: ^54.0.33
         version: 54.0.33(@babel/core@7.29.0)(react-native@0.81.4)(react@19.1.0)
+      expo-constants:
+        specifier: ~18.0.10
+        version: 18.0.13(expo@54.0.33)(react-native@0.81.4)
       expo-haptics:
         specifier: ~14.0.1
         version: 14.0.1(expo@54.0.33)
