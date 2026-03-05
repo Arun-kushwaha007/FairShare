@@ -10,10 +10,12 @@
                     "dev:web":  "pnpm --filter web dev",
                     "lint":  "turbo run lint",
                     "test":  "turbo run test",
+                    "e2e":  "playwright test",
                     "format":  "prettier --write .",
                     "seed":  "pnpm --filter backend seed"
                 },
     "devDependencies":  {
+                            "@playwright/test":  "^1.55.1",
                             "prettier":  "^3.6.2",
                             "turbo":  "^2.5.0",
                             "typescript":  "^5.7.3"
