@@ -113,9 +113,10 @@ export class ExpensesService {
       (member) => member.userId,
     );
     await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
+      type: 'expense_created',
       title: 'New expense added',
       body: dto.description,
-      data: { groupId, expenseId: expense.id },
+      data: { groupId, expenseId: expense.id, notificationType: 'expense_created' },
     });
 
     return this.toExpenseDto(expense);
@@ -204,6 +205,16 @@ export class ExpensesService {
     });
 
     await this.redis.invalidateGroupCache(expense.groupId);
+
+    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId: expense.groupId }, select: { userId: true } })).map(
+      (member) => member.userId,
+    );
+    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
+      type: 'expense_deleted',
+      title: 'Expense deleted',
+      body: expense.description,
+      data: { groupId: expense.groupId, expenseId: expense.id, notificationType: 'expense_deleted' },
+    });
 
     return { success: true };
   }

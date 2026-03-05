@@ -84,12 +84,14 @@ export class SettlementsService {
     await this.redis.invalidateGroupCache(groupId);
 
     await this.notificationsService.sendPushNotification([dto.receiverId], {
+      type: 'settlement_created',
       title: 'Settlement recorded',
       body: `${dto.payerId} settled with you`,
       data: {
         groupId,
         settlementId: settlement.id,
         amountCents: dto.amountCents,
+        notificationType: 'settlement_created',
       },
     });
 

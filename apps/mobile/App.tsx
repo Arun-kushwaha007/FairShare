@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import * as Sentry from 'sentry-expo';
 import { AppNavigator } from './app/navigation/AppNavigator';
+import { navigationRef } from './app/navigation/navigationRef';
 import { appTheme } from './app/theme/theme';
 import { useAuthStore } from './app/store/authStore';
 import { userService } from './app/services/user.service';
@@ -73,12 +74,39 @@ export default function App() {
     void register();
   }, [accessToken]);
 
+  React.useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as {
+        notificationType?: string;
+        expenseId?: string;
+        groupId?: string;
+      };
+
+      if (!navigationRef.isReady()) {
+        return;
+      }
+
+      if ((data.notificationType === 'expense_created' || data.notificationType === 'expense_deleted') && data.expenseId) {
+        navigationRef.navigate('ExpenseDetail', { expenseId: String(data.expenseId) });
+        return;
+      }
+
+      if ((data.notificationType === 'settlement_created' || data.notificationType === 'group_invite') && data.groupId) {
+        navigationRef.navigate('GroupDetail', { groupId: String(data.groupId) });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <PaperProvider theme={appTheme}>
           <StatusBar style="dark" />
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <AppNavigator />
           </NavigationContainer>
         </PaperProvider>

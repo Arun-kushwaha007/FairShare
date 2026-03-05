@@ -175,9 +175,10 @@ export class GroupsService {
     });
 
     await this.notificationsService.sendPushNotification([user.id], {
+      type: 'group_invite',
       title: 'You were invited',
       body: 'You have been added to a FairShare group.',
-      data: { groupId },
+      data: { groupId, notificationType: 'group_invite' },
     });
 
     await this.redis.invalidateGroupCache(groupId);
