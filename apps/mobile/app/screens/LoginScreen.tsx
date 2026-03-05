@@ -15,6 +15,11 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (route: st
   const toast = useToastStore((state) => state.show);
 
   const onSubmit = handleSubmit(async (values) => {
+    if (values.password.length < 8) {
+      toast('Password must be at least 8 characters');
+      return;
+    }
+
     try {
       const res = await authService.login(values);
       await setSession(res.accessToken, res.refreshToken, res.user);
