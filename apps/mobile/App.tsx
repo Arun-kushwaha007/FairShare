@@ -16,6 +16,7 @@ import { useAuthStore } from './app/store/authStore';
 import { userService } from './app/services/user.service';
 import { apiBaseUrl } from './app/services/api';
 import { realtimeService } from './app/services/realtime.service';
+import { offlineQueue } from './app/utils/offlineQueue';
 
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
 if (sentryDsn) {
@@ -36,6 +37,10 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   const accessToken = useAuthStore((state) => state.accessToken);
+
+  React.useEffect(() => {
+    void offlineQueue.start();
+  }, []);
 
   React.useEffect(() => {
     if (!accessToken) {

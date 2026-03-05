@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import * as Sentry from 'sentry-expo';
 import { ApiError } from '../types/api-error';
+import { offlineQueue } from '../utils/offlineQueue';
 
 type ExpoConstantsDevHostShape = {
   manifest2?: {
@@ -72,11 +73,41 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    const method = String(error?.config?.method ?? '').toUpperCase();
+    const url = String(error?.config?.url ?? '');
+    const retryMarked = error?.config?.headers?.['x-offline-retry'] === '1';
+    const shouldQueue =
+      !retryMarked &&
+      method === 'POST' &&
+      (url.includes('/groups/') && url.includes('/expenses') ||
+        url.includes('/settlements') ||
+        url.includes('/invite')) &&
+      !error?.response;
+
+    if (shouldQueue) {
+      let data: unknown = error?.config?.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          // Keep as-is if parsing fails.
+        }
+      }
+
+      void offlineQueue.enqueue({
+        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        method: 'POST',
+        url,
+        data,
+      });
+    }
+
     const wrapped: ApiError = {
       code: String(error?.response?.status ?? 'NETWORK_ERROR'),
       message:
         (error?.response?.data?.message as string | undefined) ??
-        (typeof error?.message === 'string' ? error.message : 'Request failed'),
+        (typeof error?.message === 'string' ? error.message : 'Request failed') +
+          (shouldQueue ? ' (queued for retry)' : ''),
       context: {
         status: error?.response?.status,
         url: error?.config?.url,
