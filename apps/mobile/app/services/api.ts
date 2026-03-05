@@ -24,7 +24,7 @@ function resolveApiBaseUrl(): string {
   const hostUri = constants.manifest2?.extra?.expoClient?.hostUri ?? constants.manifest?.debuggerHost;
   const host = hostUri?.split(':')[0];
 
-  if (host) {
+  if (host && !host.endsWith('.exp.direct')) {
     return `http://${host}:3001/api/v1`;
   }
 
@@ -41,6 +41,11 @@ export const api = axios.create({
 if (__DEV__) {
   // Helps debug real-device failures where localhost is unreachable.
   console.log('[api] baseURL:', baseURL);
+  if (!process.env.EXPO_PUBLIC_API_URL && baseURL.includes('localhost')) {
+    console.log(
+      '[api] Set EXPO_PUBLIC_API_URL in apps/mobile/.env to your PC LAN IP, e.g. http://192.168.1.10:3001/api/v1',
+    );
+  }
 }
 
 api.interceptors.request.use(async (config) => {
