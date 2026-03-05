@@ -5,6 +5,7 @@ import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RealtimeService } from '../realtime/realtime.service';
 import { CreateSettlementDto } from './dto/create-settlement.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class SettlementsService {
     private readonly balancesService: BalancesService,
     private readonly redis: RedisService,
     private readonly notificationsService: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateSettlementDto): Promise<SettlementDto> {
@@ -93,6 +95,13 @@ export class SettlementsService {
         amountCents: dto.amountCents,
         notificationType: 'settlement_created',
       },
+    });
+    this.realtime.emitToGroup(groupId, 'settlement_created', {
+      groupId,
+      settlementId: settlement.id,
+      payerId: dto.payerId,
+      receiverId: dto.receiverId,
+      amountCents: dto.amountCents,
     });
 
     return {

@@ -13,8 +13,9 @@ describe('ExpensesService', () => {
     const redis: any = { invalidateGroupCache: jest.fn() };
     const activityService: any = { log: jest.fn() };
     const notificationsService: any = { sendPushNotification: jest.fn() };
+    const realtime: any = { emitToGroup: jest.fn() };
 
-    const service = new ExpensesService(prisma, balancesService, redis, activityService, notificationsService);
+    const service = new ExpensesService(prisma, balancesService, redis, activityService, notificationsService, realtime);
 
     await expect(
       service.create('g1', 'u1', {

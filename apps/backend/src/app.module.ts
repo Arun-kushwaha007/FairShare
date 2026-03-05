@@ -16,6 +16,7 @@ import { PrismaModule } from './common/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { S3Module } from './s3/s3.module';
 import { ActivityModule } from './activity/activity.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ActivityModule } from './activity/activity.module';
     PrismaModule,
     RedisModule,
     S3Module,
+    RealtimeModule,
     ActivityModule,
     AuthModule,
     UsersModule,

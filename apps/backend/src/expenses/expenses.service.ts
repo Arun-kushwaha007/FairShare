@@ -7,6 +7,7 @@ import { RedisService } from '../redis/redis.service';
 import { ActivityService } from '../activity/activity.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { assertMoneyEquality, sumMoney } from '../common/utils/money.util';
+import { RealtimeService } from '../realtime/realtime.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { calculateBalanceDeltas } from './expense-calculator';
@@ -19,6 +20,7 @@ export class ExpensesService {
     private readonly redis: RedisService,
     private readonly activityService: ActivityService,
     private readonly notificationsService: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
@@ -118,6 +120,12 @@ export class ExpensesService {
       body: dto.description,
       data: { groupId, expenseId: expense.id, notificationType: 'expense_created' },
     });
+    this.realtime.emitToGroup(groupId, 'expense_created', {
+      groupId,
+      expenseId: expense.id,
+      payerId: expense.payerId,
+      totalAmountCents: expense.totalAmountCents.toString(),
+    });
 
     return this.toExpenseDto(expense);
   }
@@ -214,6 +222,10 @@ export class ExpensesService {
       title: 'Expense deleted',
       body: expense.description,
       data: { groupId: expense.groupId, expenseId: expense.id, notificationType: 'expense_deleted' },
+    });
+    this.realtime.emitToGroup(expense.groupId, 'expense_deleted', {
+      groupId: expense.groupId,
+      expenseId: expense.id,
     });
 
     return { success: true };

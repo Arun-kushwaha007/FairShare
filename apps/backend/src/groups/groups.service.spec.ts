@@ -22,12 +22,13 @@ describe('GroupsService', () => {
   const notificationsService = {
     sendPushNotification: jest.fn(),
   } as any;
+  const realtime = { emitToGroup: jest.fn() } as any;
 
   let service: GroupsService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new GroupsService(prisma, redis, notificationsService);
+    service = new GroupsService(prisma, redis, notificationsService, realtime);
   });
 
   it('lists group members for a valid group member', async () => {
@@ -99,6 +100,11 @@ describe('GroupsService', () => {
       expect.objectContaining({ type: 'group_invite', data: { groupId: 'g1', notificationType: 'group_invite' } }),
     );
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
+    expect(realtime.emitToGroup).toHaveBeenCalledWith(
+      'g1',
+      'group_member_joined',
+      expect.objectContaining({ userId: 'u2' }),
+    );
   });
 
   it('prevents duplicate invites', async () => {

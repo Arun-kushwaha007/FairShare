@@ -33,7 +33,8 @@ describe('Settlement Flow (integration-ish)', () => {
     const balancesService: any = { adjustBalance: jest.fn().mockResolvedValue(undefined) };
     const redis: any = { invalidateGroupCache: jest.fn().mockResolvedValue(undefined) };
     const notificationsService: any = { sendPushNotification: jest.fn().mockResolvedValue(undefined) };
-    const service = new SettlementsService(prisma, balancesService, redis, notificationsService);
+    const realtime: any = { emitToGroup: jest.fn() };
+    const service = new SettlementsService(prisma, balancesService, redis, notificationsService, realtime);
 
     await service.create('g1', 'u2', { payerId: 'u2', receiverId: 'u1', amountCents: '500' });
 
@@ -43,6 +44,7 @@ describe('Settlement Flow (integration-ish)', () => {
     expect(tx.activity.create).toHaveBeenCalled();
     expect(balancesService.adjustBalance).toHaveBeenCalledTimes(2);
     expect(redis.invalidateGroupCache).toHaveBeenCalledWith('g1');
+    expect(realtime.emitToGroup).toHaveBeenCalledWith('g1', 'settlement_created', expect.any(Object));
   });
 });
 

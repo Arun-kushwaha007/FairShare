@@ -46,7 +46,8 @@ describe('Create Expense Flow (integration-ish)', () => {
 
     const activityService: any = { log: jest.fn().mockResolvedValue(undefined) };
     const notificationsService: any = { sendPushNotification: jest.fn().mockResolvedValue(undefined) };
-    const service = new ExpensesService(prisma, balancesService, redis, activityService, notificationsService);
+    const realtime: any = { emitToGroup: jest.fn() };
+    const service = new ExpensesService(prisma, balancesService, redis, activityService, notificationsService, realtime);
 
     await service.create('g1', 'u1', {
       payerId: 'u1',
@@ -72,6 +73,7 @@ describe('Create Expense Flow (integration-ish)', () => {
         type: 'expense_created',
       }),
     );
+    expect(realtime.emitToGroup).toHaveBeenCalledWith('g1', 'expense_created', expect.any(Object));
   });
 });
 

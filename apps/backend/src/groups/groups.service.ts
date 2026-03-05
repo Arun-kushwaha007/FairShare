@@ -3,6 +3,7 @@ import { GroupDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RealtimeService } from '../realtime/realtime.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 
@@ -12,6 +13,7 @@ export class GroupsService {
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly notificationsService: NotificationsService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async create(userId: string, dto: CreateGroupDto): Promise<GroupDto> {
@@ -182,6 +184,11 @@ export class GroupsService {
     });
 
     await this.redis.invalidateGroupCache(groupId);
+    this.realtime.emitToGroup(groupId, 'group_member_joined', {
+      groupId,
+      userId: user.id,
+      email: user.email,
+    });
 
     return { success: true };
   }

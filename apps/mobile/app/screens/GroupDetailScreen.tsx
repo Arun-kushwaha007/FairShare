@@ -5,6 +5,7 @@ import { FAB, Button, Text } from 'react-native-paper';
 import type { ExpenseDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
+import { realtimeService } from '../services/realtime.service';
 import { useExpenseStore } from '../store/expenseStore';
 import { useToastStore } from '../store/toastStore';
 import { useAuthStore } from '../store/authStore';
@@ -49,6 +50,17 @@ export function GroupDetailScreen({
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  React.useEffect(() => {
+    const groupId = route.params.groupId;
+    realtimeService.joinGroup(groupId);
+    const unsubscribe = realtimeService.subscribeGroupRefresh(groupId);
+
+    return () => {
+      unsubscribe();
+      realtimeService.leaveGroup(groupId);
+    };
+  }, [route.params.groupId]);
 
   const memberById = React.useMemo(() => {
     const map = new Map<string, GroupMemberSummaryDto>();
@@ -123,7 +135,7 @@ export function GroupDetailScreen({
             <View style={{ flex: 1 }}>
               <Text>{expense.description}</Text>
               <Text>
-                {payer?.name ?? expense.payerId} • {participantCount} participants •{' '}
+                {payer?.name ?? expense.payerId} â€¢ {participantCount} participants â€¢{' '}
                 {new Date(expense.createdAt).toLocaleDateString()}
               </Text>
             </View>
@@ -223,4 +235,3 @@ export function GroupDetailScreen({
     </>
   );
 }
-

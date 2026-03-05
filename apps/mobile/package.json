@@ -34,6 +34,7 @@
                          "react-native-web":  "^0.21.1",
                          "react-native-safe-area-context":  "^5.6.2",
                          "react-native-screens":  "^4.16.0",
+                         "socket.io-client":  "^4.8.1",
                          "zustand":  "^5.0.3",
                          "expo-notifications":  "~0.29.14",
                          "expo-image":  "~2.4.0",
