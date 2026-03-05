@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import Redis from 'ioredis';
 import { AppConfigService } from '../config/app-config.service';
+import { PrismaService } from '../common/prisma.service';
 
 export type NotificationType = 'expense_created' | 'expense_deleted' | 'settlement_created' | 'group_invite';
 
@@ -17,10 +19,15 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   private readonly channel = 'fairshare:notifications';
   private readonly publisher: Redis;
   private readonly subscriber: Redis;
+  private readonly expo: Expo;
 
-  constructor(config: AppConfigService) {
+  constructor(
+    config: AppConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     this.publisher = new Redis(config.redisUrl);
     this.subscriber = new Redis(config.redisUrl);
+    this.expo = new Expo();
   }
 
   async onModuleInit(): Promise<void> {
@@ -65,5 +72,56 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         payload: event,
       }),
     );
+
+    await this.deliverExpoNotifications(userIds, payload);
+  }
+
+  private async deliverExpoNotifications(userIds: string[], payload: NotificationEventPayload): Promise<void> {
+    const rows = await this.prisma.pushToken.findMany({
+      where: { userId: { in: userIds } },
+      select: { token: true },
+    });
+
+    const validTokens = rows
+      .map((row) => row.token)
+      .filter((token) => Expo.isExpoPushToken(token));
+
+    if (validTokens.length === 0) {
+      return;
+    }
+
+    const messages: ExpoPushMessage[] = validTokens.map((to) => ({
+      to,
+      sound: 'default',
+      title: payload.title,
+      body: payload.body,
+      data: {
+        notificationType: payload.type,
+        ...payload.data,
+      },
+    }));
+
+    const chunks = this.expo.chunkPushNotifications(messages);
+    for (const chunk of chunks) {
+      await this.sendChunkWithRetry(chunk, 1);
+    }
+  }
+
+  private async sendChunkWithRetry(chunk: ExpoPushMessage[], retries: number): Promise<void> {
+    try {
+      const tickets = await this.expo.sendPushNotificationsAsync(chunk);
+      this.logger.log(
+        JSON.stringify({
+          event: 'notification_push_sent',
+          ticketCount: tickets.length,
+        }),
+      );
+    } catch (error) {
+      this.logger.error('Expo push send failed', error instanceof Error ? error.stack : undefined);
+      if (retries > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await this.sendChunkWithRetry(chunk, retries - 1);
+      }
+    }
   }
 }
