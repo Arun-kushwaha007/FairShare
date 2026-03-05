@@ -1,110 +1,75 @@
-# FairShare Beta Documentation
+# FairShare - Current Project Documentation
 
-## 1. Project Overview
-FairShare is a pnpm + Turborepo monorepo for shared-expense management with:
+## 1) Project Snapshot
+FairShare is a pnpm + Turborepo monorepo.
+
 - Mobile: Expo React Native (TypeScript strict)
 - Backend: NestJS (TypeScript strict)
-- Web: Next.js (marketing + auth entry pages)
-- Database: PostgreSQL (Supabase-compatible) via Prisma
+- Web: Next.js
+- DB: PostgreSQL (Supabase) via Prisma
 - Cache: Redis
 - Storage: AWS S3 (presigned upload URLs)
-- Monitoring: Sentry (backend + mobile)
 
-Core architecture guarantees:
-- Shared DTO contracts from `packages/shared-types`
-- All money persisted as `BigInt` cents in DB
-- Backend-only balance computation
-- Transactional writes for critical financial flows
+Current state:
+- Auth flow is connected end-to-end with Supabase.
+- Register/Login works.
+- Group listing works after auth.
+- Core backend modules and routes are running.
 
----
-
-## 2. Monorepo Layout
+## 2) Monorepo Structure
 - `apps/backend`
 - `apps/mobile`
 - `apps/web`
 - `packages/shared-types`
 - `infra/terraform`
-- `.github/workflows`
 - `scripts`
+- `.github/workflows`
 
 Key root files:
 - `pnpm-workspace.yaml`
 - `turbo.json`
-- `tsconfig.base.json`
+- `.env.example`
 - `doc.md`
 
----
+## 3) Shared Contracts (`packages/shared-types`)
+Single source of DTO truth for backend + mobile.
 
-## 3. Shared Types (`packages/shared-types`)
-Centralized contracts used by backend and mobile:
-- Auth DTOs
-- Group and membership DTOs
-- Expense and split DTOs
-- Paginated expense response DTO (`items`, `nextCursor`)
-- Balance DTOs
-- Settlement DTOs
-- Receipt URL DTOs
-- Activity DTOs + activity type union
-- Push token registration DTO
+Includes:
+- Auth DTOs (`RegisterRequestDto`, `LoginRequestDto`, `AuthTokensDto`)
+- Group DTOs
+- Expense + split DTOs
+- Balance + settlement DTOs
+- Activity DTOs
+- Receipt upload DTOs
+- Push token DTOs
 
-No DTO duplication across apps.
+Rule followed:
+- DTOs are not duplicated in app code.
 
----
+## 4) Backend Status
 
-## 4. Backend (NestJS)
+### Runtime and Security
+- Global prefix: `/api/v1`
+- Global validation pipe: enabled (`whitelist`, `forbidNonWhitelisted`, `transform`)
+- CORS: env-driven
+- Helmet: enabled
+- Compression + cookie-parser: enabled
+- Throttling: enabled (`100 req / minute / IP`)
 
-### 4.1 Core Runtime
-- Global API prefix: `/api/v1`
-- Global validation pipe enabled
-- CORS configured from env
-- Helmet enabled
-- Compression + cookie-parser enabled
-- Throttling enabled globally via `@nestjs/throttler`
-  - Limit: 100 requests / 60 seconds / IP
+### Auth
+Implemented and working:
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/google`
+- `POST /api/v1/auth/refresh`
 
-### 4.2 Security
-- JWT auth with access + refresh tokens
-- Refresh token rotation persisted in DB (`refresh_tokens`)
-- Refresh cookie set with:
-  - `httpOnly: true`
-  - `secure` in production
-  - `sameSite: 'lax'`
-  - path-scoped to auth refresh route
-- Rate limiting guard active globally
+Behavior:
+- Access token + refresh token returned
+- Refresh token hashed in DB
+- Refresh cookie set (httpOnly, path-scoped)
+- Duplicate email returns conflict handling
 
-### 4.3 Observability
-- Backend Sentry integration via `@sentry/node`
-- Captures:
-  - unhandled rejections
-  - uncaught exceptions
-
-### 4.4 Prisma Schema (beta)
-Models:
-- `User`
-- `Group`
-- `GroupMember`
-- `Expense`
-- `Split`
-- `Balance`
-- `Settlement`
-- `Receipt`
-- `RefreshToken`
-- `Activity`
-- `PushToken`
-
-Important indexes:
-- `GroupMember.groupId`
-- `GroupMember.userId`
-- `Expense.groupId`
-- `Expense.createdAt`
-- `Expense(groupId, createdAt)` composite
-- `Split.expenseId`
-- `Balance.groupId`
-- `Balance.userId`
-- `Settlement.groupId`
-
-### 4.5 Modules and Features
-Implemented modules:
+### API Modules Implemented
 - `auth`
 - `users`
 - `groups`
@@ -117,158 +82,57 @@ Implemented modules:
 - `notifications`
 - `redis`
 - `s3`
-- `common`
 
-#### Auth endpoints
+### Route Coverage
+Auth:
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/google`
 - `POST /api/v1/auth/refresh`
 
-#### Groups endpoints
+Users:
+- `GET /api/v1/users/me`
+- `POST /api/v1/users/push-token`
+
+Groups:
 - `POST /api/v1/groups`
 - `GET /api/v1/groups`
 - `GET /api/v1/groups/:id`
 - `POST /api/v1/groups/:id/invite`
 
-#### Expenses endpoints
+Expenses:
 - `POST /api/v1/groups/:id/expenses`
-- `GET /api/v1/groups/:id/expenses?page=1&limit=20`
+- `GET /api/v1/groups/:id/expenses`
 - `GET /api/v1/expenses/:id`
 - `PATCH /api/v1/expenses/:id`
 - `DELETE /api/v1/expenses/:id`
 
-#### Balances endpoint
+Balances:
 - `GET /api/v1/groups/:id/balances`
 
-#### Settlements endpoint
+Settlements:
 - `POST /api/v1/groups/:id/settlements`
 
-#### Receipts endpoint
+Simplify:
+- `GET /api/v1/groups/:id/simplify`
+
+Receipts:
 - `POST /api/v1/expenses/:id/receipt-url`
 
-#### Activity endpoint
+Activity:
 - `GET /api/v1/groups/:id/activity`
-  - returns latest 50 events sorted by `createdAt DESC`
 
-#### Users endpoint
-- `POST /api/v1/users/push-token`
+### Prisma/Supabase
+- Prisma datasource uses `SUPABASE_DATABASE_URL`
+- DB connection logging added
+- Schema pushed to Supabase and now in sync
 
-### 4.6 Financial Integrity Rules
-Expense creation safety checks:
-- total amount must be positive
-- split sum must exactly equal `totalAmountCents`
-- actor must be group member
-- payer must be group member
-- all split users must be group members
+Important tables in use:
+- `users`, `groups`, `group_members`, `expenses`, `splits`, `balances`, `settlements`, `receipts`, `refresh_tokens`, `activities`, `push_tokens`
 
-Settlement safety checks:
-- amount must be positive
-- actor must be group member
-- payer/receiver must be group members
+## 5) Mobile App Status
 
-Invite safety checks:
-- actor membership required
-- duplicate invite/member creation blocked
-
-### 4.7 Transactional Flows
-Expense create transaction:
-1. insert expense
-2. insert split rows
-3. update balances
-4. insert activity event
-
-Settlement create transaction:
-1. insert settlement
-2. update balances
-3. insert activity event
-
-### 4.8 Balance Logic
-For payer A and owing user B:
-- `B -> A` negative amount
-- `A -> B` positive amount
-
-### 4.9 Simplification Algorithm
-`SimplifyService`:
-- fetch balances by group
-- compute net position per user
-- separate debtors/creditors
-- greedy matching for settlement suggestions
-
-### 4.10 Activity Feed Events
-Supported types:
-- `expense_created`
-- `expense_updated`
-- `expense_deleted`
-- `settlement_created`
-- `member_joined`
-- `member_invited`
-
-Logged inside group/expense/settlement flows.
-
-### 4.11 Notifications Infrastructure
-- `NotificationsService.sendPushNotification(userIds, payload)` abstraction
-- currently logs payload (stub for real push provider)
-- triggered for:
-  - new expense
-  - settlement
-  - group invite
-
-### 4.12 Redis Caching
-Cached keys (TTL 120s):
-- group balances
-- group members
-- group expense summary
-
-Invalidation on expense/settlement/invite mutations.
-
-### 4.13 S3 Receipts
-- Presigned upload URL generation
-- File key pattern:
-  - `receipts/{groupId}/{expenseId}/{uuid}.{ext}`
-
----
-
-## 5. Mobile (Expo)
-
-### 5.1 Stack
-- Expo SDK 54
-- React Navigation (stack + tabs)
-- Zustand stores
-- React Hook Form
-- Axios API layer
-- React Native Paper UI
-- Reanimated + Gesture Handler
-- Expo Haptics
-- Expo Notifications
-- Expo Image
-- Sentry Expo
-- Skeleton placeholder support
-
-### 5.2 Theme System
-`app/theme`:
-- `colors.ts`
-- `spacing.ts`
-- `typography.ts`
-- `theme.ts`
-
-Primary styles:
-- primary color `#4F46E5`
-- background `#F8FAFC`
-
-### 5.3 Reusable UI Components
-`app/components/ui` includes:
-- `Button`
-- `Card`
-- `Avatar`
-- `ListItem`
-- `MoneyText`
-- `EmptyState`
-- `LoadingSpinner`
-- `GlobalToast`
-- `SkeletonList`
-
-### 5.4 Navigation
+### Navigation
 Auth stack:
 - `LoginScreen`
 - `RegisterScreen`
@@ -279,126 +143,173 @@ Main tabs:
 - `Activity`
 - `Profile`
 
-Additional screens:
-- `GroupDetailScreen`
-- `AddExpenseScreen`
-- `ExpenseDetailScreen`
-- `SettleUpScreen`
-- `SettingsScreen`
+Extra stack screens:
+- `GroupDetail`
+- `AddExpense`
+- `ExpenseDetail`
+- `SettleUp`
+- `Settings`
 
-### 5.5 Mobile Services
-`app/services`:
-- `api.ts` (axios + auth header interceptor)
-- `auth.service.ts`
-- `group.service.ts`
-- `expense.service.ts`
-- `settlement.service.ts`
-- `user.service.ts` (push token registration)
+### Auth Screens (Current)
+Implemented improvements:
+- Form validation rules (email format, password min length, name min length)
+- Submit loading state
+- Duplicate tap protection via disabled submit while submitting
+- Toast errors visible in auth screens (GlobalToast mounted at app root)
+- Detailed auth debug logs on click/submit/success/failure
 
-### 5.6 State Stores
-- `authStore`
-- `groupStore`
-- `expenseStore`
-- `toastStore`
+### API Layer (Mobile)
+`app/services/api.ts`:
+- Axios instance with auth header interceptor
+- Auto base URL resolution for local dev
+- Rejects bad Expo tunnel host fallback for backend API
+- Dev logs for request/response/error
 
-### 5.7 UX Features
-- pull-to-refresh
-- loading states
-- empty states (groups/expenses/activity)
-- haptics
-- toasts
-- subtle reanimated effects
-- FAB on group detail (`plus-circle`)
-- infinite scroll on activity screen
-- receipt preview + full-screen modal image viewer
+`EXPO_PUBLIC_API_URL` recommended in `apps/mobile/.env`:
+- Example: `http://10.111.154.142:3001/api/v1`
 
-### 5.8 Push Registration
-On authenticated app usage:
-- request notification permissions
-- fetch Expo push token
-- post token to backend `/users/push-token`
+### Current Known Mobile Warning
+- Expo notifications warning in Expo Go is expected and non-blocking.
+- For full push behavior, use a development build later.
 
-### 5.9 Mobile Monitoring
-- `sentry-expo` initialized in `App.tsx`
+## 6) Screen Flows and Action Buttons
 
----
+### LoginScreen
+Buttons:
+- `Login` -> validates form -> calls `/auth/login` -> stores tokens -> enters app
+- `Create Account` -> navigates to Register screen
 
-## 6. Web (Next.js)
+Status:
+- Working
 
-### 6.1 Stack
-- Next.js App Router
-- Tailwind CSS
-- Framer Motion
+### RegisterScreen
+Buttons:
+- `Register` -> validates form -> calls `/auth/register` -> stores tokens -> enters app
+- `Back to Login` -> returns to Login
 
-### 6.2 Pages
-- `/` landing page with:
-  - hero
-  - screenshots section
-  - animated feature cards
-  - feature comparison table
-  - FAQ
-  - newsletter signup block
-  - footer CTA links
-- `/features`
-- `/pricing`
-- `/about`
-- `/login`
+Status:
+- Working
 
-### 6.3 SEO
-`app/layout.tsx` includes metadata:
-- title
-- description
-- keywords
-- Open Graph basics
+### HomeScreen
+Buttons:
+- `Open Groups` -> navigates to Groups tab
 
----
+Status:
+- Working
 
-## 7. CI/CD
-Workflow: `.github/workflows/ci.yml`
+### GroupListScreen
+Actions:
+- Pull-to-refresh -> reload groups
+- Group list item press -> open GroupDetail
+- FAB `plus` -> navigate to AddExpense
 
-Pipeline includes:
-1. checkout
-2. pnpm setup
-3. node setup (with pnpm cache)
-4. install dependencies
-5. prisma generate (backend)
-6. typecheck (via lint command)
-7. lint
-8. tests
-9. backend coverage run
-10. coverage artifact upload
-11. build backend/mobile/web
+Status:
+- Group fetch works
+- Create expense navigation works
 
----
+### GroupDetailScreen
+Buttons:
+- `Add Expense` -> AddExpense screen
+- `Settle Up` -> SettleUp screen
+- Expense item -> ExpenseDetail
+- FAB `plus-circle` -> AddExpense
 
-## 8. Developer Tooling
+Status:
+- Screen and navigation working
+- Uses skeleton loading + toasts
 
-### 8.1 Seed Script
-- Root command: `pnpm seed`
-- Backend command: `pnpm --filter backend seed`
-- Seed file: `apps/backend/prisma/seed.ts`
+### AddExpenseScreen
+Button:
+- `Create Expense` -> calls create expense API
 
-Seed creates:
-- 3 users
-- 2 groups
-- 10 expenses
-- baseline balances
-- activity rows
+Status:
+- Functional, but currently uses placeholder payer/split values (`me`) and should be wired to real user/member IDs for production behavior.
 
-### 8.2 Prisma Commands
-- `pnpm --filter backend prisma:generate`
-- `pnpm --filter backend prisma:migrate --name <migration_name>`
+### ExpenseDetailScreen
+Buttons/actions:
+- `Generate Receipt Upload URL` -> calls receipt endpoint
+- Receipt preview tap -> opens image modal
 
----
+Status:
+- Working for presigned URL creation and preview flow
+- S3 read URL requires valid `EXPO_PUBLIC_S3_BASE_URL`
 
-## 9. Environment Variables
-From `.env.example`:
+### SettleUpScreen
+Actions:
+- Loads simplify suggestions
+- Suggestion button press -> creates settlement
+
+Status:
+- Working flow
+
+### ActivityScreen
+Actions:
+- Pull-to-refresh
+- Infinite list paging (client-side window over fetched events)
+
+Status:
+- Working
+- If opened without `groupId`, shows empty state
+
+### ProfileScreen
+Buttons:
+- `Settings` -> settings screen
+- `Logout` -> clears session
+
+Status:
+- Working
+
+### SettingsScreen
+Status:
+- Basic placeholder content present
+
+## 7) Logging and Debug Purpose
+
+### Mobile Log Prefixes
+- `[auth-ui]`:
+  - Purpose: user interaction diagnostics on auth screens
+  - Examples: submit click, validation fail, request start, success, failure
+
+- `[auth]`:
+  - Purpose: payload-level auth service request tracing on mobile
+
+- `[api]`:
+  - Purpose: transport-level debugging
+  - Logs base URL, request method+path, response status, error body
+
+### Backend Log Prefixes
+- `AuthController`:
+  - Purpose: incoming auth route entry traces
+
+- `AuthService`:
+  - Purpose: auth business flow outcomes (attempt/success/failure)
+
+- `PrismaService`:
+  - Purpose: DB connectivity diagnostics (target host + connect state)
+
+## 8) Feature Status Matrix
+- Register API: `working`
+- Login API: `working`
+- Supabase connection: `working`
+- Refresh token flow: `implemented`
+- Groups list fetch: `working`
+- Activity endpoint + mobile list: `working`
+- Simplify endpoint + settle action: `working`
+- Receipt upload URL generation: `working`
+- Push token registration endpoint: `implemented`
+- Real push delivery provider: `stub/logging only`
+- Settings page: `basic placeholder`
+- AddExpense real member-aware split UX: `partial`
+
+## 9) Environment Variables
+Root `.env.example` includes:
 - `SUPABASE_DATABASE_URL`
 - `JWT_SECRET`
 - `JWT_REFRESH_SECRET`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `REDIS_URL`
+- `CORS_ORIGINS`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_REGION`
@@ -406,56 +317,36 @@ From `.env.example`:
 - `SENTRY_DSN`
 - `EXPO_PUBLIC_SENTRY_DSN`
 
----
+Mobile `apps/mobile/.env.example` includes:
+- `EXPO_PUBLIC_API_URL`
+- `EXPO_PUBLIC_SENTRY_DSN`
+- `EXPO_PUBLIC_S3_BASE_URL`
 
-## 10. Commands
+## 10) Scripts and Commands
 
-Install:
-```bash
-pnpm install
-```
+Root:
+- `pnpm install`
+- `pnpm dev`
+- `pnpm build`
+- `pnpm test`
+- `pnpm seed`
 
-Development:
-```bash
-pnpm dev
-```
+Backend:
+- `pnpm --filter backend dev`
+- `pnpm --filter backend build`
+- `pnpm --filter backend prisma:generate`
+- `pnpm --filter backend prisma:migrate`
+- `pnpm --filter backend seed`
 
-Build:
-```bash
-pnpm build
-```
+Mobile:
+- `pnpm --filter mobile dev`
+- `pnpm --filter mobile exec expo start --clear`
+- `pnpm --filter mobile build`
 
-Test:
-```bash
-pnpm test
-```
+Web:
+- `pnpm --filter web dev`
+- `pnpm --filter web build`
 
-Seed:
-```bash
-pnpm seed
-```
-
-Backend Prisma bootstrap:
-```bash
-pnpm --filter backend prisma:generate
-pnpm --filter backend prisma:migrate --name beta_update
-```
-
----
-
-## 11. Current Status
-FairShare is now at production-ready beta scaffold level with:
-- hardened backend validation and security
-- activity feed system (backend + mobile UI)
-- push notification infrastructure
-- pagination + caching improvements
-- receipt viewing UX
-- Sentry integration
-- improved web marketing experience
-- stronger CI and dev tooling
-
-Remaining future production work can focus on:
-- real push dispatch provider integration
-- live receipt upload flow and signed download URLs
-- deeper integration/e2e tests
-- stronger domain authorization policies per endpoint
+## 11) Notes
+- `AWS SDK v2` deprecation warning appears in backend logs; not blocking runtime now.
+- Expo Go notification warnings are expected; not blocking auth or group flows.
