@@ -5,12 +5,16 @@
     "scripts":  {
                     "build":  "turbo run build",
                     "dev":  "turbo run dev --parallel",
+                    "dev:backend":  "pnpm --filter backend dev",
+                    "dev:mobile":  "pnpm --filter mobile dev",
+                    "dev:web":  "pnpm --filter web dev",
                     "lint":  "turbo run lint",
                     "test":  "turbo run test",
-                    "format":  "turbo run format",
+                    "format":  "prettier --write .",
                     "seed":  "pnpm --filter backend seed"
                 },
     "devDependencies":  {
+                            "prettier":  "^3.6.2",
                             "turbo":  "^2.5.0",
                             "typescript":  "^5.7.3"
                         }
