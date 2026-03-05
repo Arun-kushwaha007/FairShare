@@ -44,7 +44,7 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
       >
         <Text variant="headlineSmall" style={{ padding: spacing.md }}>Groups</Text>
         {groups.length === 0 ? (
-          <EmptyState title="No groups yet. Create your first group." />
+          <EmptyState kind="no_groups" title="No groups yet. Create your first group." />
         ) : (
           groups.map((group) => (
             <ListItem
@@ -60,3 +60,4 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
     </>
   );
 }
+

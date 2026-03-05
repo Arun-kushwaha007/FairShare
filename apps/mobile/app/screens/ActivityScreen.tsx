@@ -110,10 +110,10 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
         }
       }}
       ListHeaderComponent={<Text variant="headlineSmall" style={{ padding: spacing.md }}>Activity</Text>}
-      ListEmptyComponent={<EmptyState title="No activity yet" />}
+      ListEmptyComponent={<EmptyState kind="no_activity" title="No activity yet" />}
       renderItem={({ item }) => {
         const amountCents = extractAmountCents(item);
-        const amountText = amountCents ? ` Â· $${(Number(amountCents) / 100).toFixed(2)}` : '';
+        const amountText = amountCents ? ` • $${(Number(amountCents) / 100).toFixed(2)}` : '';
 
         return (
           <List.Item
@@ -130,3 +130,4 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
     />
   );
 }
+

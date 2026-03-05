@@ -182,17 +182,17 @@ export function GroupDetailScreen({
         <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
           Today
         </Text>
-        {groupedExpenses.today.length === 0 ? <EmptyState title="No expenses today" /> : groupedExpenses.today.map(renderExpenseRow)}
+        {groupedExpenses.today.length === 0 ? <EmptyState kind="no_expenses" title="No expenses today" /> : groupedExpenses.today.map(renderExpenseRow)}
 
         <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
           This Week
         </Text>
-        {groupedExpenses.week.length === 0 ? <EmptyState title="No expenses this week" /> : groupedExpenses.week.map(renderExpenseRow)}
+        {groupedExpenses.week.length === 0 ? <EmptyState kind="no_expenses" title="No expenses this week" /> : groupedExpenses.week.map(renderExpenseRow)}
 
         <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
           Older
         </Text>
-        {groupedExpenses.older.length === 0 ? <EmptyState title="No older expenses" /> : groupedExpenses.older.map(renderExpenseRow)}
+        {groupedExpenses.older.length === 0 ? <EmptyState kind="no_expenses" title="No older expenses" /> : groupedExpenses.older.map(renderExpenseRow)}
       </ScrollView>
 
       <FAB
@@ -223,3 +223,4 @@ export function GroupDetailScreen({
     </>
   );
 }
+

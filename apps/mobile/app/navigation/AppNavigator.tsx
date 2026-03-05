@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/authStore';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
@@ -49,13 +49,13 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          const iconByRoute: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+          const iconByRoute: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
             Home: 'home',
-            Groups: 'groups',
-            Activity: 'timeline',
-            Profile: 'person',
+            Groups: 'account-group',
+            Activity: 'history',
+            Profile: 'account',
           };
-          return <MaterialIcons name={iconByRoute[route.name]} size={size} color={color} />;
+          return <MaterialCommunityIcons name={iconByRoute[route.name]} size={size} color={color} />;
         },
       })}
     >
@@ -100,3 +100,5 @@ export function AppNavigator() {
     </>
   );
 }
+
+
