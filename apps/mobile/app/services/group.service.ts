@@ -10,5 +10,10 @@ export const groupService = {
   invite: async (id: string, payload: InviteMemberRequestDto) => (await api.post(`/groups/${id}/invite`, payload)).data,
   balances: async (id: string) => (await api.get(`/groups/${id}/balances`)).data,
   simplify: async (id: string) => (await api.get(`/groups/${id}/simplify`)).data,
-  activity: async (id: string) => (await api.get<ActivityDto[]>(`/groups/${id}/activity`)).data,
+  activity: async (id: string, cursor = 0, limit = 20) =>
+    (
+      await api.get<{ items: ActivityDto[]; nextCursor: number | null }>(`/groups/${id}/activity`, {
+        params: { cursor, limit },
+      })
+    ).data,
 };

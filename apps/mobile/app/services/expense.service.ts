@@ -10,10 +10,10 @@ import { api } from './api';
 export const expenseService = {
   create: async (groupId: string, payload: CreateExpenseRequestDto) =>
     (await api.post<ExpenseDto>(`/groups/${groupId}/expenses`, payload)).data,
-  list: async (groupId: string, page = 1, limit = 20) =>
+  list: async (groupId: string, cursor = 0, limit = 20) =>
     (
       await api.get<PaginatedExpensesResponseDto>(`/groups/${groupId}/expenses`, {
-        params: { page, limit },
+        params: { cursor, limit },
       })
     ).data,
   get: async (expenseId: string) => (await api.get<ExpenseDto>(`/expenses/${expenseId}`)).data,

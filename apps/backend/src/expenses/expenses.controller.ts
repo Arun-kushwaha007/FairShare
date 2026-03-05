@@ -17,8 +17,8 @@ export class ExpensesController {
   }
 
   @Get('groups/:id/expenses')
-  listByGroup(@Param('id') groupId: string, @Query('page') page = '1', @Query('limit') limit = '20') {
-    return this.expensesService.listByGroup(groupId, Number(page), Number(limit));
+  listByGroup(@Param('id') groupId: string, @Query('cursor') cursor = '0', @Query('limit') limit = '20') {
+    return this.expensesService.listByGroup(groupId, Number(cursor), Number(limit));
   }
 
   @Get('expenses/:id')

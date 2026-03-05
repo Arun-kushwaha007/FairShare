@@ -21,8 +21,8 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
 
         setFirstGroupId(groups[0].id);
         const activity = await groupService.activity(groups[0].id);
-        if (activity.length > 0) {
-          setRecentActivity(activity[0].type.replace('_', ' '));
+        if (activity.items.length > 0) {
+          setRecentActivity(activity.items[0].type.replace('_', ' '));
         }
       } catch {
         toast('Failed to load dashboard');

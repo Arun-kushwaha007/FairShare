@@ -130,8 +130,8 @@ export class ExpensesService {
     return this.toExpenseDto(expense);
   }
 
-  async listByGroup(groupId: string, page = 1, limit = 20): Promise<PaginatedExpensesResponseDto> {
-    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+  async listByGroup(groupId: string, cursor = 0, limit = 20): Promise<PaginatedExpensesResponseDto> {
+    const safeCursor = Number.isFinite(cursor) && cursor >= 0 ? cursor : 0;
     const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
 
     const cachedSummary = await this.redis.getGroupExpenseSummaryCache(groupId);
@@ -149,13 +149,13 @@ export class ExpensesService {
       await this.redis.setGroupExpenseSummaryCache(groupId, JSON.stringify(expenses));
     }
 
-    const start = (safePage - 1) * safeLimit;
+    const start = safeCursor;
     const end = start + safeLimit;
     const items = expenses.slice(start, end);
 
     return {
       items,
-      nextCursor: end < expenses.length ? safePage + 1 : null,
+      nextCursor: end < expenses.length ? end : null,
     };
   }
 

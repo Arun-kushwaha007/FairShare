@@ -25,14 +25,22 @@ export class ActivityService {
     });
   }
 
-  async getGroupActivity(groupId: string): Promise<ActivityDto[]> {
+  async getGroupActivity(
+    groupId: string,
+    cursor = 0,
+    limit = 20,
+  ): Promise<{ items: ActivityDto[]; nextCursor: number | null }> {
+    const safeCursor = Number.isFinite(cursor) && cursor >= 0 ? cursor : 0;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+
     const events = await this.prisma.activity.findMany({
       where: { groupId },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      skip: safeCursor,
+      take: safeLimit,
     });
 
-    return events.map((event) => ({
+    const items = events.map((event) => ({
       id: event.id,
       groupId: event.groupId,
       actorUserId: event.actorUserId,
@@ -41,5 +49,10 @@ export class ActivityService {
       metadata: event.metadata as Record<string, unknown>,
       createdAt: event.createdAt.toISOString(),
     }));
+
+    return {
+      items,
+      nextCursor: events.length === safeLimit ? safeCursor + safeLimit : null,
+    };
   }
 }

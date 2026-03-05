@@ -175,6 +175,7 @@ model Activity {
 
   @@index([groupId])
   @@index([createdAt])
+  @@index([groupId, createdAt])
   @@map("activities")
 }
 

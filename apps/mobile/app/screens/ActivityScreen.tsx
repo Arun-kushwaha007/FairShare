@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { spacing } from '../theme/spacing';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 const iconByType: Record<ActivityType, keyof typeof MaterialCommunityIcons.glyphMap> = {
   expense_created: 'receipt',
@@ -65,20 +65,21 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [events, setEvents] = React.useState<ActivityDto[]>([]);
-  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+  const [nextCursor, setNextCursor] = React.useState<number | null>(0);
 
-  const loadEvents = React.useCallback(async () => {
+  const loadFirstPage = React.useCallback(async () => {
     if (!groupId) {
       setEvents([]);
+      setNextCursor(null);
       setLoading(false);
       setRefreshing(false);
       return;
     }
 
     try {
-      const data = await groupService.activity(groupId);
-      setEvents(data);
-      setVisibleCount(PAGE_SIZE);
+      const data = await groupService.activity(groupId, 0, PAGE_SIZE);
+      setEvents(data.items);
+      setNextCursor(data.nextCursor);
     } catch {
       toast('Failed to load activity');
     } finally {
@@ -88,10 +89,22 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   }, [groupId, toast]);
 
   React.useEffect(() => {
-    void loadEvents();
-  }, [loadEvents]);
+    void loadFirstPage();
+  }, [loadFirstPage]);
 
-  const visibleItems = React.useMemo(() => events.slice(0, visibleCount), [events, visibleCount]);
+  const loadMore = async () => {
+    if (!groupId || nextCursor === null) {
+      return;
+    }
+
+    try {
+      const data = await groupService.activity(groupId, nextCursor, PAGE_SIZE);
+      setEvents((prev) => [...prev, ...data.items]);
+      setNextCursor(data.nextCursor);
+    } catch {
+      toast('Failed to load more activity');
+    }
+  };
 
   if (loading) {
     return <SkeletonList rows={8} />;
@@ -100,20 +113,18 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   return (
     <FlatList
       contentContainerStyle={{ paddingBottom: spacing.lg }}
-      data={visibleItems}
+      data={events}
       keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadEvents(); }} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadFirstPage(); }} />}
       onEndReachedThreshold={0.4}
       onEndReached={() => {
-        if (visibleCount < events.length) {
-          setVisibleCount((count) => count + PAGE_SIZE);
-        }
+        void loadMore();
       }}
       ListHeaderComponent={<Text variant="headlineSmall" style={{ padding: spacing.md }}>Activity</Text>}
       ListEmptyComponent={<EmptyState kind="no_activity" title="No activity yet" />}
       renderItem={({ item }) => {
         const amountCents = extractAmountCents(item);
-        const amountText = amountCents ? ` • $${(Number(amountCents) / 100).toFixed(2)}` : '';
+        const amountText = amountCents ? ` â€¢ $${(Number(amountCents) / 100).toFixed(2)}` : '';
 
         return (
           <List.Item
@@ -130,4 +141,3 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
     />
   );
 }
-
