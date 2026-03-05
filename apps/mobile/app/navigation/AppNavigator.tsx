@@ -67,17 +67,14 @@ function MainTabs() {
 
 function AppStack() {
   return (
-    <>
-      <RootStack.Navigator>
-        <RootStack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
-        <RootStack.Screen name="GroupDetail" component={GroupDetailScreen} />
-        <RootStack.Screen name="AddExpense" component={AddExpenseScreen} />
-        <RootStack.Screen name="ExpenseDetail" component={ExpenseDetailScreen} />
-        <RootStack.Screen name="SettleUp" component={SettleUpScreen} />
-        <RootStack.Screen name="Settings" component={SettingsScreen} />
-      </RootStack.Navigator>
-      <GlobalToast />
-    </>
+    <RootStack.Navigator>
+      <RootStack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
+      <RootStack.Screen name="GroupDetail" component={GroupDetailScreen} />
+      <RootStack.Screen name="AddExpense" component={AddExpenseScreen} />
+      <RootStack.Screen name="ExpenseDetail" component={ExpenseDetailScreen} />
+      <RootStack.Screen name="SettleUp" component={SettleUpScreen} />
+      <RootStack.Screen name="Settings" component={SettingsScreen} />
+    </RootStack.Navigator>
   );
 }
 
@@ -92,5 +89,11 @@ function AuthNavigator() {
 
 export function AppNavigator() {
   const token = useAuthStore((state) => state.accessToken);
-  return token ? <AppStack /> : <AuthNavigator />;
+
+  return (
+    <>
+      {token ? <AppStack /> : <AuthNavigator />}
+      <GlobalToast />
+    </>
+  );
 }
