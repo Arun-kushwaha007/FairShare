@@ -81,7 +81,7 @@ Membership validation:
 ### 4.4 Expenses / Balances / Settlements / Simplify / Receipts
 Expenses:
 - `POST /api/v1/groups/:id/expenses`
-- `GET /api/v1/groups/:id/expenses`
+- `GET /api/v1/groups/:id/expenses`d
 - `GET /api/v1/expenses/:id`
 - `PATCH /api/v1/expenses/:id`
 - `DELETE /api/v1/expenses/:id`
