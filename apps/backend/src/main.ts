@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => requestLogger.use(req, res, next));
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', { exclude: ['health'] });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

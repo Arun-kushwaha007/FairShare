@@ -22,4 +22,5 @@ COPY --from=build /app/apps/backend/prisma ./apps/backend/prisma
 COPY --from=build /app/node_modules ./node_modules
 WORKDIR /app/apps/backend
 EXPOSE 3001
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD node -e "const http=require('http');const req=http.get('http://127.0.0.1:3001/health',res=>process.exit(res.statusCode===200?0:1));req.on('error',()=>process.exit(1));"
 CMD ["node", "dist/main.js"]

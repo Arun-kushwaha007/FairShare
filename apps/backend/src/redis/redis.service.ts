@@ -5,6 +5,10 @@ import Redis from 'ioredis';
 export class RedisService {
   constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}
 
+  async ping(): Promise<string> {
+    return this.redis.ping();
+  }
+
   async getGroupBalanceCache(groupId: string): Promise<string | null> {
     return this.redis.get(`group:${groupId}:balances`);
   }

@@ -17,6 +17,7 @@ import { RedisModule } from './redis/redis.module';
 import { S3Module } from './s3/s3.module';
 import { ActivityModule } from './activity/activity.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     RedisModule,
     S3Module,
     RealtimeModule,
+    HealthModule,
     ActivityModule,
     AuthModule,
     UsersModule,
