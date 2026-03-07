@@ -21,6 +21,12 @@ enum ActivityType {
   member_invited
 }
 
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+}
+
 model User {
   id           String        @id @default(uuid())
   email        String        @unique
@@ -40,6 +46,8 @@ model User {
   refreshTokens RefreshToken[]
   activities   Activity[]
   pushTokens   PushToken[]
+  paymentsSent Payment[] @relation("payment_payer")
+  paymentsReceived Payment[] @relation("payment_receiver")
 
   @@map("users")
 }
@@ -56,6 +64,7 @@ model Group {
   balances    Balance[]
   settlements Settlement[]
   activities   Activity[]
+  payments     Payment[]
 
   @@index([createdBy])
   @@map("groups")
@@ -189,4 +198,23 @@ model PushToken {
 
   @@index([userId])
   @@map("push_tokens")
+}
+
+model Payment {
+  id                    String        @id @default(uuid())
+  groupId               String
+  payerId               String
+  receiverId            String
+  amountCents           BigInt
+  stripePaymentIntentId String        @unique
+  status                PaymentStatus @default(pending)
+  createdAt             DateTime      @default(now())
+  group                 Group         @relation(fields: [groupId], references: [id])
+  payer                 User          @relation("payment_payer", fields: [payerId], references: [id])
+  receiver              User          @relation("payment_receiver", fields: [receiverId], references: [id])
+
+  @@index([groupId])
+  @@index([payerId])
+  @@index([receiverId])
+  @@map("payments")
 }

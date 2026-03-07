@@ -43,6 +43,14 @@ export class AppConfigService {
     return this.mustGet('S3_BUCKET');
   }
 
+  get stripeSecretKey(): string {
+    return this.mustGet('STRIPE_SECRET_KEY');
+  }
+
+  get stripeWebhookSecret(): string {
+    return process.env.STRIPE_WEBHOOK_SECRET ?? '';
+  }
+
   private mustGet(key: string): string {
     const value = process.env[key];
     if (!value) {

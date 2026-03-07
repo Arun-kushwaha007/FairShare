@@ -18,6 +18,7 @@ import { S3Module } from './s3/s3.module';
 import { ActivityModule } from './activity/activity.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { HealthModule } from './health/health.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HealthModule } from './health/health.module';
     S3Module,
     RealtimeModule,
     HealthModule,
+    PaymentsModule,
     ActivityModule,
     AuthModule,
     UsersModule,

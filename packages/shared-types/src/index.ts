@@ -172,3 +172,17 @@ export interface RegisterPushTokenRequestDto {
   token: string;
   deviceType: 'ios' | 'android' | 'web';
 }
+
+export interface CreatePaymentIntentRequestDto {
+  groupId: string;
+  payerId: string;
+  receiverId: string;
+  amountCents: string;
+  currency: CurrencyCode;
+}
+
+export interface CreatePaymentIntentResponseDto {
+  paymentId: string;
+  clientSecret: string;
+  paymentIntentId: string;
+}
