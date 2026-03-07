@@ -14,7 +14,7 @@ import { calculateBalanceDeltas } from './expense-calculator';
 
 @Injectable()
 export class ExpensesService {
-  private static readonly MAX_EXPENSE_CENTS = 100_000_000n;
+  private static readonly MAX_EXPENSE_CENTS = 1_000_000n;
 
   constructor(
     private readonly prisma: PrismaService,

@@ -16,8 +16,9 @@ export class PaymentsController {
   createIntent(
     @CurrentUser() user: AuthenticatedRequestUser,
     @Body() dto: CreatePaymentIntentDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
   ): Promise<CreatePaymentIntentResponseDto> {
-    return this.paymentsService.createIntent(user.sub, dto);
+    return this.paymentsService.createIntent(user.sub, dto, idempotencyKey);
   }
 
   @Post('webhook')

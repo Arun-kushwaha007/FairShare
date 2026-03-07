@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Headers, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/types/auth.types';
@@ -11,7 +11,12 @@ export class SettlementsController {
   constructor(private readonly settlementsService: SettlementsService) {}
 
   @Post()
-  create(@Param('id') groupId: string, @CurrentUser() user: JwtPayload, @Body() dto: CreateSettlementDto) {
-    return this.settlementsService.create(groupId, user.sub, dto);
+  create(
+    @Param('id') groupId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateSettlementDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.settlementsService.create(groupId, user.sub, dto, idempotencyKey);
   }
 }

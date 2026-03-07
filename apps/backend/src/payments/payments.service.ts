@@ -22,7 +22,11 @@ export class PaymentsService {
     });
   }
 
-  async createIntent(actorUserId: string, dto: CreatePaymentIntentDto): Promise<CreatePaymentIntentResponseDto> {
+  async createIntent(
+    actorUserId: string,
+    dto: CreatePaymentIntentDto,
+    idempotencyKey?: string,
+  ): Promise<CreatePaymentIntentResponseDto> {
     const amount = BigInt(dto.amountCents);
     if (amount <= 0n) {
       throw new BadRequestException('Amount must be positive');
@@ -43,6 +47,20 @@ export class PaymentsService {
       throw new BadRequestException('Payer and receiver must be group members');
     }
 
+    if (idempotencyKey) {
+      const existingPayment = await this.prisma.payment.findUnique({
+        where: { idempotencyKey },
+      });
+      if (existingPayment) {
+        const existingIntent = await this.stripe.paymentIntents.retrieve(existingPayment.stripePaymentIntentId);
+        return {
+          paymentId: existingPayment.id,
+          paymentIntentId: existingIntent.id,
+          clientSecret: existingIntent.client_secret ?? '',
+        };
+      }
+    }
+
     const payment = await this.prisma.payment.create({
       data: {
         groupId: dto.groupId,
@@ -50,23 +68,29 @@ export class PaymentsService {
         receiverId: dto.receiverId,
         amountCents: amount,
         stripePaymentIntentId: `pending_${randomUUID()}`,
+        idempotencyKey: idempotencyKey ?? null,
         status: 'pending',
       },
     });
 
-    const intent = await this.stripe.paymentIntents.create({
-      amount: Number(amount),
-      currency: dto.currency.toLowerCase(),
-      metadata: {
-        paymentId: payment.id,
-        groupId: dto.groupId,
-        payerId: dto.payerId,
-        receiverId: dto.receiverId,
+    const intent = await this.stripe.paymentIntents.create(
+      {
+        amount: Number(amount),
+        currency: dto.currency.toLowerCase(),
+        metadata: {
+          paymentId: payment.id,
+          groupId: dto.groupId,
+          payerId: dto.payerId,
+          receiverId: dto.receiverId,
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
       },
-      automatic_payment_methods: {
-        enabled: true,
+      {
+        idempotencyKey: idempotencyKey || undefined,
       },
-    });
+    );
 
     await this.prisma.payment.update({
       where: { id: payment.id },
@@ -105,7 +129,7 @@ export class PaymentsService {
       payerId: payment.payerId,
       receiverId: payment.receiverId,
       amountCents: payment.amountCents.toString(),
-    });
+    }, `payment:${payment.id}`);
 
     this.logger.log(`Payment succeeded and settlement recorded paymentId=${payment.id}`);
   }

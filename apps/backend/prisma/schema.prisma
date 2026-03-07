@@ -139,6 +139,7 @@ model Settlement {
   payerId     String
   receiverId  String
   amountCents BigInt
+  idempotencyKey String? @unique
   createdAt   DateTime @default(now())
   group       Group    @relation(fields: [groupId], references: [id])
   payer       User     @relation("settlement_payer", fields: [payerId], references: [id])
@@ -207,6 +208,7 @@ model Payment {
   receiverId            String
   amountCents           BigInt
   stripePaymentIntentId String        @unique
+  idempotencyKey        String?       @unique
   status                PaymentStatus @default(pending)
   createdAt             DateTime      @default(now())
   group                 Group         @relation(fields: [groupId], references: [id])

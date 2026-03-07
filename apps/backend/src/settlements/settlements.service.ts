@@ -18,10 +18,29 @@ export class SettlementsService {
     private readonly realtime: RealtimeService,
   ) {}
 
-  async create(groupId: string, actorUserId: string, dto: CreateSettlementDto): Promise<SettlementDto> {
+  async create(
+    groupId: string,
+    actorUserId: string,
+    dto: CreateSettlementDto,
+    idempotencyKey?: string,
+  ): Promise<SettlementDto> {
     const amount = BigInt(dto.amountCents);
     if (amount <= 0n) {
       throw new BadRequestException('Settlement amount must be positive');
+    }
+
+    if (idempotencyKey) {
+      const existingByKey = await this.prisma.settlement.findUnique({ where: { idempotencyKey } });
+      if (existingByKey) {
+        return {
+          id: existingByKey.id,
+          groupId: existingByKey.groupId,
+          payerId: existingByKey.payerId,
+          receiverId: existingByKey.receiverId,
+          amountCents: existingByKey.amountCents.toString(),
+          createdAt: existingByKey.createdAt.toISOString(),
+        };
+      }
     }
 
     const requiredMemberIds = new Set<string>([actorUserId, dto.payerId, dto.receiverId]);
@@ -41,6 +60,22 @@ export class SettlementsService {
       throw new BadRequestException('Payer and receiver must be group members');
     }
 
+    const duplicate = await this.prisma.settlement.findFirst({
+      where: {
+        groupId,
+        payerId: dto.payerId,
+        receiverId: dto.receiverId,
+        amountCents: amount,
+        createdAt: {
+          gte: new Date(Date.now() - 60_000),
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (duplicate) {
+      throw new BadRequestException('Duplicate settlement detected');
+    }
+
     const settlement = await this.prisma.$transaction(async (tx) => {
       const created = await tx.settlement.create({
         data: {
@@ -48,6 +83,7 @@ export class SettlementsService {
           payerId: dto.payerId,
           receiverId: dto.receiverId,
           amountCents: amount,
+          idempotencyKey: idempotencyKey ?? null,
         },
       });
 
