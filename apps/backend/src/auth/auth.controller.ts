@@ -1,4 +1,4 @@
-import { Body, Controller, Logger, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -11,6 +11,13 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) {}
+
+  @Get('csrf-token')
+  getCsrfToken(@Req() req: Request & { csrfToken?: () => string }) {
+    return {
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
+    };
+  }
 
   @Post('register')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

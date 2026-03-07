@@ -5,6 +5,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { NextFunction, Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
+import csurf from 'csurf';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -34,6 +35,16 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());
+  const csrfProtection = csurf({
+    cookie: {
+      key: '_csrf',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    },
+  });
+  app.use('/api/v1/auth/refresh', csrfProtection);
+  app.use('/api/v1/auth/csrf-token', csrfProtection);
   app.use((req: Request, res: Response, next: NextFunction) => requestLogger.use(req, res, next));
 
   app.setGlobalPrefix('api/v1', { exclude: ['health', 'metrics'] });

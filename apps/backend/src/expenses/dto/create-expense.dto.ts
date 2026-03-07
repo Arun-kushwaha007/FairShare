@@ -1,6 +1,7 @@
 ﻿import { IsArray, IsIn, IsString, MinLength, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { CreateExpenseRequestDto, CreateExpenseSplitDto } from '@fairshare/shared-types';
+import { sanitizeText } from '../../common/utils/sanitize.util';
 
 export class CreateExpenseSplitInputDto implements CreateExpenseSplitDto {
   @IsString()
@@ -19,6 +20,7 @@ export class CreateExpenseDto implements CreateExpenseRequestDto {
 
   @IsString()
   @MinLength(2)
+  @Transform(({ value }: { value: unknown }) => sanitizeText(value))
   description!: string;
 
   @IsString()
