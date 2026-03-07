@@ -1,0 +1,9 @@
+aws_region            = "ap-south-1"
+environment           = "prod"
+vpc_cidr              = "10.30.0.0/16"
+availability_zones    = ["ap-south-1a", "ap-south-1b"]
+s3_bucket_name        = "fairshare-prod-receipts"
+backend_image         = "123456789012.dkr.ecr.ap-south-1.amazonaws.com/fairshare-backend:latest"
+backend_desired_count = 2
+backend_min_capacity  = 2
+backend_max_capacity  = 6
