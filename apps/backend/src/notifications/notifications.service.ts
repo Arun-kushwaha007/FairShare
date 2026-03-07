@@ -1,8 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import Redis from 'ioredis';
 import { AppConfigService } from '../config/app-config.service';
 import { PrismaService } from '../common/prisma.service';
+import { JobsQueueService } from '../jobs/jobs-queue.service';
 
 export type NotificationType = 'expense_created' | 'expense_deleted' | 'settlement_created' | 'group_invite';
 
@@ -24,6 +25,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     config: AppConfigService,
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => JobsQueueService))
+    private readonly jobsQueueService: JobsQueueService,
   ) {
     this.publisher = new Redis(config.redisUrl);
     this.subscriber = new Redis(config.redisUrl);
@@ -73,7 +76,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       }),
     );
 
-    await this.deliverExpoNotifications(userIds, payload);
+    await this.jobsQueueService.enqueueNotification({ userIds, payload });
+  }
+
+  async processQueuedNotification(input: { userIds: string[]; payload: NotificationEventPayload }): Promise<void> {
+    await this.deliverExpoNotifications(input.userIds, input.payload);
   }
 
   private async deliverExpoNotifications(userIds: string[], payload: NotificationEventPayload): Promise<void> {

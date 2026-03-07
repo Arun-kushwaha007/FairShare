@@ -6,10 +6,14 @@ import { AuthenticatedRequestUser } from '../common/types/authenticated-request-
 import { UseGuards } from '@nestjs/common';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { PaymentsService } from './payments.service';
+import { JobsQueueService } from '../jobs/jobs-queue.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly jobsQueueService: JobsQueueService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('create-intent')
@@ -27,7 +31,7 @@ export class PaymentsController {
     @Headers('stripe-signature') signature: string | undefined,
     @Body() payload: Record<string, unknown>,
   ): Promise<{ received: true }> {
-    await this.paymentsService.handleWebhook(signature, payload);
+    await this.jobsQueueService.enqueuePaymentWebhook({ signature, body: payload });
     return { received: true };
   }
 }

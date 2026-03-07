@@ -32,6 +32,7 @@
                          "class-validator":  "^0.14.1",
                          "compression":  "^1.8.0",
                          "cookie-parser":  "^1.4.7",
+                         "bullmq": "^5.63.1",
                          "expo-server-sdk":  "^3.15.0",
                          "helmet":  "^8.0.0",
                          "ioredis":  "^5.4.2",
