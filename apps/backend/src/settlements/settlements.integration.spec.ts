@@ -24,6 +24,9 @@ describe('Settlement Flow (integration-ish)', () => {
     };
 
     const prisma: any = {
+      settlement: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
       groupMember: {
         findMany: jest.fn().mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]),
       },
