@@ -7,7 +7,8 @@
                     "dev":  "expo start",
                     "build":  "tsc --noEmit",
                     "lint":  "tsc --noEmit",
-                    "test":  "jest --runInBand --passWithNoTests"
+                    "test":  "jest --runInBand --passWithNoTests",
+                    "eas:build": "eas build -p android --profile production"
                 },
     "dependencies":  {
                          "@expo/vector-icons":  "^14.1.0",

@@ -8,6 +8,7 @@
                     "dev:backend":  "pnpm --filter backend dev",
                     "dev:mobile":  "pnpm --filter mobile dev",
                     "dev:web":  "pnpm --filter web dev",
+                    "mobile:build": "pnpm --filter mobile eas:build",
                     "lint":  "turbo run lint",
                     "test":  "turbo run test",
                     "e2e":  "playwright test",
