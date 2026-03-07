@@ -2,6 +2,7 @@ import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { logStructured } from '../logger/structured-logger.util';
+import { observeApiRequest } from '../../observability/metrics';
 
 @Injectable()
 export class RequestLoggerMiddleware implements NestMiddleware {
@@ -17,6 +18,7 @@ export class RequestLoggerMiddleware implements NestMiddleware {
       this.logger.log(
         `${req.method} ${req.originalUrl} status=${res.statusCode} durationMs=${durationMs}`,
       );
+      observeApiRequest(req.method, req.path, res.statusCode, durationMs);
       logStructured({
         requestId,
         route: req.originalUrl,

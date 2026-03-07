@@ -8,8 +8,11 @@ import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
+import { shutdownOpenTelemetry, startOpenTelemetry } from './observability/otel';
 
 async function bootstrap(): Promise<void> {
+  await startOpenTelemetry();
+
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV ?? 'development',
@@ -33,7 +36,7 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => requestLogger.use(req, res, next));
 
-  app.setGlobalPrefix('api/v1', { exclude: ['health'] });
+  app.setGlobalPrefix('api/v1', { exclude: ['health', 'metrics'] });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -45,6 +48,13 @@ async function bootstrap(): Promise<void> {
   app.enableCors({
     origin: config.corsOrigins,
     credentials: true,
+  });
+
+  process.on('SIGTERM', () => {
+    void shutdownOpenTelemetry();
+  });
+  process.on('SIGINT', () => {
+    void shutdownOpenTelemetry();
   });
 
   await app.listen(config.port, '0.0.0.0');

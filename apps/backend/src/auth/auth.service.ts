@@ -11,6 +11,7 @@ import { JwtPayload } from './types/auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { setActiveUsers } from '../observability/metrics';
 
 @Injectable()
 export class AuthService {
@@ -151,6 +152,16 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
+
+    const active = await this.prisma.refreshToken.findMany({
+      where: {
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      distinct: ['userId'],
+      select: { userId: true },
+    });
+    setActiveUsers(active.length);
 
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 

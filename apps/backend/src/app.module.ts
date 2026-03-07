@@ -19,6 +19,7 @@ import { ActivityModule } from './activity/activity.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { HealthModule } from './health/health.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ObservabilityModule } from './observability/observability.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PaymentsModule } from './payments/payments.module';
     RealtimeModule,
     HealthModule,
     PaymentsModule,
+    ObservabilityModule,
     ActivityModule,
     AuthModule,
     UsersModule,

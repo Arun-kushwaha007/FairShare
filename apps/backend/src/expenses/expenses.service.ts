@@ -8,6 +8,7 @@ import { ActivityService } from '../activity/activity.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { assertMoneyEquality, sumMoney } from '../common/utils/money.util';
 import { RealtimeService } from '../realtime/realtime.service';
+import { incrementExpenseCreated } from '../observability/metrics';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { calculateBalanceDeltas } from './expense-calculator';
@@ -131,6 +132,7 @@ export class ExpensesService {
       payerId: expense.payerId,
       totalAmountCents: expense.totalAmountCents.toString(),
     });
+    incrementExpenseCreated(groupId);
 
     return this.toExpenseDto(expense);
   }
