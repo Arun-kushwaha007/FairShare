@@ -1,7 +1,9 @@
 import React from 'react';
-import { Modal, ScrollView, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { FAB, Button, Text } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { ExpenseDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
@@ -9,10 +11,15 @@ import { realtimeService } from '../services/realtime.service';
 import { useExpenseStore } from '../store/expenseStore';
 import { useToastStore } from '../store/toastStore';
 import { useAuthStore } from '../store/authStore';
+import { useAppTheme } from '../theme/useAppTheme';
+import { spacing } from '../theme/spacing';
+import { BalanceCard } from '../components/BalanceCard';
+import { SectionHeader } from '../components/SectionHeader';
+import { MemberAvatarStack } from '../components/MemberAvatarStack';
+import { ExpenseCard } from '../components/ExpenseCard';
+import { FloatingActionButton } from '../components/FloatingActionButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
-import { Avatar } from '../components/ui/Avatar';
-import { spacing } from '../theme/spacing';
 import { endScreenLoad, startScreenLoad } from '../utils/perf';
 
 export function GroupDetailScreen({
@@ -35,6 +42,7 @@ export function GroupDetailScreen({
   const setExpenses = useExpenseStore((state) => state.setExpenses);
   const toast = useToastStore((state) => state.show);
   const currentUserId = useAuthStore((state) => state.user?.id);
+  const { colors, isDark } = useAppTheme();
 
   const load = React.useCallback(async () => {
     startScreenLoad('GroupDetail');
@@ -82,28 +90,16 @@ export function GroupDetailScreen({
     return map;
   }, [members]);
 
-  const showMemberSummary = (member: GroupMemberSummaryDto) => {
-    if (!currentUserId) {
-      return;
-    }
-
-    const pairBalance = balances.find(
-      (balance) => balance.userId === currentUserId && balance.counterpartyUserId === member.userId,
-    );
-
-    const amount = pairBalance ? Number(pairBalance.amountCents) / 100 : 0;
-    if (amount === 0) {
-      toast(`${member.name}: settled`);
-      return;
-    }
-
-    if (amount > 0) {
-      toast(`${member.name} owes you $${amount.toFixed(2)}`);
-      return;
-    }
-
-    toast(`You owe ${member.name} $${Math.abs(amount).toFixed(2)}`);
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
   };
+
+  const userBalance = React.useMemo(() => {
+    if (!currentUserId || !summary) return 0;
+    return Number(summary.perUserOwedCents[currentUserId] ?? '0') / 100;
+  }, [currentUserId, summary]);
 
   const groupedExpenses = React.useMemo(() => {
     const now = new Date();
@@ -130,7 +126,7 @@ export function GroupDetailScreen({
     return groups;
   }, [expenses]);
 
-  const renderExpenseRow = (expense: ExpenseDto) => {
+  const renderExpenseCard = (expense: ExpenseDto) => {
     const payer = memberById.get(expense.payerId);
     const participantCount = expense.splits?.length ?? 0;
 
@@ -138,24 +134,23 @@ export function GroupDetailScreen({
       <Swipeable
         key={expense.id}
         renderRightActions={() => (
-          <Button mode="contained" buttonColor="#b91c1c" onPress={() => setDeleteTarget(expense)}>
-            Delete
-          </Button>
+          <TouchableOpacity
+            style={[styles.deleteAction, { backgroundColor: colors.danger }]}
+            onPress={() => setDeleteTarget(expense)}
+          >
+            <MaterialCommunityIcons name="delete-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
         )}
       >
-        <Button onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, width: '100%' }}>
-            <Avatar name={payer?.name ?? 'U'} avatarUrl={payer?.avatarUrl} />
-            <View style={{ flex: 1 }}>
-              <Text>{expense.description}</Text>
-              <Text>
-                {payer?.name ?? expense.payerId} â€¢ {participantCount} participants â€¢{' '}
-                {new Date(expense.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-            <Text>${(Number(expense.totalAmountCents) / 100).toFixed(2)}</Text>
-          </View>
-        </Button>
+        <ExpenseCard
+          description={expense.description}
+          amount={`$${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
+          payerName={payer?.name ?? 'Unknown'}
+          payerInitials={getInitials(payer?.name ?? 'U')}
+          participantCount={participantCount}
+          date={new Date(expense.createdAt).toLocaleDateString()}
+          onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}
+        />
       </Swipeable>
     );
   };
@@ -179,83 +174,248 @@ export function GroupDetailScreen({
     return <SkeletonList rows={5} />;
   }
 
+  const renderExpenseSection = (title: string, expenses: ExpenseDto[], delay: number) => {
+    if (expenses.length === 0) return null;
+    return (
+      <Animated.View entering={FadeInDown.duration(400).delay(delay)}>
+        <SectionHeader title={title} />
+        {expenses.map(renderExpenseCard)}
+      </Animated.View>
+    );
+  };
+
   return (
     <>
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}>
-        <Text variant="headlineSmall" style={{ marginBottom: spacing.sm }}>
-          Group Detail
-        </Text>
-        {summary ? (
-          <View style={{ padding: spacing.sm, borderRadius: 10, backgroundColor: '#EEF2FF', marginBottom: spacing.md }}>
-            <Text>Total Spending: ${(Number(summary.totalExpensesCents) / 100).toFixed(2)}</Text>
-            <Text>Top Spender: {summary.topSpenderUserId ?? 'N/A'}</Text>
-            <Text>
-              Your Balance: $
-              {currentUserId ? (Number(summary.perUserOwedCents[currentUserId] ?? '0') / 100).toFixed(2) : '0.00'}
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Balance Summary */}
+        {summary && (
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
+            <View style={styles.balanceRow}>
+              <View style={{ flex: 1 }}>
+                <BalanceCard
+                  title="Total Spent"
+                  amount={`$${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
+                  icon="cash-multiple"
+                  variant="default"
+                />
+              </View>
+            </View>
+            <View style={styles.balanceRow}>
+              <View style={{ flex: 1 }}>
+                <BalanceCard
+                  title="Your Balance"
+                  amount={`$${Math.abs(userBalance).toFixed(2)}`}
+                  subtitle={userBalance > 0 ? 'You are owed' : userBalance < 0 ? 'You owe' : 'Settled up'}
+                  icon={userBalance >= 0 ? 'trending-up' : 'trending-down'}
+                  variant={userBalance > 0 ? 'success' : userBalance < 0 ? 'danger' : 'default'}
+                />
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Members */}
+        <Animated.View entering={FadeInDown.duration(400).delay(100)}>
+          <SectionHeader
+            title="Members"
+            action="View All"
+            onActionPress={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
+          />
+          <View style={styles.membersRow}>
+            <MemberAvatarStack
+              members={members.map((m) => ({ userId: m.userId, name: m.name, avatarUrl: m.avatarUrl }))}
+              maxVisible={6}
+              size={44}
+            />
+            <Text style={[styles.memberCount, { color: colors.text_secondary }]}>
+              {members.length} member{members.length !== 1 ? 's' : ''}
             </Text>
           </View>
-        ) : null}
+        </Animated.View>
 
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
-          {members.slice(0, 6).map((member) => (
-            <Button key={member.memberId} compact onPress={() => showMemberSummary(member)}>
-              <Avatar name={member.name} avatarUrl={member.avatarUrl} />
-            </Button>
-          ))}
-        </View>
+        {/* Action Buttons */}
+        <Animated.View entering={FadeInDown.duration(400).delay(200)} style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+            <Text style={styles.actionBtnText}>Add Expense</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.actionBtn,
+              {
+                backgroundColor: 'transparent',
+                borderWidth: 1.5,
+                borderColor: colors.primary,
+              },
+            ]}
+            onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcons name="handshake" size={18} color={colors.primary} />
+            <Text style={[styles.actionBtnText, { color: colors.primary }]}>Settle Up</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
-        <Button mode="outlined" onPress={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}>
-          View Members
-        </Button>
+        {/* Expense History */}
+        {renderExpenseSection('Today', groupedExpenses.today, 300)}
+        {renderExpenseSection('This Week', groupedExpenses.week, 400)}
+        {renderExpenseSection('Older', groupedExpenses.older, 500)}
 
-        <Button mode="contained" style={{ marginTop: spacing.sm }} onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}>
-          Add Expense
-        </Button>
-        <Button style={{ marginTop: spacing.sm }} onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}>
-          Settle Up
-        </Button>
-
-        <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
-          Today
-        </Text>
-        {groupedExpenses.today.length === 0 ? <EmptyState kind="no_expenses" title="No expenses today" /> : groupedExpenses.today.map(renderExpenseRow)}
-
-        <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
-          This Week
-        </Text>
-        {groupedExpenses.week.length === 0 ? <EmptyState kind="no_expenses" title="No expenses this week" /> : groupedExpenses.week.map(renderExpenseRow)}
-
-        <Text variant="titleMedium" style={{ marginTop: spacing.md }}>
-          Older
-        </Text>
-        {groupedExpenses.older.length === 0 ? <EmptyState kind="no_expenses" title="No older expenses" /> : groupedExpenses.older.map(renderExpenseRow)}
+        {expenses.length === 0 && (
+          <Animated.View entering={FadeInDown.duration(400).delay(300)}>
+            <EmptyState kind="no_expenses" title="No expenses yet" />
+          </Animated.View>
+        )}
       </ScrollView>
 
-      <FAB
-        icon="plus-circle"
-        style={{ position: 'absolute', right: spacing.md, bottom: spacing.md }}
+      <FloatingActionButton
         onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
       />
 
+      {/* Delete Confirmation Modal */}
       <Modal transparent visible={Boolean(deleteTarget)} onRequestClose={() => setDeleteTarget(null)}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            justifyContent: 'center',
-            padding: spacing.md,
-          }}
-        >
-          <View style={{ backgroundColor: '#fff', borderRadius: 10, padding: spacing.md, gap: spacing.sm }}>
-            <Text variant="titleMedium">Delete Expense?</Text>
-            <Text>{deleteTarget?.description}</Text>
-            <Button mode="contained" buttonColor="#b91c1c" onPress={() => void deleteExpense()}>
-              Confirm Delete
-            </Button>
-            <Button onPress={() => setDeleteTarget(null)}>Cancel</Button>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: isDark ? colors.card : colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={[styles.modalIconBg, { backgroundColor: `${colors.danger}18` }]}>
+              <MaterialCommunityIcons name="delete-alert" size={32} color={colors.danger} />
+            </View>
+            <Text style={[styles.modalTitle, { color: colors.text_primary }]}>
+              Delete Expense?
+            </Text>
+            <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>
+              {deleteTarget?.description}
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.danger }]}
+                onPress={() => void deleteExpense()}
+              >
+                <Text style={styles.modalBtnText}>Delete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.muted }]}
+                onPress={() => setDeleteTarget(null)}
+              >
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: 120,
+  },
+  balanceSection: {
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  membersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  memberCount: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  actionBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  deleteAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    borderRadius: 14,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  modalContent: {
+    borderRadius: 20,
+    padding: spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  modalIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+  },
+  modalDesc: {
+    fontSize: 14,
+    marginBottom: spacing.xl,
+    textAlign: 'center',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+});
