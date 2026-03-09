@@ -20,6 +20,7 @@ describe('GroupListScreen', () => {
       </PaperProvider>,
     );
 
-    await waitFor(() => expect(getByText('No groups yet. Create your first group.')).toBeTruthy());
+    await waitFor(() => expect(getByText('No groups yet')).toBeTruthy());
+    expect(getByText('Create your first group to start splitting expenses')).toBeTruthy();
   });
 });

@@ -1,10 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
-import { colors } from '../../theme/colors';
+import { useAppTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
 
 export function SkeletonList({ rows = 4 }: { rows?: number }) {
+  const { colors } = useAppTheme();
+
   return (
     <View style={{ padding: spacing.md }}>
       {Array.from({ length: rows }).map((_, idx) => (

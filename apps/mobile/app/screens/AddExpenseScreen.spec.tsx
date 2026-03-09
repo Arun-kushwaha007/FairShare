@@ -14,13 +14,18 @@ describe('AddExpenseScreen', () => {
   it('shows validation error when no payer is available', async () => {
     (groupService.members as jest.Mock).mockResolvedValueOnce([]);
 
-    const { getByText } = render(
+    const { getByText, getByTestId } = render(
       <PaperProvider>
         <AddExpenseScreen route={{ params: { groupId: 'g1' } }} navigation={{ goBack: jest.fn() }} />
       </PaperProvider>,
     );
 
-    fireEvent.press(getByText('Create Expense'));
+    await waitFor(() => expect(groupService.members).toHaveBeenCalledWith('g1'));
+
+    fireEvent.changeText(getByTestId('description-input'), 'Dinner');
+    fireEvent.changeText(getByTestId('amount-input'), '1000');
+    fireEvent.press(getByTestId('next-button'));
+    fireEvent.press(getByTestId('next-button'));
 
     await waitFor(() => expect(getByText('Select a payer')).toBeTruthy());
   });

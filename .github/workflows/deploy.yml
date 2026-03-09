@@ -1,9 +1,20 @@
-name: Deploy
+name: Deploy Main
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
 
 env:
   AWS_REGION: ap-south-1
@@ -14,19 +25,28 @@ env:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+    timeout-minutes: 45
 
     steps:
-      - name: Checkout
+      - name: Checkout workflow_run commit
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Checkout manual dispatch commit
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.6.1
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -35,22 +55,33 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --frozen-lockfile
 
-      - name: Test
-        run: pnpm test
+      - name: Generate Prisma client
+        run: pnpm --filter backend prisma:generate
 
-      - name: Build
-        run: pnpm build
+      - name: Verify backend tests
+        run: pnpm --filter backend test -- --runInBand --passWithNoTests
 
-      - name: Configure AWS credentials
+      - name: Verify backend build
+        run: pnpm --filter backend build
+
+      - name: Configure AWS credentials with OIDC
+        if: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Configure AWS credentials with access keys
+        if: ${{ secrets.AWS_ROLE_TO_ASSUME == '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -58,17 +89,24 @@ jobs:
         id: image
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         run: |
-          docker build -f apps/backend/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          docker build -f apps/backend/Dockerfile -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" .
+          docker tag "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Force ECS service deployment
+      - name: Render next ECS task definition
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.image_uri }}
         run: |
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --force-new-deployment
+          TASK_DEF_ARN="$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0].taskDefinition' --output text)"
+          aws ecs describe-task-definition --task-definition "$TASK_DEF_ARN" --query 'taskDefinition' > task-definition.json
+          jq 'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy) | .containerDefinitions |= map(if .name == env.CONTAINER_NAME then .image = env.IMAGE_URI else . end)' task-definition.json > task-definition.rendered.json
+
+      - name: Register task definition and deploy
+        run: |
+          TASK_DEF_ARN="$(aws ecs register-task-definition --cli-input-json file://task-definition.rendered.json --query 'taskDefinition.taskDefinitionArn' --output text)"
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --task-definition "$TASK_DEF_ARN" --force-new-deployment
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"

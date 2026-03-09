@@ -168,6 +168,7 @@ export function AddExpenseScreen({
               name="description"
               render={({ field: { value, onChange } }) => (
                 <TextInput
+                  testID="description-input"
                   label="Description"
                   value={value}
                   onChangeText={onChange}
@@ -184,6 +185,7 @@ export function AddExpenseScreen({
               name="amountCents"
               render={({ field: { value, onChange } }) => (
                 <TextInput
+                  testID="amount-input"
                   label="Amount (cents)"
                   value={value}
                   onChangeText={onChange}
@@ -426,6 +428,7 @@ export function AddExpenseScreen({
         <View style={styles.footer}>
           {currentStep > 0 ? (
             <TouchableOpacity
+              testID="back-button"
               style={[
                 styles.navBtn,
                 {
@@ -445,6 +448,7 @@ export function AddExpenseScreen({
           )}
           {currentStep < STEPS.length - 1 ? (
             <TouchableOpacity
+              testID="next-button"
               style={[styles.navBtn, { backgroundColor: colors.primary }]}
               onPress={goNext}
               activeOpacity={0.8}
@@ -454,6 +458,7 @@ export function AddExpenseScreen({
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
+              testID="create-button"
               style={[styles.navBtn, { backgroundColor: colors.success }]}
               onPress={onSubmit}
               activeOpacity={0.8}
