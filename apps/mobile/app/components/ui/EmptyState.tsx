@@ -1,7 +1,9 @@
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from 'react-native-paper';
+import { useAppTheme } from '../../theme/useAppTheme';
+import { spacing } from '../../theme/spacing';
 
 type EmptyStateKind = 'no_groups' | 'no_expenses' | 'no_activity' | 'default';
 
@@ -12,13 +14,78 @@ const iconByKind: Record<EmptyStateKind, keyof typeof MaterialCommunityIcons.gly
   default: 'information-outline',
 };
 
-export function EmptyState({ title, kind = 'default' }: { title: string; kind?: EmptyStateKind }) {
+const subtitleByKind: Record<EmptyStateKind, string> = {
+  no_groups: 'Create your first group to start splitting expenses',
+  no_expenses: 'Add an expense to track spending',
+  no_activity: 'Activity will appear here when things happen',
+  default: '',
+};
+
+export function EmptyState({
+  title,
+  kind = 'default',
+  subtitle,
+}: {
+  title: string;
+  kind?: EmptyStateKind;
+  subtitle?: string;
+}) {
+  const { colors, isDark } = useAppTheme();
+
   return (
-    <View style={{ padding: 24, alignItems: 'center', gap: 8 }}>
-      <MaterialCommunityIcons name={iconByKind[kind]} size={42} color="#64748B" />
-      <Text variant="titleMedium">{title}</Text>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? colors.card : colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <View style={[styles.iconBg, { backgroundColor: `${colors.primary}12` }]}>
+        <MaterialCommunityIcons
+          name={iconByKind[kind]}
+          size={48}
+          color={colors.muted}
+        />
+      </View>
+      <Text
+        style={[styles.title, { color: colors.text_primary }]}
+      >
+        {title}
+      </Text>
+      <Text style={[styles.subtitle, { color: colors.text_secondary }]}>
+        {subtitle ?? subtitleByKind[kind]}
+      </Text>
     </View>
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.xxl,
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
+    marginHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  iconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});
