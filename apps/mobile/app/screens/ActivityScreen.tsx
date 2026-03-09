@@ -1,10 +1,12 @@
 import React from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
-import { List, Text } from 'react-native-paper';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { ActivityDto, ActivityType } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
+import { useAppTheme } from '../theme/useAppTheme';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { spacing } from '../theme/spacing';
@@ -18,6 +20,15 @@ const iconByType: Record<ActivityType, keyof typeof MaterialCommunityIcons.glyph
   settlement_created: 'cash',
   member_joined: 'account-plus',
   member_invited: 'account-arrow-right',
+};
+
+const colorByType: Record<ActivityType, string> = {
+  expense_created: '#6366F1',
+  expense_updated: '#F59E0B',
+  expense_deleted: '#EF4444',
+  settlement_created: '#22C55E',
+  member_joined: '#14B8A6',
+  member_invited: '#EC4899',
 };
 
 const actionText = (activity: ActivityDto): string => {
@@ -62,6 +73,7 @@ const relativeTime = (iso: string): string => {
 export function ActivityScreen({ route }: { route?: { params?: { groupId?: string } } }) {
   const groupId = route?.params?.groupId;
   const toast = useToastStore((state) => state.show);
+  const { colors, isDark } = useAppTheme();
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [events, setEvents] = React.useState<ActivityDto[]>([]);
@@ -110,34 +122,116 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
     return <SkeletonList rows={8} />;
   }
 
+  const renderItem = ({ item, index }: { item: ActivityDto; index: number }) => {
+    const amountCents = extractAmountCents(item);
+    const amountText = amountCents ? `$${(Number(amountCents) / 100).toFixed(2)}` : null;
+    const iconColor = colorByType[item.type] ?? colors.primary;
+
+    return (
+      <Animated.View entering={FadeInDown.duration(300).delay(index * 40)}>
+        <View
+          style={[
+            styles.activityCard,
+            {
+              backgroundColor: isDark ? colors.card : colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+          accessibilityLabel={actionText(item)}
+        >
+          <View style={[styles.iconBg, { backgroundColor: `${iconColor}18` }]}>
+            <MaterialCommunityIcons name={iconByType[item.type]} size={20} color={iconColor} />
+          </View>
+          <View style={styles.content}>
+            <Text style={[styles.title, { color: colors.text_primary }]} numberOfLines={1}>
+              {actionText(item)}
+            </Text>
+            <Text style={[styles.time, { color: colors.text_secondary }]}>
+              {relativeTime(item.createdAt)}
+            </Text>
+          </View>
+          {amountText && (
+            <Text style={[styles.amount, { color: colors.text_primary }]}>{amountText}</Text>
+          )}
+        </View>
+      </Animated.View>
+    );
+  };
+
   return (
     <FlatList
-      contentContainerStyle={{ paddingBottom: spacing.lg }}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.scrollContent}
       data={events}
       keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void loadFirstPage(); }} />}
+      renderItem={renderItem}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            void loadFirstPage();
+          }}
+        />
+      }
       onEndReachedThreshold={0.4}
       onEndReached={() => {
         void loadMore();
       }}
-      ListHeaderComponent={<Text variant="headlineSmall" style={{ padding: spacing.md }}>Activity</Text>}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.heading, { color: colors.text_primary }]}>Activity</Text>
+        </View>
+      }
       ListEmptyComponent={<EmptyState kind="no_activity" title="No activity yet" />}
-      renderItem={({ item }) => {
-        const amountCents = extractAmountCents(item);
-        const amountText = amountCents ? ` • $${(Number(amountCents) / 100).toFixed(2)}` : '';
-
-        return (
-          <List.Item
-            title={actionText(item)}
-            description={`${relativeTime(item.createdAt)}${amountText}`}
-            left={() => (
-              <View style={{ justifyContent: 'center', paddingLeft: spacing.sm }}>
-                <MaterialCommunityIcons name={iconByType[item.type]} size={22} />
-              </View>
-            )}
-          />
-        );
-      }}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: spacing.xl,
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  heading: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: spacing.md,
+  },
+  iconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  time: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  amount: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});
