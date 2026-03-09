@@ -1,16 +1,19 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { Button, FAB, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
+import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
+import { FloatingActionButton } from '../components/FloatingActionButton';
 import { startScreenLoad, endScreenLoad } from '../utils/perf';
 
 export function HomeScreen({ navigation }: { navigation: { navigate: (route: string, params?: any) => void } }) {
   const [firstGroupId, setFirstGroupId] = React.useState<string>('');
   const [recentActivity, setRecentActivity] = React.useState<string>('No recent activity');
   const toast = useToastStore((state) => state.show);
+  const { colors } = useAppTheme();
 
   React.useEffect(() => {
     startScreenLoad('Dashboard');
@@ -38,46 +41,42 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
 
   return (
     <>
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 120 }}>
-        <Animated.View entering={FadeInDown.duration(400)} style={{ gap: spacing.sm }}>
-          <Text variant="headlineSmall">Dashboard</Text>
-          <Text variant="bodyMedium">Recent activity: {recentActivity}</Text>
-
-          <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-            <Button mode="contained" onPress={() => navigation.navigate('Tabs')}>
-              Open Groups/Activity/Profile
-            </Button>
-            <Button
-              mode="outlined"
-              onPress={() => {
-                if (!firstGroupId) {
-                  toast('Create a group first');
-                  return;
-                }
-                navigation.navigate('AddExpense', { groupId: firstGroupId });
-              }}
-            >
-              Quick Add Expense
-            </Button>
-            <Button
-              mode="outlined"
-              onPress={() => {
-                if (!firstGroupId) {
-                  toast('Create a group first');
-                  return;
-                }
-                navigation.navigate('SettleUp', { groupId: firstGroupId });
-              }}
-            >
-              Quick Settle Suggestion
-            </Button>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 120 }}
+      >
+        <Animated.View entering={FadeInDown.duration(400)} style={{ gap: spacing.md }}>
+          <Text
+            variant="headlineMedium"
+            style={{ color: colors.text_primary, fontWeight: '700' }}
+          >
+            Dashboard
+          </Text>
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 16,
+              padding: spacing.lg,
+              borderWidth: 1,
+              borderColor: colors.border,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              elevation: 3,
+            }}
+          >
+            <Text style={{ color: colors.text_secondary, fontSize: 13, marginBottom: 4 }}>
+              RECENT ACTIVITY
+            </Text>
+            <Text style={{ color: colors.text_primary, fontSize: 16, fontWeight: '500' }}>
+              {recentActivity}
+            </Text>
           </View>
         </Animated.View>
       </ScrollView>
 
-      <FAB
-        icon="plus"
-        style={{ position: 'absolute', right: spacing.md, bottom: spacing.md }}
+      <FloatingActionButton
         onPress={() => {
           if (!firstGroupId) {
             toast('Create a group first');
@@ -89,3 +88,4 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
     </>
   );
 }
+
