@@ -1,292 +1,75 @@
-# FairShare - Current Documentation (March 2026)
+# FairShare — Production Launch Notes (March 2026)
 
-## 1. Project Snapshot
-FairShare is a pnpm + Turborepo monorepo for shared expense management.
+## 1. Overview
+FairShare is a pnpm/Turborepo monorepo built for collaborative expense sharing across Expo mobile, NestJS backend, and a Next.js marketing/dashboard experience. The stack is hard‑typed (TypeScript strict), backed by Prisma + Supabase PostgreSQL, Redis caching, and AWS S3 storage. JWT auth, refresh rotation, Google OAuth, and production observability are already wired together.
 
-- Mobile: Expo React Native (TypeScript strict)
-- Backend: NestJS (TypeScript strict)
-- Web: Next.js
-- Database: PostgreSQL (Supabase) via Prisma
-- Cache: Redis
-- Storage: AWS S3
+## 2. Infrastructure & Deployment
+- **Terraform**: reusable modules (`vpc`, `ecs_cluster`, `ecs_service_backend`, `redis`, `s3_storage`, `cloudwatch_logs`) plus per‑env stacks (dev/staging/prod) deploy ECS Fargate backend, ElastiCache Redis, S3 buckets, and CloudWatch log groups. ECS service uses ALB health checks against `/health` and auto scaling (min/max caps).
+- **Docker**: multi‑stage backend image with `HEALTHCHECK` hitting `/health`, Prisma migrations bundled, and runtime environment variables wired from `AppConfigService`.
+- **CI/CD**:
+  - `ci.yml`: pnpm + Turbo cache; jobs for typecheck, lint, tests, frontend builds, security audit, dependency review, coverage uploads, and Playwright e2e (guarded by `RUN_E2E`).
+  - `deploy.yml`: on `main` builds/test -> docker image -> pushes to AWS ECR -> forces ECS service redeploy; image tagged with SHA + `latest`.
+- **Scripts**: `pnpm dev`, `pnpm build`, `pnpm test`, `pnpm mobile:build` (EAS production AAB), `pnpm seed`, `pnpm --filter backend prisma:generate`.
 
-Current baseline:
-- Auth + Supabase flow is working.
-- Group/member flows are implemented.
-- Real split creation UI is implemented.
-- Backend and mobile have expanded logging + tests.
+## 3. Backend Implementation
+- **Core runtime**: `/api/v1` prefix, global `ValidationPipe`, helmet, compression, CSRF on refresh + `/auth/csrf-token`, and structured request logging (method/path/status/duration plus Prometheus metrics via `observeApiRequest`). AppConfig enforces environment variables for Supabase, Redis, AWS, S3, Stripe, etc.
+- **Health, metrics, observability**: `GET /health` reports DB + Redis status, `/metrics` exports Prometheus metrics, and OpenTelemetry NodeSDK auto-instrumentation starts on bootstrap with graceful shutdown.
+- **Auth + security**:
+  - Email/password + Google OAuth, refresh rotation stored hashed, secure `refresh_token` cookie (`httpOnly`, `secure`, `sameSite=strict`).
+  - `csurf` middleware across refresh endpoints; `AuthController` provides `/csrf-token`.
+  - Throttler limits auth/login/register to 10 req/min in addition to global 100/min.
+- **Payments & settlements**:
+  - Stripe-based `payments` module creates payment intents, stores idempotency keys, handles webhooks queued via BullMQ, and records settlements (duplicate guard + idempotency).
+  - Payment webhook job ensures settlement is created once per intent.
+- **Jobs + notifications**:
+  - BullMQ queues for notification delivery, receipt processing, payment webhooks; workers publish Expo push notifications asynchronously (job retry/backoff configured).
+  - `NotificationsService` now enqueues jobs, reads push tokens from Prisma, and retries chunked Expo requests.
+- **Data integrity**:
+  - Prisma schema now includes `Payment`, `Activity`, `PushToken`, `Balance`, `Settlement`, etc., with indexes and soft delete awareness via `createdAt`.
+  - Utilities `money.util.ts` and `sanitize.util.ts` ensure BigInt sums and protected text.
+  - Validation ensures splits add to total, payer/members exist, expenses capped at 1,000,000 cents, settlements prevent duplicates, invites sanitize email, and idempotency key support in payments/settlements.
 
-## 2. Monorepo Layout
-- `apps/backend`
-- `apps/mobile`
-- `apps/web`
-- `packages/shared-types`
-- `infra/terraform`
-- `scripts`
-- `.github/workflows`
+## 4. Frontend & UX (priority on polish + flow)
+### Mobile Experience
+- **Navigation**: auth stack (`Login`, `Register`), main stack with `Dashboard`, tab navigator (`Groups`, `Activity`, `Profile`), and deep links to `GroupDetail`, `GroupMembers`, `AddExpense`, `ExpenseDetail`, `SettleUp`, `Settings`.
+- **Dashboard (HomeScreen)**: quick insights, activity preview, quick add expense, quick settle suggestion, and floating action button linking to `AddExpenseScreen`.
+- **Group detail**:
+  - Sections framed by time (`Today`, `This Week`, `Older`) with payer avatars, participant chips, swipe-to-delete (modal confirm), and member avatars that show balance summaries on tap.
+  - Member roster view with invite-by-email action and inline loading states/empty states backed by themed illustrations (`no-groups`, `no-expenses`, `no-activity`).
+- **Add Expense workflow**:
+  - Real group members loaded, payer + participant selection, split selector supporting equal, exact, and percentage splits with inline validation.
+  - `SplitSelector` component and shared `split.ts` utility manage calculations; `money` utilities ensure BigInt-friendly arithmetic.
+- **Settle Up flow**:
+  - Greedy simplify data drives buttons; UPI deeplink (`upi://pay?...`) plus “Mark as paid” button after payment ensures manual checkoff; success animation via Lottie.
+  - Offline + queue backed by `offlineQueue` using NetInfo; API wrappers mark retried POSTs accordingly.
+- **Theming & UI polish**:
+  - Design system with responsive spacing/typography/colors (`#4F46E5`, `#F8FAFC`, Inter), button variants (primary/secondary/danger) with press-scale animation via Reanimated.
+  - Custom UI primitives (`Avatar`, `Button`, `Card`, `MoneyText`, `LoadingSpinner`, `EmptyState`) built on react-native-paper plus MaterialCommunityIcons.
+  - Animations for settlements (Lottie), skeleton loaders, haptic feedback, toast system, and offline-safe retry notices.
+- **Networking**:
+  - Axios layer logs requests/responses, attaches JWT, measures latency (`trackApiLatency`), reports high latency to Sentry, and queues POSTs when offline.
+  - SecureStore persists tokens; Expo Notifications + Sentry SDK initialized in App.tsx; realtime socket handled via `socket.io-client` with rooms by group.
 
-Key root files:
-- `pnpm-workspace.yaml`
-- `turbo.json`
-- `package.json`
-- `Makefile`
-- `.prettierrc`
-- `doc.md`
+### Web Experience
+- Authenticated dashboard under `/dashboard` showing group list, balances, and recent activity (reuses API contracts).
+- Marketing + documentation pages (`/features`, `/pricing`, `/about`, `/login`) include TailwindCSS + Framer Motion cards, hero with CTA, FAQ, newsletter form, and metadata for SEO.
 
-## 3. Shared Types
-`packages/shared-types` is the contract source for backend + mobile.
+## 5. Testing & CI
+- Backend: Jest suites cover groups, balances, settlements (integration + unit), expenses, simplify, activity, notifications; newly updated mocks support duplicate-guard logic.
+- Mobile: jest-expo tests for `SplitSelector`, `AddExpenseScreen`, `GroupListScreen`, `LoginScreen`.
+- Playwright e2e: registration → login → group → invite → expense → settlement → activity assertions.
+- CI pipeline (see `.github/workflows/ci.yml`) ensures typecheck, lint, tests, builds, security audit, dependency review, coverage artifacts, and Playwright run (conditioned).
 
-Notable DTOs:
-- Auth tokens + auth request DTOs
-- Groups, expenses, balances, settlements
-- Activity DTOs
-- Receipt URL DTO
-- Push token DTO
-- Group member summary DTO (`GroupMemberSummaryDto`)
+## 6. Logging & Observability
+- Backend structured logging (RequestLogger + Sentry + Prometheus). Observability controller exposes metrics for API latency, error count, expense creation, active users.
+- Mobile logs prefixed `[api]`, `[auth-ui]`, `[auth]`; Sentry receives high-latency warnings and slow-screen traces.
 
-## 4. Backend Status
+## 7. Environment & Secrets
+- `.env.example` contains Supabase, JWT secrets, Google OAuth, Redis, CORS, AWS, S3, Stripe, Sentry keys.
+- Mobile `.env.example` covers `EXPO_PUBLIC_API_URL`, Sentry, and S3 base URL.
+- `AppConfigService` enforces `mustGet` for mandatory vars, while mobile/respective services resolve host addresses for Expo Go vs LAN dev.
 
-### 4.1 Core Runtime
-- API prefix: `/api/v1`
-- ValidationPipe: enabled globally
-- Helmet + compression + cookie parser
-- CORS from env config
-- Throttler enabled (`100/min/IP`)
-- Request logging middleware:
-  - logs method, path, status, duration
-
-### 4.2 Auth
-Endpoints:
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/google`
-- `POST /api/v1/auth/refresh`
-
-Behavior:
-- JWT access + refresh
-- Refresh rotation persisted in DB
-- duplicate email handling in register
-
-### 4.3 Group/Member Management
-Endpoints:
-- `POST /api/v1/groups`
-- `GET /api/v1/groups`
-- `GET /api/v1/groups/:id`
-- `GET /api/v1/groups/:id/members`
-- `POST /api/v1/groups/:id/invite`
-
-Membership validation:
-- group-read and group-member routes validate actor membership
-
-### 4.4 Expenses / Balances / Settlements / Simplify / Receipts
-Expenses:
-- `POST /api/v1/groups/:id/expenses`
-- `GET /api/v1/groups/:id/expenses`d
-- `GET /api/v1/expenses/:id`
-- `PATCH /api/v1/expenses/:id`
-- `DELETE /api/v1/expenses/:id`
-
-Balances:
-- `GET /api/v1/groups/:id/balances`
-
-Settlements:
-- `POST /api/v1/groups/:id/settlements`
-
-Simplify:
-- `GET /api/v1/groups/:id/simplify`
-
-Receipts:
-- `POST /api/v1/expenses/:id/receipt-url`
-
-### 4.5 Activity + Notifications
-Activity:
-- `GET /api/v1/groups/:id/activity`
-
-Notifications:
-- Notification event types:
-  - `expense_created`
-  - `expense_deleted`
-  - `settlement_created`
-  - `group_invite`
-- Redis pub/sub channel used for internal notification queue/broadcast
-- Push provider is still a stub logger (infra-ready, not external provider yet)
-
-### 4.6 Database and Prisma
-- Prisma datasource points to `SUPABASE_DATABASE_URL`
-- Schema synced with Supabase
-- Key models in use:
-  - users, groups, group_members, expenses, splits, balances, settlements,
-    receipts, refresh_tokens, activities, push_tokens
-
-## 5. Mobile Status
-
-### 5.1 Navigation
-Auth stack:
-- `LoginScreen`
-- `RegisterScreen`
-
-Root stack (post-auth):
-- `Dashboard` (HomeScreen)
-- `Tabs`
-- `GroupDetail`
-- `GroupMembers`
-- `AddExpense`
-- `ExpenseDetail`
-- `SettleUp`
-- `Settings`
-
-Tabs:
-- `Groups`
-- `Activity`
-- `Profile`
-
-### 5.2 Dashboard
-`HomeScreen` now acts as dashboard:
-- recent activity preview
-- quick add expense action
-- quick settle suggestion action
-- floating add-expense button
-
-### 5.3 Group Flows
-`GroupDetailScreen`:
-- member avatars row at top
-- member tap -> member balance summary toast
-- sections:
-  - Today
-  - This week
-  - Older
-- expense row shows payer/avatar/participants/date/amount
-- swipe left -> delete
-- confirm delete modal
-
-`GroupMembersScreen`:
-- list members
-- invite by email
-- invite action button
-
-### 5.4 Expense Creation (Real Split UI)
-`AddExpenseScreen` now supports:
-- load real group members
-- payer selection
-- participant selection
-- split types:
-  - equal
-  - exact amount
-  - percentage
-- inline split validation mismatch error
-
-`SplitSelector` component:
-- path: `app/components/ui/SplitSelector.tsx`
-
-Split math utilities:
-- path: `app/utils/split.ts`
-
-### 5.5 API Layer and Error Handling
-`app/services/api.ts`:
-- auth header interceptor
-- base URL resolution for real-device dev
-- structured API errors (`code`, `message`, `context`)
-- critical server errors reported to Sentry
-
-### 5.6 Notifications on Mobile
-- push token registration on authenticated state
-- notification tap routing:
-  - expense event -> `ExpenseDetail`
-  - settlement/invite event -> `GroupDetail`
-
-### 5.7 UI/Polish
-- MaterialCommunityIcons standardized in navigation/empty-state usage
-- custom button variants + press-scale animation in `ui/Button`
-- empty-state visual improvements
-- illustration placeholders added:
-  - `app/assets/illustrations/no-groups.txt`
-  - `app/assets/illustrations/no-expenses.txt`
-  - `app/assets/illustrations/no-activity.txt`
-
-## 6. Logging Guide
-
-### Mobile logs
-- `[auth-ui]`: button click, validation, submit start/success/failure
-- `[auth]`: auth service payload tracing
-- `[api]`: base URL, request, response, structured error
-
-### Backend logs
-- `AuthController`: route entry
-- `AuthService`: auth attempt/success/failure
-- `PrismaService`: DB host + connection state
-- `RequestLoggerMiddleware`: method/path/status/duration
-
-## 7. Testing Status
-
-Backend tests expanded for:
-- group invite edge cases
-- member listing
-- split sum validation
-- notification assertions in expense flow
-
-Mobile tests added for:
-- `GroupListScreen` render path
-- `AddExpenseScreen` validation path
-- `SplitSelector` interaction
-- split utility math
-
-## 8. CI Status (`.github/workflows/ci.yml`)
-Pipeline now has separate jobs:
-- `typecheck`
-- `lint`
-- `test`
-- `build` (depends on above)
-
-Includes:
-- pnpm cache
-- turbo cache
-- Prisma generate step
-- coverage artifact upload
-
-## 9. Env Variables
-
-Root `.env.example` includes:
-- `SUPABASE_DATABASE_URL`
-- `JWT_SECRET`
-- `JWT_REFRESH_SECRET`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `REDIS_URL`
-- `CORS_ORIGINS`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-- `S3_BUCKET`
-- `SENTRY_DSN`
-- `EXPO_PUBLIC_SENTRY_DSN`
-
-Mobile `apps/mobile/.env.example`:
-- `EXPO_PUBLIC_API_URL`
-- `EXPO_PUBLIC_SENTRY_DSN`
-- `EXPO_PUBLIC_S3_BASE_URL`
-
-## 10. Scripts and Tooling
-
-Root scripts:
-- `pnpm install`
-- `pnpm dev`
-- `pnpm dev:backend`
-- `pnpm dev:mobile`
-- `pnpm dev:web`
-- `pnpm build`
-- `pnpm test`
-- `pnpm format`
-- `pnpm seed`
-
-Makefile:
-- `make dev`
-- `make test`
-- `make build`
-- `make dev-backend`
-- `make dev-mobile`
-- `make dev-web`
-
-## 11. Known Notes
-- Expo Go shows `expo-notifications` limitation warnings (expected in Expo Go).
-- AWS SDK v2 deprecation warning appears in backend logs; migration to v3 is pending.
-- Push notification sending is queue + logging infrastructure ready, external push provider integration pending.
+## 8. Next Steps
+1. Wire Expo notification tokens to backend + real push service (currently logged through Expo queue).
+2. Migrate AWS SDK usage to v3 and align Terraform CDK if needed.
+3. Document E2E setup (`RUN_E2E=true`) and release Playwright builds in CI.
