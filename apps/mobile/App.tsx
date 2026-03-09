@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,7 +11,7 @@ import Constants from 'expo-constants';
 import * as Sentry from 'sentry-expo';
 import { AppNavigator } from './app/navigation/AppNavigator';
 import { navigationRef } from './app/navigation/navigationRef';
-import { appTheme } from './app/theme/theme';
+import { lightTheme, darkTheme } from './app/theme/theme';
 import { useAuthStore } from './app/store/authStore';
 import { userService } from './app/services/user.service';
 import { apiBaseUrl } from './app/services/api';
@@ -37,6 +37,9 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
   React.useEffect(() => {
     void offlineQueue.start();
@@ -121,9 +124,9 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PaperProvider theme={appTheme}>
-          <StatusBar style="dark" />
-          <NavigationContainer ref={navigationRef}>
+        <PaperProvider theme={theme}>
+          <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+          <NavigationContainer ref={navigationRef} theme={theme as any}>
             <AppNavigator />
           </NavigationContainer>
         </PaperProvider>
@@ -131,3 +134,4 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
