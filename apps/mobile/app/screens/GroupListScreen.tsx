@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useGroupStore } from '../store/groupStore';
@@ -42,9 +42,11 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
 
   return (
     <>
-      <ScrollView
+      <FlatList
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={styles.scrollContent}
+        data={groups}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -54,31 +56,29 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
             }}
           />
         }
-      >
-        <Animated.View entering={FadeInDown.duration(400)}>
-          <Text style={[styles.heading, { color: colors.text_primary }]}>Groups</Text>
-          <Text style={[styles.subHeading, { color: colors.text_secondary }]}>
-            {groups.length} group{groups.length !== 1 ? 's' : ''}
-          </Text>
-        </Animated.View>
-
-        {groups.length === 0 ? (
-          <EmptyState kind="no_groups" title="No groups yet" />
-        ) : (
-          <View style={{ marginTop: spacing.md }}>
-            {groups.map((group, i) => (
-              <Animated.View key={group.id} entering={FadeInDown.duration(400).delay(100 + i * 60)}>
-                <ListItem
-                  title={group.name}
-                  description={group.currency}
-                  leftIcon="account-group"
-                  onPress={() => navigation.navigate('GroupDetail', { groupId: group.id })}
-                />
-              </Animated.View>
-            ))}
-          </View>
+        ListHeaderComponent={
+          <Animated.View entering={FadeInDown.duration(400)}>
+            <Text style={[styles.heading, { color: colors.text_primary }]}>Groups</Text>
+            <Text style={[styles.subHeading, { color: colors.text_secondary }]}>
+              {groups.length} group{groups.length !== 1 ? 's' : ''}
+            </Text>
+          </Animated.View>
+        }
+        ListEmptyComponent={
+          !loading ? <EmptyState kind="no_groups" title="No groups yet" /> : null
+        }
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>
+            <ListItem
+              title={item.name}
+              description={item.currency}
+              leftIcon="account-group"
+              onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
+            />
+          </Animated.View>
         )}
-      </ScrollView>
+      />
+
 
       {groups.length > 0 && (
         <FloatingActionButton

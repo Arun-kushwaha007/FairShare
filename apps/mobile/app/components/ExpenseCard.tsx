@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ interface ExpenseCardProps {
   onPress?: () => void;
 }
 
-export function ExpenseCard({
+export const ExpenseCard = memo(function ExpenseCard({
   description,
   amount,
   payerName,
@@ -83,7 +83,7 @@ export function ExpenseCard({
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

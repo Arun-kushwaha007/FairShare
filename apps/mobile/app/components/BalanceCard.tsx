@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ interface BalanceCardProps {
   variant?: 'default' | 'success' | 'danger';
 }
 
-export function BalanceCard({
+export const BalanceCard = memo(function BalanceCard({
   title,
   amount,
   subtitle,
@@ -87,7 +87,7 @@ export function BalanceCard({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useAppTheme } from '../theme/useAppTheme';
@@ -15,7 +15,7 @@ interface MemberAvatarStackProps {
   size?: number;
 }
 
-export function MemberAvatarStack({
+export const MemberAvatarStack = memo(function MemberAvatarStack({
   members,
   maxVisible = 5,
   size = 40,
@@ -79,7 +79,7 @@ export function MemberAvatarStack({
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
