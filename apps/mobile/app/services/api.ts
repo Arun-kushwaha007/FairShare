@@ -43,6 +43,15 @@ export const api = axios.create({
   timeout: 15000,
 });
 
+offlineQueue.setRequestExecutor(async (request) => {
+  await api.request({
+    method: request.method,
+    url: request.url,
+    data: request.data,
+    headers: { 'x-offline-retry': '1' },
+  });
+});
+
 if (__DEV__) {
   // Helps debug real-device failures where localhost is unreachable.
   console.log('[api] baseURL:', baseURL);

@@ -1,6 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as SecureStore from 'expo-secure-store';
-import { api } from '../services/api';
 
 type OfflineRequest = {
   id: string;
@@ -9,11 +8,18 @@ type OfflineRequest = {
   data: unknown;
 };
 
+type OfflineRequestExecutor = (request: OfflineRequest) => Promise<void>;
+
 const STORAGE_KEY = 'fairshare_offline_queue';
 
 class OfflineQueue {
   private initialized = false;
   private flushing = false;
+  private requestExecutor: OfflineRequestExecutor | null = null;
+
+  setRequestExecutor(executor: OfflineRequestExecutor): void {
+    this.requestExecutor = executor;
+  }
 
   async enqueue(req: OfflineRequest): Promise<void> {
     const queue = await this.readQueue();
@@ -47,19 +53,14 @@ class OfflineQueue {
 
     try {
       const queue = await this.readQueue();
-      if (queue.length === 0) {
+      if (queue.length === 0 || !this.requestExecutor) {
         return;
       }
 
       const remaining: OfflineRequest[] = [];
       for (const item of queue) {
         try {
-          await api.request({
-            method: item.method,
-            url: item.url,
-            data: item.data,
-            headers: { 'x-offline-retry': '1' },
-          });
+          await this.requestExecutor(item);
         } catch {
           remaining.push(item);
         }
