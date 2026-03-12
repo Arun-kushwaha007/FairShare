@@ -1,75 +1,232 @@
-# FairShare — Production Launch Notes (March 2026)
+# FairShare Project Status
 
-## 1. Overview
-FairShare is a pnpm/Turborepo monorepo built for collaborative expense sharing across Expo mobile, NestJS backend, and a Next.js marketing/dashboard experience. The stack is hard‑typed (TypeScript strict), backed by Prisma + Supabase PostgreSQL, Redis caching, and AWS S3 storage. JWT auth, refresh rotation, Google OAuth, and production observability are already wired together.
+Last updated: March 12, 2026
 
-## 2. Infrastructure & Deployment
-- **Terraform**: reusable modules (`vpc`, `ecs_cluster`, `ecs_service_backend`, `redis`, `s3_storage`, `cloudwatch_logs`) plus per‑env stacks (dev/staging/prod) deploy ECS Fargate backend, ElastiCache Redis, S3 buckets, and CloudWatch log groups. ECS service uses ALB health checks against `/health` and auto scaling (min/max caps).
-- **Docker**: multi‑stage backend image with `HEALTHCHECK` hitting `/health`, Prisma migrations bundled, and runtime environment variables wired from `AppConfigService`.
-- **CI/CD**:
-  - `ci.yml`: pnpm + Turbo cache; jobs for typecheck, lint, tests, frontend builds, security audit, dependency review, coverage uploads, and Playwright e2e (guarded by `RUN_E2E`).
-  - `deploy.yml`: on `main` builds/test -> docker image -> pushes to AWS ECR -> forces ECS service redeploy; image tagged with SHA + `latest`.
-- **Scripts**: `pnpm dev`, `pnpm build`, `pnpm test`, `pnpm mobile:build` (EAS production AAB), `pnpm seed`, `pnpm --filter backend prisma:generate`.
+## Overview
 
-## 3. Backend Implementation
-- **Core runtime**: `/api/v1` prefix, global `ValidationPipe`, helmet, compression, CSRF on refresh + `/auth/csrf-token`, and structured request logging (method/path/status/duration plus Prometheus metrics via `observeApiRequest`). AppConfig enforces environment variables for Supabase, Redis, AWS, S3, Stripe, etc.
-- **Health, metrics, observability**: `GET /health` reports DB + Redis status, `/metrics` exports Prometheus metrics, and OpenTelemetry NodeSDK auto-instrumentation starts on bootstrap with graceful shutdown.
-- **Auth + security**:
-  - Email/password + Google OAuth, refresh rotation stored hashed, secure `refresh_token` cookie (`httpOnly`, `secure`, `sameSite=strict`).
-  - `csurf` middleware across refresh endpoints; `AuthController` provides `/csrf-token`.
-  - Throttler limits auth/login/register to 10 req/min in addition to global 100/min.
-- **Payments & settlements**:
-  - Stripe-based `payments` module creates payment intents, stores idempotency keys, handles webhooks queued via BullMQ, and records settlements (duplicate guard + idempotency).
-  - Payment webhook job ensures settlement is created once per intent.
-- **Jobs + notifications**:
-  - BullMQ queues for notification delivery, receipt processing, payment webhooks; workers publish Expo push notifications asynchronously (job retry/backoff configured).
-  - `NotificationsService` now enqueues jobs, reads push tokens from Prisma, and retries chunked Expo requests.
-- **Data integrity**:
-  - Prisma schema now includes `Payment`, `Activity`, `PushToken`, `Balance`, `Settlement`, etc., with indexes and soft delete awareness via `createdAt`.
-  - Utilities `money.util.ts` and `sanitize.util.ts` ensure BigInt sums and protected text.
-  - Validation ensures splits add to total, payer/members exist, expenses capped at 1,000,000 cents, settlements prevent duplicates, invites sanitize email, and idempotency key support in payments/settlements.
+FairShare is a monorepo expense-sharing application with:
 
-## 4. Frontend & UX (priority on polish + flow)
-### Mobile Experience
-- **Navigation**: auth stack (`Login`, `Register`), main stack with `Dashboard`, tab navigator (`Groups`, `Activity`, `Profile`), and deep links to `GroupDetail`, `GroupMembers`, `AddExpense`, `ExpenseDetail`, `SettleUp`, `Settings`.
-- **Dashboard (HomeScreen)**: quick insights, activity preview, quick add expense, quick settle suggestion, and floating action button linking to `AddExpenseScreen`.
-- **Group detail**:
-  - Sections framed by time (`Today`, `This Week`, `Older`) with payer avatars, participant chips, swipe-to-delete (modal confirm), and member avatars that show balance summaries on tap.
-  - Member roster view with invite-by-email action and inline loading states/empty states backed by themed illustrations (`no-groups`, `no-expenses`, `no-activity`).
-- **Add Expense workflow**:
-  - Real group members loaded, payer + participant selection, split selector supporting equal, exact, and percentage splits with inline validation.
-  - `SplitSelector` component and shared `split.ts` utility manage calculations; `money` utilities ensure BigInt-friendly arithmetic.
-- **Settle Up flow**:
-  - Greedy simplify data drives buttons; UPI deeplink (`upi://pay?...`) plus “Mark as paid” button after payment ensures manual checkoff; success animation via Lottie.
-  - Offline + queue backed by `offlineQueue` using NetInfo; API wrappers mark retried POSTs accordingly.
-- **Theming & UI polish**:
-  - Design system with responsive spacing/typography/colors (`#4F46E5`, `#F8FAFC`, Inter), button variants (primary/secondary/danger) with press-scale animation via Reanimated.
-  - Custom UI primitives (`Avatar`, `Button`, `Card`, `MoneyText`, `LoadingSpinner`, `EmptyState`) built on react-native-paper plus MaterialCommunityIcons.
-  - Animations for settlements (Lottie), skeleton loaders, haptic feedback, toast system, and offline-safe retry notices.
-- **Networking**:
-  - Axios layer logs requests/responses, attaches JWT, measures latency (`trackApiLatency`), reports high latency to Sentry, and queues POSTs when offline.
-  - SecureStore persists tokens; Expo Notifications + Sentry SDK initialized in App.tsx; realtime socket handled via `socket.io-client` with rooms by group.
+- A NestJS backend in `apps/backend`
+- An Expo React Native mobile app in `apps/mobile`
+- A web app workspace in `apps/web`
+- Shared TypeScript contracts in `@fairshare/shared-types`
 
-### Web Experience
-- Authenticated dashboard under `/dashboard` showing group list, balances, and recent activity (reuses API contracts).
-- Marketing + documentation pages (`/features`, `/pricing`, `/about`, `/login`) include TailwindCSS + Framer Motion cards, hero with CTA, FAQ, newsletter form, and metadata for SEO.
+The project is beyond bootstrap stage. Core expense-sharing flows, settlements, notifications, receipts, realtime updates, and payment intent creation are implemented. Recent work has shifted toward reliability, idempotency, delivery safety, and production hardening.
 
-## 5. Testing & CI
-- Backend: Jest suites cover groups, balances, settlements (integration + unit), expenses, simplify, activity, notifications; newly updated mocks support duplicate-guard logic.
-- Mobile: jest-expo tests for `SplitSelector`, `AddExpenseScreen`, `GroupListScreen`, `LoginScreen`.
-- Playwright e2e: registration → login → group → invite → expense → settlement → activity assertions.
-- CI pipeline (see `.github/workflows/ci.yml`) ensures typecheck, lint, tests, builds, security audit, dependency review, coverage artifacts, and Playwright run (conditioned).
+## Infrastructure And Deployment
 
-## 6. Logging & Observability
-- Backend structured logging (RequestLogger + Sentry + Prometheus). Observability controller exposes metrics for API latency, error count, expense creation, active users.
-- Mobile logs prefixed `[api]`, `[auth-ui]`, `[auth]`; Sentry receives high-latency warnings and slow-screen traces.
+- Monorepo managed with `pnpm` and Turbo
+- PostgreSQL accessed through Prisma
+- Redis used for cache invalidation and queue-related workflows
+- Socket.IO used for realtime updates
+- S3 integration present for receipt flows using AWS SDK v3 presigning
+- Stripe integration present for payment intents and webhooks
+- Sentry and OpenTelemetry hooks present in the backend
 
-## 7. Environment & Secrets
-- `.env.example` contains Supabase, JWT secrets, Google OAuth, Redis, CORS, AWS, S3, Stripe, Sentry keys.
-- Mobile `.env.example` covers `EXPO_PUBLIC_API_URL`, Sentry, and S3 base URL.
-- `AppConfigService` enforces `mustGet` for mandatory vars, while mobile/respective services resolve host addresses for Expo Go vs LAN dev.
+Backend runtime characteristics:
 
-## 8. Next Steps
-1. Wire Expo notification tokens to backend + real push service (currently logged through Expo queue).
-2. Migrate AWS SDK usage to v3 and align Terraform CDK if needed.
-3. Document E2E setup (`RUN_E2E=true`) and release Playwright builds in CI.
+- Nest listens on `0.0.0.0`
+- Global API prefix is `/api/v1`
+- CORS is enabled from configured origins
+- Throttling, compression, helmet, cookie parsing, CSRF protection, and request logging are enabled
+
+## Backend Implementation
+
+### Implemented modules
+
+The backend currently wires these major modules:
+
+- Auth
+- Users
+- Groups
+- Expenses
+- Balances
+- Settlements
+- Simplify
+- Receipts
+- Notifications
+- Payments
+- Jobs
+- Activity
+- Realtime
+- Health
+- Observability
+- Redis
+- S3
+- Prisma
+
+### Implemented backend capabilities
+
+- User authentication and token-based login flows
+- Group creation and membership management
+- Expense creation, listing, update, deletion, and detail retrieval
+- Balance tracking and debt simplification support
+- Settlement creation between group members
+- Receipt upload URL generation
+- Activity logging for domain actions
+- Push token registration and notification delivery workflows
+- Stripe payment intent creation
+- Payment webhook handling that records successful payments as settlements
+- Realtime emission for group activity
+- Health and metrics endpoints
+
+### Recent backend fix
+
+A NestJS startup failure caused by a module cycle was resolved.
+
+Problem chain:
+
+- `SettlementsModule -> NotificationsModule -> JobsModule -> PaymentsModule -> SettlementsModule`
+
+Resolution:
+
+- `SettlementsModule` now uses `forwardRef(() => NotificationsModule)` so Nest can resolve the cycle during module initialization
+
+This restored a clean backend boot path.
+
+### Recent backend reliability work
+
+Additional backend hardening completed in the latest pass:
+
+- Migrated S3 presigned upload generation from AWS SDK v2 to AWS SDK v3
+- Added receipt upload URL coverage with service-level and HTTP-level tests
+- Hardened payment webhook processing so settlement creation happens before payment status is marked `succeeded`
+- Improved settlement idempotency handling for duplicate webhook delivery and unique-key races
+- Enforced Stripe signature presence when a webhook secret is configured
+- Added notification delivery retry backoff and automatic cleanup of invalid Expo push tokens
+
+## Frontend And UX
+
+### Mobile status
+
+The Expo mobile app already includes:
+
+- Login and registration
+- Group list and group detail flows
+- Group members view
+- Add expense and expense detail flows
+- Settlement flow
+- Activity screen
+- Profile and settings screens
+- Shared UI components for cards, buttons, avatars, skeleton states, empty states, and toasts
+- Zustand-based stores for auth, groups, expenses, and toast state
+- Service clients for auth, groups, expenses, settlements, realtime, and users
+
+Implemented mobile platform features:
+
+- API client with request logging and latency tracking
+- Bearer-token injection from secure storage
+- Realtime connection after authentication
+- Push token registration through `expo-notifications`
+- Offline POST queueing for selected write actions
+
+### Recent mobile fixes
+
+Recent development fixes addressed local runtime issues:
+
+- Removed the stale `apps/mobile/.env` override for `EXPO_PUBLIC_API_URL`
+- Stopped forcing the dead API host `http://10.111.154.142:3001/api/v1`
+- Restored local API host auto-detection from the Expo runtime host
+- Removed the `api.ts` <-> `offlineQueue.ts` require cycle
+- Refactored the offline queue so it receives a request executor from `api.ts` instead of importing the API client directly
+
+This makes local mobile networking more reliable as long as the device and backend machine are on the same reachable network.
+
+### Web status
+
+The web workspace exists in the monorepo, but backend and mobile appear to be the most actively implemented parts of the product at this stage. Web should be treated as secondary until a dedicated milestone or readiness target is documented.
+
+## Testing And CI
+
+Repository-level scripts include:
+
+- `pnpm lint`
+- `pnpm test`
+- `pnpm e2e`
+
+Recent validation used during current fixes:
+
+- `pnpm --filter backend lint`
+- `pnpm --filter backend build`
+- `pnpm --filter backend test -- receipts`
+- `pnpm --filter backend test -- payments settlements`
+- `pnpm --filter backend test -- notifications`
+- `pnpm --filter mobile exec tsc --noEmit`
+
+There are tests in both backend and mobile codebases. The latest backend pass added direct coverage for receipt URL generation, payment webhook idempotency, settlement idempotency behavior, and notification retry handling.
+
+## Logging And Observability
+
+Backend observability already includes:
+
+- Sentry initialization
+- OpenTelemetry startup and shutdown hooks
+- Request logging middleware
+- Domain logging around notifications and payments
+- Prometheus-style metrics infrastructure through `prom-client`
+
+Mobile development diagnostics currently include:
+
+- API base URL logging in development
+- Request, response, and error logging in the API client
+- API latency tracking
+
+## Environment And Secrets
+
+Backend environment configuration currently covers:
+
+- Port
+- CORS origins
+- Redis connection
+- PostgreSQL and Prisma access
+- Stripe secret and webhook configuration
+- S3 configuration
+- Sentry DSN
+
+Mobile environment configuration currently covers:
+
+- Optional `EXPO_PUBLIC_API_URL` override
+- Optional `EXPO_PUBLIC_SENTRY_DSN`
+
+Important local mobile networking behavior:
+
+- If `EXPO_PUBLIC_API_URL` is set, it overrides host auto-detection
+- If it is not set, the app derives the backend host from the Expo runtime host during local development
+- The phone or emulator and the backend machine must still be on the same reachable network
+
+## Current Status
+
+### Working now
+
+- Backend boots successfully
+- Core API surface for auth, groups, expenses, balances, settlements, receipts, notifications, payments, and activity is implemented
+- Prisma, Redis, realtime, and payment flows are integrated in the backend
+- Receipt upload URLs are generated through AWS SDK v3 presigning
+- Payment webhook settlement handling is idempotent at the settlement layer and safer under retry
+- Invalid Expo push tokens are removed automatically after permanent delivery failures
+- Mobile app can authenticate, navigate the core flows, register push tokens, connect to realtime, and use the offline queue
+
+### Partially complete
+
+- Push notifications are implemented, but full remote notification testing should use a development build instead of Expo Go
+- Payments are implemented at the intent and webhook level, with improved idempotency, but still need broader production validation
+- Web progress is less clearly advanced than backend and mobile
+
+## Known Gaps
+
+- Expo package versions are slightly out of sync with the installed SDK and still produce compatibility warnings
+- `expo-notifications` remote push support is limited in Expo Go
+- Local mobile networking remains environment-sensitive when LAN addressing changes
+- Receipt OCR and structured receipt parsing are not implemented yet
+- Smart split suggestion APIs and UI are not implemented yet
+- Mobile notification center and expanded offline retry UI are not implemented yet
+- Broader observability counters and tracing for expense, settlement, and webhook flows still need expansion
+
+## Next Steps
+
+1. Align Expo package versions with the installed SDK.
+2. Validate login, expense, settlement, payment, and notification flows end to end on a real device and a development build.
+3. Add receipt OCR processing and structured receipt item storage.
+4. Add smart split suggestion APIs and mobile UI.
+5. Expand observability counters and tracing for expense creation, settlement creation, and webhook processing.
+6. Clarify the target scope and milestone for the web workspace.
