@@ -116,20 +116,22 @@ export class PaymentsService {
       where: { stripePaymentIntentId: intent.id },
     });
 
-    if (!payment || payment.status === 'succeeded') {
+    if (!payment) {
       return;
     }
-
-    await this.prisma.payment.update({
-      where: { id: payment.id },
-      data: { status: 'succeeded' },
-    });
 
     await this.settlementsService.create(payment.groupId, payment.payerId, {
       payerId: payment.payerId,
       receiverId: payment.receiverId,
       amountCents: payment.amountCents.toString(),
     }, `payment:${payment.id}`);
+
+    if (payment.status !== 'succeeded') {
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: 'succeeded' },
+      });
+    }
 
     this.logger.log(`Payment succeeded and settlement recorded paymentId=${payment.id}`);
   }
@@ -139,6 +141,10 @@ export class PaymentsService {
     payload: Record<string, unknown>,
   ): Promise<Stripe.Event> {
     const webhookSecret = this.config.stripeWebhookSecret;
+    if (webhookSecret && !signature) {
+      throw new BadRequestException('Missing Stripe signature');
+    }
+
     if (signature && webhookSecret) {
       const rawBody = JSON.stringify(payload);
       return this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);

@@ -76,48 +76,67 @@ export class SettlementsService {
       throw new BadRequestException('Duplicate settlement detected');
     }
 
-    const settlement = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.settlement.create({
-        data: {
-          groupId,
-          payerId: dto.payerId,
-          receiverId: dto.receiverId,
-          amountCents: amount,
-          idempotencyKey: idempotencyKey ?? null,
-        },
-      });
-
-      await this.balancesService.adjustBalance(
-        tx as unknown as Prisma.TransactionClient,
-        groupId,
-        dto.payerId,
-        dto.receiverId,
-        amount,
-      );
-      await this.balancesService.adjustBalance(
-        tx as unknown as Prisma.TransactionClient,
-        groupId,
-        dto.receiverId,
-        dto.payerId,
-        -amount,
-      );
-
-      await tx.activity.create({
-        data: {
-          groupId,
-          actorUserId,
-          type: 'settlement_created',
-          entityId: created.id,
-          metadata: {
+    let settlement;
+    try {
+      settlement = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.settlement.create({
+          data: {
+            groupId,
             payerId: dto.payerId,
             receiverId: dto.receiverId,
-            amountCents: amount.toString(),
+            amountCents: amount,
+            idempotencyKey: idempotencyKey ?? null,
           },
-        },
-      });
+        });
 
-      return created;
-    });
+        await this.balancesService.adjustBalance(
+          tx as unknown as Prisma.TransactionClient,
+          groupId,
+          dto.payerId,
+          dto.receiverId,
+          amount,
+        );
+        await this.balancesService.adjustBalance(
+          tx as unknown as Prisma.TransactionClient,
+          groupId,
+          dto.receiverId,
+          dto.payerId,
+          -amount,
+        );
+
+        await tx.activity.create({
+          data: {
+            groupId,
+            actorUserId,
+            type: 'settlement_created',
+            entityId: created.id,
+            metadata: {
+              payerId: dto.payerId,
+              receiverId: dto.receiverId,
+              amountCents: amount.toString(),
+            },
+          },
+        });
+
+        return created;
+      });
+    } catch (error) {
+      if (idempotencyKey && this.isUniqueConstraintError(error)) {
+        const existing = await this.prisma.settlement.findUnique({ where: { idempotencyKey } });
+        if (existing) {
+          return {
+            id: existing.id,
+            groupId: existing.groupId,
+            payerId: existing.payerId,
+            receiverId: existing.receiverId,
+            amountCents: existing.amountCents.toString(),
+            createdAt: existing.createdAt.toISOString(),
+          };
+        }
+      }
+
+      throw error;
+    }
 
     await this.redis.invalidateGroupCache(groupId);
 
@@ -148,5 +167,9 @@ export class SettlementsService {
       amountCents: settlement.amountCents.toString(),
       createdAt: settlement.createdAt.toISOString(),
     };
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2002');
   }
 }
