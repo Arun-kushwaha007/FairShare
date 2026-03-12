@@ -1,21 +1,23 @@
-﻿import { Injectable } from '@nestjs/common';
-import AWS from 'aws-sdk';
+import { Injectable } from '@nestjs/common';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
 export class S3Service {
-  private readonly s3: AWS.S3;
+  private readonly s3: S3Client;
 
   constructor(private readonly config: AppConfigService) {
-    this.s3 = new AWS.S3({ region: this.config.awsRegion });
+    this.s3 = new S3Client({ region: this.config.awsRegion });
   }
 
   async getPresignedUploadUrl(key: string, contentType: string, expiresInSeconds = 300): Promise<string> {
-    return this.s3.getSignedUrlPromise('putObject', {
+    const command = new PutObjectCommand({
       Bucket: this.config.s3Bucket,
       Key: key,
       ContentType: contentType,
-      Expires: expiresInSeconds,
     });
+
+    return getSignedUrl(this.s3, command, { expiresIn: expiresInSeconds });
   }
 }
