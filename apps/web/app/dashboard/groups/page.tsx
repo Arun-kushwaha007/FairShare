@@ -1,33 +1,36 @@
-'use client';
-
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { apiFetch } from '../../../lib/api';
+﻿import Link from 'next/link';
+import { DashboardLayout } from '../../../src/components/layout';
+import { backendFetch } from '../../../src/lib/backend';
 
 type Group = { id: string; name: string; currency: string };
 
-export default function DashboardGroupsPage() {
-  const [groups, setGroups] = useState<Group[]>([]);
-
-  useEffect(() => {
-    void apiFetch<Group[]>('/groups').then(setGroups).catch(() => setGroups([]));
-  }, []);
+export default async function DashboardGroupsPage() {
+  let groups: Group[] = [];
+  try {
+    groups = await backendFetch<Group[]>('/groups');
+  } catch {
+    groups = [];
+  }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="text-3xl font-bold">Groups</h1>
-      <div className="mt-6 space-y-3">
+    <DashboardLayout>
+      <section className="space-y-3">
         {groups.map((group) => (
           <Link
             key={group.id}
             href={`/dashboard/group/${group.id}`}
-            className="block rounded-lg border bg-white p-4 shadow-sm"
+            className="block rounded-2xl border border-border bg-card p-5 shadow-glass backdrop-blur-glass"
           >
-            <p className="font-semibold">{group.name}</p>
-            <p className="text-sm text-slate-600">{group.currency}</p>
+            <p className="font-semibold text-text-primary">{group.name}</p>
+            <p className="mt-1 text-sm text-text-secondary">{group.currency}</p>
           </Link>
         ))}
-      </div>
-    </main>
+        {groups.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card p-6 text-sm text-text-secondary shadow-glass backdrop-blur-glass">
+            No groups yet.
+          </div>
+        ) : null}
+      </section>
+    </DashboardLayout>
   );
 }

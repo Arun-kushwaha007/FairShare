@@ -1,18 +1,18 @@
 ﻿'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
-type LoginResponse = { user: unknown | null };
+type RegisterResponse = { user: unknown | null };
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -20,19 +20,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
       if (!response.ok) {
-        throw new Error('Login failed');
+        throw new Error('Register failed');
       }
-      (await response.json()) as LoginResponse;
-      const next = searchParams.get('next') || '/dashboard';
-      router.push(next);
+      (await response.json()) as RegisterResponse;
+      router.push('/dashboard');
     } catch {
-      setError('Login failed');
+      setError('Registration failed');
     } finally {
       setLoading(false);
     }
@@ -40,12 +39,18 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-14">
-      <h1 className="text-3xl font-semibold tracking-tight">Login</h1>
-      <p className="mt-2 text-sm text-text-secondary">Welcome back. Sign in to your dashboard.</p>
+      <h1 className="text-3xl font-semibold tracking-tight">Create account</h1>
+      <p className="mt-2 text-sm text-text-secondary">Start tracking shared expenses in minutes.</p>
       <form
         className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-6 shadow-glass backdrop-blur-glass"
         onSubmit={onSubmit}
       >
+        <input
+          className="w-full rounded-xl border border-border bg-surface/40 p-3 text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand/60"
+          placeholder="Name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
         <input
           className="w-full rounded-xl border border-border bg-surface/40 p-3 text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-brand/60"
           placeholder="Email"
@@ -66,12 +71,12 @@ export default function LoginPage() {
           disabled={loading}
           type="submit"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'Creating...' : 'Create account'}
         </button>
         <p className="text-center text-sm text-text-secondary">
-          New here?{' '}
-          <Link className="text-text-primary underline underline-offset-4 hover:opacity-90" href="/register">
-            Create an account
+          Already have an account?{' '}
+          <Link className="text-text-primary underline underline-offset-4 hover:opacity-90" href="/login">
+            Sign in
           </Link>
         </p>
       </form>
