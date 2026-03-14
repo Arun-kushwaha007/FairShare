@@ -9,12 +9,28 @@ export function SummaryCard({
   value: ReactNode;
   hint?: ReactNode;
 }) {
+export function SummaryCard({
+  title,
+  value,
+  hint,
+}: {
+  title: string;
+  value: ReactNode;
+  hint?: ReactNode;
+}) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-glass backdrop-blur-glass">
-      <p className="text-sm text-text-secondary">{title}</p>
-      <div className="mt-1 text-2xl font-semibold tracking-tight text-text-primary">{value}</div>
-      {hint ? <div className="mt-2 text-sm text-text-secondary">{hint}</div> : null}
+    <div className="neo-border bg-black p-6 shadow-[4px_4px_0px_0px_#22d3ee] flex flex-col justify-between">
+      <div>
+        <p className="text-xs font-mono font-black uppercase tracking-widest text-zinc-500 mb-1">{title}</p>
+        <div className="text-4xl font-black italic tracking-tighter text-white">{value}</div>
+      </div>
+      {hint ? (
+        <div className="mt-4 pt-4 border-t border-zinc-900 text-[10px] font-mono font-bold uppercase tracking-tighter text-zinc-400">
+          DATA_LOG // {hint}
+        </div>
+      ) : null}
     </div>
   );
 }
+
 
