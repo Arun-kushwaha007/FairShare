@@ -13,11 +13,12 @@ export default async function DashboardGroupsPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Your Groups</h1>
+      <div className="mb-12 border-b-4 border-white pb-6">
+        <h1 className="text-4xl font-black uppercase italic tracking-tighter text-white">Squad Directory</h1>
+        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-500 mt-2">ACCESSING_ALL_ACTIVE_NODES</p>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((group) => (
           <GroupCard
             key={group.id}
@@ -29,9 +30,9 @@ export default async function DashboardGroupsPage() {
         ))}
 
         {groups.length === 0 && (
-          <div className="col-span-full rounded-2xl border border-border bg-card p-10 text-center text-text-secondary shadow-glass backdrop-blur-glass">
-            <p className="text-lg font-medium text-text-primary">No groups yet</p>
-            <p className="mt-1">Create or join a group to start sharing expenses.</p>
+          <div className="col-span-full neo-border bg-zinc-900 p-20 text-center">
+            <p className="text-2xl font-black uppercase tracking-tighter text-zinc-500 mb-2">NO_GROUPS_INITIALIZED</p>
+            <p className="text-sm font-mono text-zinc-600">Create or join a squad to synchronize records.</p>
           </div>
         )}
       </section>
