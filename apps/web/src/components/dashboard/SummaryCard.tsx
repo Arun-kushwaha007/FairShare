@@ -9,15 +9,7 @@ export function SummaryCard({
   value: ReactNode;
   hint?: ReactNode;
 }) {
-export function SummaryCard({
-  title,
-  value,
-  hint,
-}: {
-  title: string;
-  value: ReactNode;
-  hint?: ReactNode;
-}) {
+
   return (
     <div className="neo-border bg-black p-6 shadow-[4px_4px_0px_0px_#22d3ee] flex flex-col justify-between">
       <div>
