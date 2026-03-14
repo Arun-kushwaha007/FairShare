@@ -1,7 +1,6 @@
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Text } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
 
@@ -25,10 +24,14 @@ export function EmptyState({
   title,
   kind = 'default',
   subtitle,
+  actionLabel,
+  onAction,
 }: {
   title: string;
   kind?: EmptyStateKind;
   subtitle?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   const { colors, isDark } = useAppTheme();
 
@@ -57,6 +60,16 @@ export function EmptyState({
       <Text style={[styles.subtitle, { color: colors.text_secondary }]}>
         {subtitle ?? subtitleByKind[kind]}
       </Text>
+      {actionLabel && onAction && (
+        <Button
+          mode="contained"
+          onPress={onAction}
+          style={styles.button}
+          contentStyle={styles.buttonContent}
+        >
+          {actionLabel}
+        </Button>
+      )}
     </View>
   );
 }
@@ -87,5 +100,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  button: {
+    marginTop: spacing.md,
+    borderRadius: 8,
+  },
+  buttonContent: {
+    paddingHorizontal: spacing.md,
   },
 });

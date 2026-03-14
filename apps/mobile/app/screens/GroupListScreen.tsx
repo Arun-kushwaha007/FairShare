@@ -1,6 +1,7 @@
 import React from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useGroupStore } from '../store/groupStore';
 import { groupService } from '../services/group.service';
@@ -12,7 +13,7 @@ import { SkeletonList } from '../components/ui/SkeletonList';
 import { FloatingActionButton } from '../components/FloatingActionButton';
 import { spacing } from '../theme/spacing';
 
-export function GroupListScreen({ navigation }: { navigation: { navigate: (route: string, params?: any) => void } }) {
+export function GroupListScreen({ navigation }: { navigation: any }) {
   const groups = useGroupStore((state) => state.groups);
   const setGroups = useGroupStore((state) => state.setGroups);
   const [loading, setLoading] = React.useState(true);
@@ -35,6 +36,19 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
   React.useEffect(() => {
     void loadGroups();
   }, [loadGroups]);
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CreateGroup')}
+          style={{ marginRight: spacing.md }}
+        >
+          <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, colors.primary]);
 
   if (loading) {
     return <SkeletonList rows={6} />;
@@ -65,7 +79,14 @@ export function GroupListScreen({ navigation }: { navigation: { navigate: (route
           </Animated.View>
         }
         ListEmptyComponent={
-          !loading ? <EmptyState kind="no_groups" title="No groups yet" /> : null
+          !loading ? (
+            <EmptyState
+              kind="no_groups"
+              title="No groups yet"
+              actionLabel="Create Group"
+              onAction={() => navigation.navigate('CreateGroup')}
+            />
+          ) : null
         }
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>

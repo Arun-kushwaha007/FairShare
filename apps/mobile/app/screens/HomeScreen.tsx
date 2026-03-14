@@ -67,7 +67,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
       color: colors.primary,
       onPress: () => {
         if (!firstGroupId) {
-          toast('Create a group first');
+          navigation.navigate('CreateGroup');
           return;
         }
         navigation.navigate('AddExpense', { groupId: firstGroupId });
@@ -79,7 +79,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
       color: colors.success,
       onPress: () => {
         if (!firstGroupId) {
-          toast('Create a group first');
+          navigation.navigate('CreateGroup');
           return;
         }
         navigation.navigate('SettleUp', { groupId: firstGroupId });
@@ -230,7 +230,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
       <FloatingActionButton
         onPress={() => {
           if (!firstGroupId) {
-            toast('Create a group first');
+            navigation.navigate('CreateGroup');
             return;
           }
           navigation.navigate('AddExpense', { groupId: firstGroupId });

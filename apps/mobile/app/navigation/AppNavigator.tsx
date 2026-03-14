@@ -17,6 +17,7 @@ import { SettleUpScreen } from '../screens/SettleUpScreen';
 import { ActivityScreen } from '../screens/ActivityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { CreateGroupScreen } from '../screens/CreateGroupScreen';
 import { GlobalToast } from '../components/ui/GlobalToast';
 
 export type AuthStackParamList = {
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   AddExpense: { groupId: string };
   ExpenseDetail: { expenseId: string };
   SettleUp: { groupId: string };
+  CreateGroup: undefined;
   Settings: undefined;
 };
 
@@ -115,6 +117,7 @@ function AppStack() {
       <RootStack.Screen name="AddExpense" component={AddExpenseScreen} />
       <RootStack.Screen name="ExpenseDetail" component={ExpenseDetailScreen} />
       <RootStack.Screen name="SettleUp" component={SettleUpScreen} />
+      <RootStack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ title: 'Create Group' }} />
       <RootStack.Screen name="Settings" component={SettingsScreen} />
     </RootStack.Navigator>
   );
