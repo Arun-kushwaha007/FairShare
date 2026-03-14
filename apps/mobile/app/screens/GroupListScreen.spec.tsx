@@ -16,7 +16,7 @@ describe('GroupListScreen', () => {
 
     const { getByText } = render(
       <PaperProvider>
-        <GroupListScreen navigation={{ navigate: jest.fn() }} />
+        <GroupListScreen navigation={{ navigate: jest.fn(), setOptions: jest.fn() }} />
       </PaperProvider>,
     );
 
