@@ -1,24 +1,24 @@
 {
-    "name":  "fairshare",
-    "private":  true,
-    "packageManager":  "pnpm@10.6.1",
-    "scripts":  {
-                    "build":  "turbo run build",
-                    "dev":  "turbo run dev --parallel",
-                    "dev:backend":  "pnpm --filter backend dev",
-                    "dev:mobile":  "pnpm --filter mobile dev",
-                    "dev:web":  "pnpm --filter web dev",
-                    "mobile:build": "pnpm --filter mobile eas:build",
-                    "lint":  "turbo run lint",
-                    "test":  "turbo run test",
-                    "e2e":  "playwright test",
-                    "format":  "prettier --write .",
-                    "seed":  "pnpm --filter backend seed"
-                },
-    "devDependencies":  {
-                            "@playwright/test":  "^1.55.1",
-                            "prettier":  "^3.6.2",
-                            "turbo":  "^2.5.0",
-                            "typescript":  "^5.7.3"
-                        }
+  "name": "fairshare",
+  "private": true,
+  "packageManager": "pnpm@8.15.5",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:mobile": "pnpm --filter mobile dev",
+    "dev:web": "pnpm --filter web dev",
+    "mobile:build": "pnpm --filter mobile eas:build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "e2e": "playwright test",
+    "format": "prettier --write .",
+    "seed": "pnpm --filter backend seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.3"
+  }
 }
