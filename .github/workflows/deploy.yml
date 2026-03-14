@@ -46,7 +46,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.6.1
+          version: 8.15.5
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -67,14 +67,18 @@ jobs:
         run: pnpm --filter backend build
 
       - name: Configure AWS credentials with OIDC
-        if: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}
+        if: ${{ env.HAS_AWS_ROLE == 'true' }}
+        env:
+          HAS_AWS_ROLE: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
       - name: Configure AWS credentials with access keys
-        if: ${{ secrets.AWS_ROLE_TO_ASSUME == '' }}
+        if: ${{ env.HAS_AWS_ROLE != 'true' }}
+        env:
+          HAS_AWS_ROLE: ${{ secrets.AWS_ROLE_TO_ASSUME != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
