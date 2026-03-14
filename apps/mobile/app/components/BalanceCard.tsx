@@ -20,7 +20,7 @@ export const BalanceCard = memo(function BalanceCard({
   icon = 'wallet',
   variant = 'default',
 }: BalanceCardProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
 
   const accentColor =
     variant === 'success'
@@ -30,99 +30,88 @@ export const BalanceCard = memo(function BalanceCard({
         : colors.primary;
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: isDark
-            ? `${accentColor}18`
-            : `${accentColor}0A`,
-          borderColor: isDark ? `${accentColor}30` : `${accentColor}20`,
-        },
-      ]}
-    >
-      <View style={styles.iconContainer}>
-        <View
-          style={[
-            styles.iconBg,
-            {
-              backgroundColor: `${accentColor}20`,
-            },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={icon}
-            size={22}
-            color={accentColor}
-          />
-        </View>
-      </View>
-      <View style={styles.content}>
-        <Text
-          style={[
-            styles.title,
-            { color: colors.text_secondary },
-          ]}
-        >
-          {title}
-        </Text>
-        <Text
-          style={[
-            styles.amount,
-            { color: colors.text_primary },
-          ]}
-        >
-          {amount}
-        </Text>
-        {subtitle ? (
-          <Text
-            style={[
-              styles.subtitle,
-              { color: colors.text_secondary },
-            ]}
-          >
-            {subtitle}
+    <View style={styles.wrapper}>
+      <View style={[styles.shadow, { backgroundColor: colors.border }]} />
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={styles.header}>
+          <View style={[styles.iconBg, { backgroundColor: accentColor }]}>
+            <MaterialCommunityIcons name={icon} size={24} color={colors.background} />
+          </View>
+          <Text style={[styles.title, { color: colors.text_secondary }]}>
+            {title.toUpperCase()}
           </Text>
-        ) : null}
+        </View>
+        
+        <View style={styles.content}>
+          <Text style={[styles.amount, { color: colors.text_primary }]}>
+            {amount}
+          </Text>
+          {subtitle ? (
+            <View style={[styles.subtitleBadge, { backgroundColor: accentColor }]}>
+              <Text style={[styles.subtitleText, { color: colors.background }]}>
+                {subtitle.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+    marginBottom: 8,
+    marginRight: 8,
+  },
+  shadow: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: -6,
+    bottom: -6,
+    backgroundColor: '#000000',
+  },
   card: {
-    borderRadius: 16,
     padding: spacing.lg,
-    borderWidth: 1,
+    borderWidth: 3,
+    gap: spacing.md,
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  iconContainer: {},
   iconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  content: {
-    flex: 1,
-  },
   title: {
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 2,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.md,
   },
   amount: {
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -0.5,
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: -1,
   },
-  subtitle: {
-    fontSize: 13,
-    marginTop: 2,
+  subtitleBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  subtitleText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });

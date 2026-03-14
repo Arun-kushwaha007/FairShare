@@ -24,120 +24,135 @@ export const ExpenseCard = memo(function ExpenseCard({
   date,
   onPress,
 }: ExpenseCardProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: isDark ? colors.card : colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-      accessibilityLabel={`Expense: ${description}, ${amount}`}
-      accessibilityRole="button"
-    >
-      <View style={styles.row}>
-        {/* Payer Avatar */}
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>{payerInitials}</Text>
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <Text
-            style={[styles.description, { color: colors.text_primary }]}
-            numberOfLines={1}
-          >
-            {description}
-          </Text>
-          <View style={styles.metaRow}>
-            <Text style={[styles.meta, { color: colors.text_secondary }]}>
-              {payerName}
+    <View style={styles.wrapper}>
+      <View style={[styles.shadow, { backgroundColor: colors.border }]} />
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+        onPress={onPress}
+        activeOpacity={0.8}
+        accessibilityLabel={`Expense: ${description}, ${amount}`}
+        accessibilityRole="button"
+      >
+        <View style={styles.topRow}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.background }]}>{payerInitials}</Text>
+          </View>
+          <View style={styles.descriptionContainer}>
+            <Text style={[styles.description, { color: colors.text_primary }]} numberOfLines={1}>
+              {description.toUpperCase()}
             </Text>
-            <View style={styles.dot} />
-            <View style={styles.chipRow}>
-              <MaterialCommunityIcons
-                name="account-multiple"
-                size={13}
-                color={colors.text_secondary}
-              />
-              <Text style={[styles.meta, { color: colors.text_secondary }]}>
-                {participantCount}
-              </Text>
-            </View>
-            <View style={styles.dot} />
-            <Text style={[styles.meta, { color: colors.text_secondary }]}>
-              {date}
+            <Text style={[styles.payer, { color: colors.text_secondary }]}>
+              BY {payerName.toUpperCase()}
             </Text>
           </View>
+          <Text style={[styles.amount, { color: colors.text_primary }]}>
+            {amount}
+          </Text>
         </View>
 
-        {/* Amount */}
-        <Text style={[styles.amount, { color: colors.text_primary }]}>
-          {amount}
-        </Text>
-      </View>
-    </TouchableOpacity>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        <View style={styles.bottomRow}>
+          <View style={styles.metaItem}>
+            <MaterialCommunityIcons name="account-multiple" size={16} color={colors.primary} />
+            <Text style={[styles.metaText, { color: colors.text_secondary }]}>
+              {participantCount} INVOLVED
+            </Text>
+          </View>
+          <Text style={[styles.date, { color: colors.text_secondary }]}>
+            {date.toUpperCase()}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 14,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
+  wrapper: {
+    position: 'relative',
+    marginBottom: spacing.lg,
+    marginRight: spacing.sm,
   },
-  row: {
+  shadow: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: -6,
+    bottom: -6,
+    backgroundColor: '#000000',
+  },
+  card: {
+    padding: spacing.lg,
+    borderWidth: 3,
+  },
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 15,
+    fontWeight: '900',
+    fontSize: 16,
   },
-  content: {
+  descriptionContainer: {
     flex: 1,
   },
   description: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 2,
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  meta: {
-    fontSize: 12,
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#9CA3AF',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
+  payer: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 1,
   },
   amount: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  divider: {
+    height: 2,
+    marginVertical: spacing.md,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  date: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
 });

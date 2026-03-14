@@ -26,7 +26,7 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
       const data = await groupService.list();
       setGroups(data);
     } catch {
-      toast('Failed to load groups');
+      toast('FAILED TO LOAD GROUPS');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -39,6 +39,8 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: 'GROUPS',
+      headerTitleStyle: { fontWeight: '900', letterSpacing: 1 },
       headerRight: () => <HeaderPlusButton onPress={() => navigation.navigate('CreateGroup')} />,
     });
   }, [navigation]);
@@ -48,9 +50,9 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
   }
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <FlatList
-        style={{ flex: 1, backgroundColor: colors.background }}
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         data={groups}
         keyExtractor={(item) => item.id}
@@ -61,22 +63,25 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
               setRefreshing(true);
               void loadGroups();
             }}
+            tintColor={colors.primary}
           />
         }
         ListHeaderComponent={
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <Text style={[styles.heading, { color: colors.text_primary }]}>Groups</Text>
-            <Text style={[styles.subHeading, { color: colors.text_secondary }]}>
-              {groups.length} group{groups.length !== 1 ? 's' : ''}
-            </Text>
+          <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
+            <Text style={[styles.heading, { color: colors.text_primary }]}>GROUPS</Text>
+            <View style={styles.badge}>
+              <Text style={[styles.badgeText, { color: colors.background }]}>
+                {groups.length} TOTAL
+              </Text>
+            </View>
           </Animated.View>
         }
         ListEmptyComponent={
           !loading ? (
             <EmptyState
               kind="no_groups"
-              title="No groups yet"
-              actionLabel="Create Group"
+              title="NO GROUPS YET"
+              actionLabel="CREATE GROUP"
               onAction={() => navigation.navigate('CreateGroup')}
             />
           ) : null
@@ -84,8 +89,8 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>
             <ListItem
-              title={item.name}
-              description={item.currency}
+              title={item.name.toUpperCase()}
+              description={item.currency.toUpperCase()}
               leftIcon="account-group"
               onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
             />
@@ -93,31 +98,38 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
         )}
       />
 
-
-      {groups.length > 0 && (
-        <FloatingActionButton
-          onPress={() => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' })}
-        />
-      )}
-    </>
+      <FloatingActionButton
+        onPress={() => navigation.navigate('CreateGroup')}
+        icon="plus-thick"
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingTop: spacing.lg,
     paddingBottom: 120,
   },
-  heading: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    paddingHorizontal: spacing.lg,
+  header: {
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
   },
-  subHeading: {
-    fontSize: 14,
-    paddingHorizontal: spacing.lg,
-    marginTop: 2,
+  heading: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  badge: {
+    backgroundColor: '#000000',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '900',
   },
 });
 
@@ -125,7 +137,7 @@ function HeaderPlusButton({ onPress }: { onPress: () => void }) {
   const { colors } = useAppTheme();
   return (
     <TouchableOpacity onPress={onPress} style={{ marginRight: spacing.md }}>
-      <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+      <MaterialCommunityIcons name="plus-thick" size={24} color={colors.primary} />
     </TouchableOpacity>
   );
 }

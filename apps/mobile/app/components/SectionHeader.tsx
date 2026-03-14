@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
@@ -21,15 +21,19 @@ export function SectionHeader({ title, action, onActionPress }: SectionHeaderPro
           { color: colors.text_primary },
         ]}
       >
-        {title}
+        {title.toUpperCase()}
       </Text>
       {action ? (
-        <Text
-          style={[styles.action, { color: colors.primary }]}
-          onPress={onActionPress}
+        <TouchableOpacity 
+          onPress={onActionPress} 
+          style={[styles.actionBadge, { backgroundColor: colors.primary }]}
         >
-          {action}
-        </Text>
+          <Text
+            style={[styles.action, { color: colors.background }]}
+          >
+            {action.toUpperCase()}
+          </Text>
+        </TouchableOpacity>
       ) : null}
     </View>
   );
@@ -41,13 +45,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.md,
+    marginTop: spacing.md,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  actionBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   action: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
 });
