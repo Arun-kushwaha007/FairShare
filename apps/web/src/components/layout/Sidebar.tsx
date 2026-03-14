@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -23,15 +23,15 @@ export function Sidebar() {
 
   return (
     <aside className="md:sticky md:top-6">
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-glass backdrop-blur-glass">
-        <div className="flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm font-semibold tracking-wide text-text-primary">
-            FairShare
+      <div className="neo-border bg-zinc-900 p-6 shadow-[4px_4px_0px_0px_#a855f7]">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b-2 border-zinc-800">
+          <Link href="/dashboard" className="text-xl font-black italic tracking-tighter uppercase">
+            FAIRSHARE
           </Link>
-          <span className="text-xs text-text-secondary">Web</span>
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-500">v1.2.0</span>
         </div>
 
-        <nav className="mt-4 flex gap-1 overflow-x-auto md:flex-col md:gap-1.5 md:overflow-visible">
+        <nav className="flex flex-col gap-2">
           {items.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -39,17 +39,26 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={[
-                  'whitespace-nowrap rounded-xl px-3 py-2 text-sm transition',
+                  'relative group flex items-center justify-between border-2 px-4 py-3 text-sm font-black uppercase tracking-tighter transition-all',
                   active
-                    ? 'bg-white/10 text-text-primary'
-                    : 'text-text-secondary hover:bg-white/5 hover:text-text-primary',
+                    ? 'border-white bg-white text-black translate-x-1 translate-y-1 shadow-[2px_2px_0px_0px_#22d3ee]'
+                    : 'border-zinc-800 text-zinc-500 hover:border-white hover:text-white',
                 ].join(' ')}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {active && <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />}
               </Link>
             );
           })}
         </nav>
+
+        <div className="mt-12 bg-black neo-border p-4">
+          <p className="text-[10px] font-mono font-bold uppercase tracking-tighter text-zinc-500 mb-2">SYSTEM STATUS:</p>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
+            <span className="text-xs font-mono font-bold text-green-400">NOMINAL</span>
+          </div>
+        </div>
       </div>
     </aside>
   );

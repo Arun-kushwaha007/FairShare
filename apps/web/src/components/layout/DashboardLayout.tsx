@@ -1,4 +1,4 @@
-﻿import { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { AppLayout } from './AppLayout';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -6,15 +6,18 @@ import { Topbar } from './Topbar';
 export function DashboardLayout({ children, topbarRight }: { children: ReactNode; topbarRight?: ReactNode }) {
   return (
     <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
-        <div className="grid gap-6 md:grid-cols-[260px_1fr]">
+      <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
+        <div className="grid gap-12 md:grid-cols-[300px_1fr]">
           <Sidebar />
-          <main className="space-y-6">
+          <main className="min-h-[80vh]">
             <Topbar rightSlot={topbarRight} />
-            {children}
+            <div className="bg-zinc-900/50 neo-border p-8 min-h-full">
+              {children}
+            </div>
           </main>
         </div>
       </div>
     </AppLayout>
+
   );
 }
