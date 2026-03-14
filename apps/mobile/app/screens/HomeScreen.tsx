@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
 import { useAuthStore } from '../store/authStore';
@@ -28,7 +28,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
   >([]);
   const toast = useToastStore((state) => state.show);
   const user = useAuthStore((state) => state.user);
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
 
   React.useEffect(() => {
     startScreenLoad('Dashboard');
@@ -62,8 +62,8 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
 
   const quickActions: QuickActionItem[] = [
     {
-      icon: 'plus-circle-outline',
-      label: 'Add Expense',
+      icon: 'plus-thick',
+      label: 'ADD EXPENSE',
       color: colors.primary,
       onPress: () => {
         if (!firstGroupId) {
@@ -74,8 +74,8 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
       },
     },
     {
-      icon: 'handshake-outline',
-      label: 'Settle Up',
+      icon: 'handshake',
+      label: 'SETTLE UP',
       color: colors.success,
       onPress: () => {
         if (!firstGroupId) {
@@ -86,8 +86,8 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
       },
     },
     {
-      icon: 'account-group-outline',
-      label: 'Groups',
+      icon: 'account-group',
+      label: 'GROUPS',
       color: colors.warning,
       onPress: () => navigation.navigate('Groups' as any),
     },
@@ -97,16 +97,16 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
     const now = Date.now();
     const ts = new Date(iso).getTime();
     const diff = Math.floor((now - ts) / 1000);
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
+    if (diff < 60) return `${diff}S AGO`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}M AGO`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}H AGO`;
+    return `${Math.floor(diff / 86400)}D AGO`;
   };
 
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
-        style={{ flex: 1, backgroundColor: colors.background }}
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -114,10 +114,10 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.text_secondary }]}>
-              Welcome back,
+              WELCOME BACK,
             </Text>
             <Text style={[styles.name, { color: colors.text_primary }]}>
-              {user?.name ?? 'Guest'}
+              {user?.name?.toUpperCase() ?? 'GUEST'}
             </Text>
           </View>
         </Animated.View>
@@ -126,9 +126,9 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
         <Animated.View entering={FadeInDown.duration(500).delay(100)} style={styles.balanceRow}>
           <View style={{ flex: 1 }}>
             <BalanceCard
-              title="Groups"
+              title="GROUPS"
               amount={String(totalGroups)}
-              subtitle="Active"
+              subtitle="ACTIVE"
               icon="account-group"
               variant="default"
             />
@@ -137,85 +137,47 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
 
         {/* Quick Actions */}
         <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-          <SectionHeader title="Quick Actions" />
+          <SectionHeader title="QUICK ACTIONS" />
           <View style={styles.quickActionRow}>
-            {quickActions.map((action, i) => (
-              <Animated.View
+            {quickActions.map((action) => (
+              <TouchableOpacity
                 key={action.label}
-                entering={FadeInRight.duration(400).delay(300 + i * 100)}
-                style={{ flex: 1 }}
+                style={[styles.quickAction, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={action.onPress}
+                activeOpacity={0.8}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.quickAction,
-                    {
-                      backgroundColor: isDark ? colors.card : colors.surface,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  onPress={action.onPress}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.quickIconBg, { backgroundColor: `${action.color}18` }]}>
-                    <MaterialCommunityIcons
-                      name={action.icon}
-                      size={24}
-                      color={action.color}
-                    />
-                  </View>
-                  <Text
-                    style={[styles.quickLabel, { color: colors.text_primary }]}
-                    numberOfLines={1}
-                  >
+                <View style={styles.quickActionShadow} />
+                <View style={styles.quickActionContent}>
+                  <MaterialCommunityIcons name={action.icon} size={28} color={action.color} />
+                  <Text style={[styles.quickLabel, { color: colors.text_primary }]}>
                     {action.label}
                   </Text>
-                </TouchableOpacity>
-              </Animated.View>
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         </Animated.View>
 
         {/* Recent Activity */}
         <Animated.View entering={FadeInDown.duration(500).delay(400)}>
-          <SectionHeader title="Recent Activity" />
+          <SectionHeader title="RECENT ACTIVITY" />
           {recentActivities.length === 0 ? (
-            <View
-              style={[
-                styles.emptyCard,
-                {
-                  backgroundColor: isDark ? colors.card : colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="history"
-                size={40}
-                color={colors.muted}
-              />
-              <Text style={{ color: colors.text_secondary, marginTop: spacing.sm }}>
-                No recent activity
-              </Text>
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+               <View style={styles.emptyCardShadow} />
+               <View style={styles.emptyCardContent}>
+                <MaterialCommunityIcons name="history" size={48} color={colors.muted} />
+                <Text style={[styles.emptyText, { color: colors.text_secondary }]}>
+                  NO RECENT ACTIVITY
+                </Text>
+              </View>
             </View>
           ) : (
             recentActivities.map((activity, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.activityItem,
-                  {
-                    backgroundColor: isDark ? colors.card : colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
+              <View key={i} style={[styles.activityItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={[styles.activityDot, { backgroundColor: colors.primary }]} />
                 <View style={{ flex: 1 }}>
-                  <Text
-                    style={[styles.activityText, { color: colors.text_primary }]}
-                    numberOfLines={1}
-                  >
-                    {activity.type}
+                  <Text style={[styles.activityText, { color: colors.text_primary }]}>
+                    {activity.type.toUpperCase()}
                   </Text>
                   <Text style={[styles.activityTime, { color: colors.text_secondary }]}>
                     {formatRelativeTime(activity.createdAt)}
@@ -236,7 +198,7 @@ export function HomeScreen({ navigation }: { navigation: { navigate: (route: str
           navigation.navigate('AddExpense', { groupId: firstGroupId });
         }}
       />
-    </>
+    </View>
   );
 }
 
@@ -246,74 +208,104 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   header: {
-    marginBottom: spacing.xl,
-    marginTop: spacing.sm,
+    marginBottom: spacing.xxl,
+    marginTop: spacing.md,
+    borderLeftWidth: 8,
+    borderLeftColor: '#00FF41', // Accent stripe
+    paddingLeft: spacing.md,
   },
   greeting: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
   name: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    marginTop: 2,
+    fontSize: 36,
+    fontWeight: '900',
+    lineHeight: 40,
+    marginTop: 4,
   },
   balanceRow: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xl,
   },
   quickActionRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
+    flexDirection: 'column',
+    gap: spacing.lg,
   },
   quickAction: {
-    borderRadius: 16,
-    padding: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    gap: spacing.sm,
+    height: 72,
+    position: 'relative',
   },
-  quickIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+  quickActionShadow: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: -6,
+    bottom: -6,
+    backgroundColor: '#000000',
+    borderRadius: 0,
+  },
+  quickActionContent: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    borderWidth: 3,
+    backgroundColor: '#FFFFFF',
+    gap: spacing.lg,
   },
   quickLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   emptyCard: {
-    borderRadius: 16,
-    padding: spacing.xxl,
+    height: 160,
+    position: 'relative',
+  },
+  emptyCardShadow: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: -8,
+    bottom: -8,
+    backgroundColor: '#000000',
+  },
+  emptyCardContent: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 3,
+    backgroundColor: '#FFFFFF',
+    gap: spacing.md,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   activityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    gap: spacing.md,
-    borderWidth: 1,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 2,
+    gap: spacing.lg,
   },
   activityDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
   },
   activityText: {
     fontSize: 14,
-    fontWeight: '500',
-    textTransform: 'capitalize',
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   activityTime: {
-    fontSize: 12,
+    fontSize: 10,
+    fontWeight: '600',
     marginTop: 2,
+    letterSpacing: 1,
   },
 });

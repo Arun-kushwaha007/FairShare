@@ -1,29 +1,31 @@
-﻿export const colors = {
+export const colors = {
   light: {
-    background: '#F8FAFC',
+    background: '#FFFFFF',
     surface: '#FFFFFF',
     card: '#FFFFFF',
-    primary: '#4F46E5',
-    success: '#16A34A',
-    danger: '#DC2626',
-    warning: '#F59E0B',
-    text_primary: '#0F172A',
-    text_secondary: '#64748B',
-    muted: '#94A3B8',
-    border: '#E2E8F0',
+    primary: '#000000', // Brutalist Black
+    success: '#00FF41', // Matrix Green
+    danger: '#FF3131',  // Electric Red
+    warning: '#FFEE00', // Caution Yellow
+    text_primary: '#000000',
+    text_secondary: '#404040',
+    muted: '#808080',
+    border: '#000000',  // Heavy Black Border
+    shadow: '#000000',
   },
   dark: {
-    background: '#0F172A',
-    surface: '#111827',
-    card: '#1F2937',
-    primary: '#6366F1',
-    success: '#22C55E',
-    danger: '#EF4444',
-    warning: '#F59E0B',
-    text_primary: '#F9FAFB',
-    text_secondary: '#9CA3AF',
-    muted: '#475569',
-    border: '#334155',
+    background: '#000000',
+    surface: '#000000',
+    card: '#121212',
+    primary: '#FFFFFF', // Brutalist White
+    success: '#00FF41',
+    danger: '#FF3131',
+    warning: '#FFEE00',
+    text_primary: '#FFFFFF',
+    text_secondary: '#A0A0A0',
+    muted: '#606060',
+    border: '#FFFFFF',  // Heavy White Border
+    shadow: '#FFFFFF',
   },
 };
 

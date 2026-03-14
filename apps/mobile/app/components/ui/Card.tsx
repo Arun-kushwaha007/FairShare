@@ -6,44 +6,49 @@ import { spacing } from '../../theme/spacing';
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  variant?: 'default' | 'glass';
 }
 
-export function Card({ children, style, variant = 'default' }: CardProps) {
-  const { colors, isDark } = useAppTheme();
+export function Card({ children, style }: CardProps) {
+  const { colors } = useAppTheme();
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: isDark ? colors.card : colors.surface,
-          borderColor: colors.border,
-          ...(variant === 'glass'
-            ? {
-                backgroundColor: isDark
-                  ? 'rgba(31, 41, 55, 0.8)'
-                  : 'rgba(255, 255, 255, 0.8)',
-              }
-            : {}),
-        },
-        style,
-      ]}
-    >
-      {children}
+    <View style={styles.container}>
+      {/* Hard Shadow */}
+      <View style={[styles.shadow, { backgroundColor: colors.border }]} />
+      
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+          style,
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+    marginBottom: 8,
+    marginRight: 8,
+  },
   card: {
-    borderRadius: 16,
+    borderRadius: 4,
     padding: spacing.lg,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 2,
+  },
+  shadow: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: -6,
+    bottom: -6,
+    borderRadius: 4,
   },
 });

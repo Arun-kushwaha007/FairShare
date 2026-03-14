@@ -13,6 +13,7 @@ import { AppNavigator } from './app/navigation/AppNavigator';
 import { navigationRef } from './app/navigation/navigationRef';
 import { lightTheme, darkTheme } from './app/theme/theme';
 import { useAuthStore } from './app/store/authStore';
+import { useThemeStore } from './app/store/themeStore';
 import { userService } from './app/services/user.service';
 import { apiBaseUrl } from './app/services/api';
 import { realtimeService } from './app/services/realtime.service';
@@ -37,8 +38,14 @@ Notifications.setNotificationHandler({
 
 export default function App() {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark';
+  const systemColorScheme = useColorScheme();
+  const themeMode = useThemeStore((state) => state.themeMode);
+
+  const isDarkMode = React.useMemo(() => {
+    if (themeMode === 'system') return systemColorScheme === 'dark';
+    return themeMode === 'dark';
+  }, [themeMode, systemColorScheme]);
+
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   React.useEffect(() => {
