@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { MoveRight, CheckCircle2, Zap, Shield, TrendingUp } from 'lucide-react';
 
 const features = [
-  'Smart expense splits',
-  'Automatic balance tracking',
-  'Settle-up suggestions',
-  'Receipt uploads',
+  { text: 'Smart expense splits', icon: Zap, color: 'text-yellow-400' },
+  { text: 'Automatic balance tracking', icon: TrendingUp, color: 'text-cyan-400' },
+  { text: 'Settle-up suggestions', icon: CheckCircle2, color: 'text-purple-400' },
+  { text: 'Receipt uploads', icon: Shield, color: 'text-pink-400' },
 ];
 
 const faqs = [
@@ -26,101 +27,169 @@ const faqs = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <motion.h1 initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="text-5xl font-bold tracking-tight">
-          Split smarter with FairShare
-        </motion.h1>
-        <p className="mt-4 max-w-2xl text-lg text-slate-600">Track group expenses, simplify debts, and settle transparently.</p>
-        <div className="mt-8 flex gap-4">
-          <a href="/login" className="rounded bg-brand px-5 py-3 text-white">Get Started</a>
-          <a href="/features" className="rounded border border-slate-300 px-5 py-3">View Features</a>
-        </div>
+    <main className="relative min-h-screen font-sans text-white">
+      {/* Hero Section */}
+      <section className="mx-auto max-w-7xl px-6 py-32 text-center md:py-48">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative inline-block"
+        >
+          <h1 
+            data-text="FAIRSHARE"
+            className="glitch-text text-7xl font-black italic tracking-tighter md:text-9xl lg:text-[12rem]"
+          >
+            FAIRSHARE
+          </h1>
+        </motion.div>
+        
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mx-auto mt-6 max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400 md:text-3xl"
+        >
+          Split smarter. Settle faster. <span className="text-white italic underline decoration-yellow-400 decoration-4 underline-offset-8">No cap.</span>
+        </motion.p>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-12 flex flex-col items-center justify-center gap-6 sm:flex-row"
+        >
+          <a
+            href="/login"
+            className="neo-pop-hover neo-pop-hover-purple group relative flex items-center gap-3 border-2 border-white bg-white px-8 py-4 font-black text-black transition-colors hover:bg-transparent hover:text-white"
+          >
+            GET STARTED <MoveRight className="group-hover:translate-x-2 transition-transform" />
+          </a>
+          <a
+            href="/features"
+            className="neo-pop-hover neo-pop-hover-cyan flex items-center gap-3 border-2 border-white bg-black px-8 py-4 font-black transition-all"
+          >
+            SYSTEM FEATURES
+          </a>
+        </motion.div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <h2 className="text-3xl font-semibold">Product Screenshots</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {['Dashboard', 'Group Detail', 'Settle Up'].map((label) => (
-            <div key={label} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="h-48 rounded bg-gradient-to-br from-indigo-100 to-slate-100" />
-              <p className="mt-3 text-sm font-medium text-slate-700">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <h2 className="text-3xl font-semibold">Features</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+      {/* Social Proof / Features Grid */}
+      <section className="mx-auto max-w-7xl px-6 pb-32">
+        <h2 className="mb-12 text-center text-4xl font-black uppercase italic tracking-tighter text-yellow-400 md:text-6xl">
+          Core Mechanics
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {features.map((item, index) => (
             <motion.div
-              key={item}
-              initial={{ opacity: 0, y: 12 }}
+              key={item.text}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.05 }}
-              className="rounded-lg border border-slate-200 bg-white p-4"
+              transition={{ delay: index * 0.1 }}
+              className="neo-border neo-shadow-purple neo-pop-hover bg-zinc-900 p-8"
             >
-              {item}
+              <item.icon size={48} className={`mb-6 ${item.color}`} />
+              <h3 className="text-xl font-black uppercase leading-tight">
+                {item.text}
+              </h3>
             </motion.div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <h2 className="text-3xl font-semibold">Feature Comparison</h2>
-        <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-100">
-              <tr>
-                <th className="px-4 py-3">Feature</th>
-                <th className="px-4 py-3">FairShare</th>
-                <th className="px-4 py-3">Spreadsheets</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t border-slate-200"><td className="px-4 py-3">Auto balances</td><td className="px-4 py-3">Yes</td><td className="px-4 py-3">Manual</td></tr>
-              <tr className="border-t border-slate-200"><td className="px-4 py-3">Settlement suggestions</td><td className="px-4 py-3">Yes</td><td className="px-4 py-3">No</td></tr>
-              <tr className="border-t border-slate-200"><td className="px-4 py-3">Receipt uploads</td><td className="px-4 py-3">Yes</td><td className="px-4 py-3">No</td></tr>
-            </tbody>
-          </table>
+      {/* Pricing / Table (Feature Comparison) */}
+      <section className="mx-auto max-w-7xl px-6 pb-32">
+        <div className="neo-border neo-shadow-cyan bg-black p-8 md:p-12">
+          <h2 className="mb-12 text-4xl font-black uppercase italic tracking-tighter text-cyan-400 md:text-6xl text-center md:text-left">
+            Meta vs Reality
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-bold uppercase tracking-tighter">
+              <thead className="border-b-4 border-white">
+                <tr>
+                  <th className="px-4 py-6 text-2xl">Standard</th>
+                  <th className="px-4 py-6 text-2xl text-yellow-400">FairShare</th>
+                  <th className="px-4 py-6 text-2xl text-zinc-500">Spreadsheets</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y-2 divide-zinc-800">
+                <tr>
+                  <td className="px-4 py-6">Auto balances</td>
+                  <td className="px-4 py-6 text-white">Full Send</td>
+                  <td className="px-4 py-6 text-zinc-500">Manual L</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-6">Settle up</td>
+                  <td className="px-4 py-6 text-white">One Tap</td>
+                  <td className="px-4 py-6 text-zinc-500">N/A</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-6">Receipts</td>
+                  <td className="px-4 py-6 text-white">Cloud Base</td>
+                  <td className="px-4 py-6 text-zinc-500">Physical Only</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <h2 className="text-3xl font-semibold">FAQ</h2>
-        <div className="mt-6 space-y-3">
+      {/* FAQ */}
+      <section className="mx-auto max-w-4xl px-6 pb-32">
+        <h2 className="mb-12 text-center text-4xl font-black uppercase italic tracking-tighter text-pink-500 md:text-6xl">
+          Dev Log
+        </h2>
+        <div className="space-y-6">
           {faqs.map((faq) => (
-            <div key={faq.q} className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="font-semibold">{faq.q}</h3>
-              <p className="mt-2 text-slate-600">{faq.a}</p>
+            <div key={faq.q} className="neo-border neo-shadow-yellow bg-zinc-900 p-6">
+              <h3 className="text-lg font-black uppercase tracking-tighter md:text-2xl">
+                {faq.q}
+              </h3>
+              <p className="mt-4 font-bold text-zinc-400">
+                {faq.a}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-semibold">Newsletter</h2>
-          <p className="mt-2 text-slate-600">Get product updates and beta invitations.</p>
-          <form className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <input type="email" placeholder="Enter your email" className="w-full rounded border border-slate-300 px-4 py-3" />
-            <button className="rounded bg-brand px-5 py-3 text-white" type="submit">Subscribe</button>
+      {/* Newsletter / CTA */}
+      <section className="mx-auto max-w-7xl px-6 pb-48">
+        <div className="neo-border bg-white px-8 py-12 text-black md:px-20 md:py-24 text-center">
+          <h2 className="text-5xl font-black uppercase italic tracking-tighter md:text-8xl">
+            LOCK IN.
+          </h2>
+          <p className="mt-6 text-xl font-bold uppercase tracking-widest text-zinc-600">
+            Join the beta and stop the group chat static.
+          </p>
+          <form className="mt-12 flex flex-col gap-4 md:flex-row md:justify-center">
+            <input 
+              type="email" 
+              placeholder="YOUR@EMAIL.XYZ" 
+              className="border-4 border-black bg-white px-6 py-4 font-black uppercase placeholder-zinc-400 outline-none focus:bg-yellow-100 transition-colors md:min-w-[400px]" 
+            />
+            <button 
+              type="submit"
+              className="neo-pop-hover bg-black px-10 py-4 font-black uppercase text-white shadow-[4px_4px_0px_0px_rgba(168,85,247,1)]"
+            >
+              SUBSCRIBE
+            </button>
           </form>
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-          <p>FairShare</p>
-          <div className="flex gap-4 text-sm text-slate-600">
-            <a href="/about">About</a>
-            <a href="/pricing">Pricing</a>
-            <a href="/login">Login</a>
+      <footer className="border-t-4 border-white bg-black py-12 px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
+          <p className="text-3xl font-black uppercase tracking-tighter italic">FAIRSHARE</p>
+          <div className="flex gap-12 font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
+            <a href="/about" className="hover:text-yellow-400">About</a>
+            <a href="/pricing" className="hover:text-cyan-400">Pricing</a>
+            <a href="/login" className="hover:text-purple-400">Login</a>
           </div>
         </div>
       </footer>
     </main>
   );
 }
+

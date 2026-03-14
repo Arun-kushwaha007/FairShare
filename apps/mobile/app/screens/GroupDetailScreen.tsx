@@ -21,6 +21,9 @@ import { FloatingActionButton } from '../components/FloatingActionButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { endScreenLoad, startScreenLoad } from '../utils/perf';
+import { useGroupStore } from '../store/groupStore';
+
+const EMPTY_EXPENSES: ExpenseDto[] = [];
 
 export function GroupDetailScreen({
   route,
@@ -38,7 +41,9 @@ export function GroupDetailScreen({
     perUserOwedCents: Record<string, string>;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ExpenseDto | null>(null);
-  const expenses = useExpenseStore((state) => state.expensesByGroup[route.params.groupId] ?? []);
+  const expenses = useExpenseStore(
+    React.useCallback((state) => state.expensesByGroup[route.params.groupId] ?? EMPTY_EXPENSES, [route.params.groupId])
+  );
   const setExpenses = useExpenseStore((state) => state.setExpenses);
   const toast = useToastStore((state) => state.show);
   const currentUserId = useAuthStore((state) => state.user?.id);

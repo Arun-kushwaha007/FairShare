@@ -39,16 +39,9 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CreateGroup')}
-          style={{ marginRight: spacing.md }}
-        >
-          <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
-        </TouchableOpacity>
-      ),
+      headerRight: () => <HeaderPlusButton onPress={() => navigation.navigate('CreateGroup')} />,
     });
-  }, [navigation, colors.primary]);
+  }, [navigation]);
 
   if (loading) {
     return <SkeletonList rows={6} />;
@@ -127,3 +120,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+function HeaderPlusButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useAppTheme();
+  return (
+    <TouchableOpacity onPress={onPress} style={{ marginRight: spacing.md }}>
+      <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+    </TouchableOpacity>
+  );
+}

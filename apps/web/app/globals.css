@@ -1,7 +1,76 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-50 text-slate-900;
+:root {
+  --neon-purple: #a855f7;
+  --neon-cyan: #22d3ee;
+  --neon-pink: #ec4899;
+  --neon-yellow: #facc15;
+  --bg-dark: #0a0a0a;
 }
+
+body {
+  @apply bg-[#0a0a0a] text-white font-sans;
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image: linear-gradient(#333 1px, transparent 1px),
+      linear-gradient(90deg, #333 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .neo-border {
+    @apply border-2 border-white;
+  }
+
+  .neo-shadow-purple {
+    box-shadow: 4px 4px 0px 0px var(--neon-purple);
+  }
+
+  .neo-shadow-cyan {
+    box-shadow: 4px 4px 0px 0px var(--neon-cyan);
+  }
+
+  .neo-shadow-pink {
+    box-shadow: 4px 4px 0px 0px var(--neon-pink);
+  }
+
+  .neo-shadow-yellow {
+    box-shadow: 4px 4px 0px 0px var(--neon-yellow);
+  }
+
+  .neo-pop-hover {
+    @apply transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1;
+  }
+
+  .neo-pop-hover-purple:hover {
+    box-shadow: 8px 8px 0px 0px var(--neon-purple);
+  }
+
+  .neo-pop-hover-cyan:hover {
+    box-shadow: 8px 8px 0px 0px var(--neon-cyan);
+  }
+
+  .glitch-text {
+    @apply relative inline-block;
+  }
+
+  .glitch-text::before,
+  .glitch-text::after {
+    content: attr(data-text);
+    @apply absolute top-0 left-0 w-full h-full opacity-0;
+  }
+
+  .glitch-text:hover::before {
+    @apply animate-pulse opacity-100 text-cyan-400 -translate-x-1;
+    z-index: -1;
+  }
+
+  .glitch-text:hover::after {
+    @apply animate-pulse opacity-100 text-pink-500 translate-x-1;
+    z-index: -2;
+  }
+}
+
