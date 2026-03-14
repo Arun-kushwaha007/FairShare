@@ -17,36 +17,37 @@ export function MemberList({ groupId, members }: MemberListProps) {
 
   return (
     <>
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-glass backdrop-blur-glass">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-text-primary">Group Members</h2>
+      <div className="neo-border bg-zinc-900 p-8 shadow-[6px_6px_0px_0px_#a855f7]">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Squad Manifest</h2>
           <button 
             onClick={() => setIsInviteOpen(true)}
-            className="p-2 rounded-lg bg-brand/10 text-brand hover:bg-brand/20 transition-colors"
+            className="p-3 neo-border border-2 border-white bg-white text-black hover:bg-zinc-100 transition-all shadow-[2px_2px_0px_0px_#a855f7] active:shadow-none active:translate-x-0.5 active:translate-y-0.5"
             title="Invite Member"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-5 h-5" />
           </button>
         </div>
         
         <div className="space-y-4">
           {members.map((member) => (
-            <div key={member.memberId} className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand font-bold shrink-0">
+            <div key={member.memberId} className="flex items-center gap-4 border-2 border-zinc-800 bg-black p-4 group hover:border-white transition-colors">
+              <div className="flex h-12 w-12 items-center justify-center neo-border border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 font-black text-lg shrink-0">
                 {member.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">
+                <p className="text-lg font-black uppercase tracking-tighter text-white truncate">
                   {member.name}
                 </p>
-                <p className="text-xs text-text-secondary capitalize truncate">
-                  {member.role.toLowerCase()}
+                <p className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest truncate mt-1">
+                  ROLE // {member.role.toLowerCase()}
                 </p>
               </div>
             </div>
           ))}
         </div>
       </div>
+
 
       <InviteModal 
         groupId={groupId}
