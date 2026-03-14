@@ -13,6 +13,8 @@ import { RegisterDto } from './dto/register.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { setActiveUsers } from '../observability/metrics';
 
+import { GroupsService } from '../groups/groups.service';
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -21,6 +23,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly config: AppConfigService,
+    private readonly groupsService: GroupsService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensDto> {
@@ -38,6 +41,14 @@ export class AuthService {
       });
 
       this.logger.log(`Register success userId=${user.id} email=${email}`);
+      
+      // Resolve any pending invitations
+      try {
+        await this.groupsService.resolvePendingInvites(user.id, email);
+      } catch (err) {
+        this.logger.error(`Failed to resolve pending invites for userId=${user.id}`, err instanceof Error ? err.stack : undefined);
+      }
+
       return this.issueTokens(user.id, user.email);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -74,16 +85,28 @@ export class AuthService {
     const email = dto.email.toLowerCase();
     this.logger.log(`Google login attempt email=${email}`);
 
-    const user =
-      (await this.prisma.user.findUnique({ where: { email } })) ??
-      (await this.prisma.user.create({
+    let user = await this.prisma.user.findUnique({ where: { email } });
+    const isNewUser = !user;
+
+    if (!user) {
+      user = await this.prisma.user.create({
         data: {
           email,
           name: dto.name,
           avatarUrl: dto.avatarUrl,
           passwordHash: await hash(randomUUID(), 10),
         },
-      }));
+      });
+    }
+
+    if (isNewUser) {
+      // Resolve any pending invitations for new Google users
+      try {
+        await this.groupsService.resolvePendingInvites(user.id, email);
+      } catch (err) {
+        this.logger.error(`Failed to resolve pending invites for userId=${user.id}`, err instanceof Error ? err.stack : undefined);
+      }
+    }
 
     this.logger.log(`Google login success userId=${user.id} email=${email}`);
     return this.issueTokens(user.id, user.email);

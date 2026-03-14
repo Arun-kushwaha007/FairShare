@@ -198,10 +198,27 @@ export class GroupsService {
 
   async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
     await this.assertMembership(groupId, actorUserId);
+    const email = dto.email.toLowerCase();
 
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      // Create or update pending invitation
+      await this.prisma.groupInvite.upsert({
+        where: {
+          groupId_email: {
+            groupId,
+            email,
+          },
+        },
+        create: {
+          groupId,
+          email,
+          invitedBy: actorUserId,
+          role: 'MEMBER',
+        },
+        update: {}, // Already invited, no-op
+      });
+      return { success: true };
     }
 
     const existingMembership = await this.prisma.groupMember.findUnique({
@@ -255,6 +272,48 @@ export class GroupsService {
     });
 
     return { success: true };
+  }
+
+  async resolvePendingInvites(userId: string, email: string): Promise<void> {
+    const invites = await this.prisma.groupInvite.findMany({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (invites.length === 0) {
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const invite of invites) {
+        // Create membership
+        await tx.groupMember.create({
+          data: {
+            groupId: invite.groupId,
+            userId,
+            role: invite.role,
+          },
+        });
+
+        // Add activity
+        await tx.activity.create({
+          data: {
+            groupId: invite.groupId,
+            actorUserId: invite.invitedBy,
+            type: 'member_joined',
+            entityId: userId,
+            metadata: { role: invite.role },
+          },
+        });
+
+        // Delete invite
+        await tx.groupInvite.delete({
+          where: { id: invite.id },
+        });
+
+        // Invalidate cache for each group
+        await this.redis.invalidateGroupCache(invite.groupId);
+      }
+    });
   }
 
   private async assertMembership(groupId: string, userId: string): Promise<void> {

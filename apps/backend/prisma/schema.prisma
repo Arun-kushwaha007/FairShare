@@ -65,6 +65,7 @@ model Group {
   settlements Settlement[]
   activities   Activity[]
   payments     Payment[]
+  invites      GroupInvite[]
 
   @@index([createdBy])
   @@map("groups")
@@ -187,6 +188,20 @@ model Activity {
   @@index([createdAt])
   @@index([groupId, createdAt])
   @@map("activities")
+}
+
+model GroupInvite {
+  id        String   @id @default(uuid())
+  groupId   String
+  email     String
+  role      GroupRole @default(MEMBER)
+  invitedBy String
+  createdAt DateTime @default(now())
+  group     Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([groupId, email])
+  @@index([email])
+  @@map("group_invites")
 }
 
 model PushToken {

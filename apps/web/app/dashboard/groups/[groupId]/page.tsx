@@ -46,7 +46,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
           </div>
           
           <aside className="space-y-6">
-            <MemberList members={members} />
+            <MemberList groupId={groupId} members={members} />
             
             <div className="rounded-2xl border border-border bg-card p-5 shadow-glass backdrop-blur-glass">
               <h3 className="text-sm font-semibold text-text-primary">Quick Actions</h3>

@@ -42,30 +42,34 @@ export default async function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Groups" value={groups.length} hint="Your active groups" />
-        <SummaryCard
-          title="You owe"
-          value={formatUsd(oweCents)}
-          hint={activeGroupId ? `Based on ${activeGroupId}` : 'No group selected'}
-        />
-        <SummaryCard
-          title="You are owed"
-          value={formatUsd(owedToMeCents)}
-          hint={me ? `Signed in as ${me.email}` : 'Session active'}
-        />
-      </section>
+      <div className="space-y-12">
+        <section className="grid gap-6 md:grid-cols-3">
+          <SummaryCard title="ACTIVE_GROUPS" value={groups.length} hint="Directory count" />
+          <SummaryCard
+            title="LIABILITIES"
+            value={formatUsd(oweCents)}
+            hint={activeGroupId ? `REF: ${activeGroupId.slice(0, 8)}...` : 'NULL_PTR'}
+          />
+          <SummaryCard
+            title="ASSETS"
+            value={formatUsd(owedToMeCents)}
+            hint={me ? `USER: ${me.email}` : 'AUTH_OK'}
+          />
+        </section>
 
-      <section className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-        {activeGroupId ? (
-          <ActivityList groupId={activeGroupId} items={activity} />
-        ) : (
-          <div className="rounded-2xl border border-border bg-card p-5 text-sm text-text-secondary shadow-glass backdrop-blur-glass">
-            Create or join a group to see activity.
-          </div>
-        )}
-        <QuickActions groupId={activeGroupId} />
-      </section>
+        <section className="grid gap-12 lg:grid-cols-[1fr_350px]">
+          {activeGroupId ? (
+            <ActivityList groupId={activeGroupId} items={activity} />
+          ) : (
+            <div className="neo-border bg-zinc-900 p-12 text-center">
+              <p className="text-xl font-black uppercase tracking-tighter text-zinc-500 mb-2">NO_ACTIVE_GROUP_DETECTED</p>
+              <p className="text-sm font-mono text-zinc-600">Initialize a group to begin expense monitoring.</p>
+            </div>
+          )}
+          <QuickActions groupId={activeGroupId} />
+        </section>
+      </div>
     </DashboardLayout>
   );
 }
+

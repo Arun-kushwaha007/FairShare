@@ -1,6 +1,7 @@
 import './globals.css';
 import './theme.css';
 import type { Metadata } from 'next';
+import { Providers } from '../src/components/Providers';
 
 export const metadata: Metadata = {
   title: 'FairShare | Smart Group Expense Sharing',
@@ -16,7 +17,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-grid min-h-screen">{children}</body>
+      <body className="bg-grid min-h-screen">
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

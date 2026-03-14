@@ -27,19 +27,34 @@ export function GroupMembersScreen({ route }: { route: { params: { groupId: stri
   }, [loadMembers]);
 
   const onInvite = async () => {
-    if (!inviteEmail.trim()) {
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email) {
       toast('Enter an email to invite');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast('Invalid email format');
       return;
     }
 
     try {
       setInviting(true);
-      await groupService.invite(route.params.groupId, { email: inviteEmail.trim().toLowerCase() });
+      await groupService.invite(route.params.groupId, { email });
       setInviteEmail('');
-      toast('Invite sent');
+      toast('Invite successfully sent');
       await loadMembers();
-    } catch {
-      toast('Failed to invite member');
+    } catch (error: any) {
+      const message = error.response?.data?.message;
+      if (Array.isArray(message)) {
+        toast(message[0]);
+      } else if (typeof message === 'string') {
+        toast(message);
+      } else {
+        toast('Failed to invite member');
+      }
     } finally {
       setInviting(false);
     }
