@@ -67,7 +67,7 @@ export function GroupDetailScreen({
         perUserOwedCents: summaryData.perUserOwedCents,
       });
     } catch {
-      toast('FAILED TO LOAD GROUP');
+      toast('Failed to load group details');
     } finally {
       setLoading(false);
       endScreenLoad('GroupDetail');
@@ -143,33 +143,21 @@ export function GroupDetailScreen({
             style={[styles.deleteAction, { backgroundColor: colors.danger }]}
             onPress={() => setDeleteTarget(expense)}
           >
-            <MaterialCommunityIcons name="delete" size={24} color="#FFFFFF" />
+            <MaterialCommunityIcons name="delete-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         )}
       >
         <ExpenseCard
-          description={expense.description.toUpperCase()}
+          description={expense.description}
           amount={`$${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
-          payerName={payer?.name?.toUpperCase() ?? 'UNKNOWN'}
+          payerName={payer?.name ?? 'Unknown'}
           payerInitials={getInitials(payer?.name ?? 'U')}
           participantCount={participantCount}
-          date={new Date(expense.createdAt).toLocaleDateString().toUpperCase()}
+          date={new Date(expense.createdAt).toLocaleDateString()}
           onPress={() => navigation.navigate('ExpenseDetail', { expenseId: expense.id })}
         />
       </Swipeable>
     );
-  };
-
-  const deleteExpense = async () => {
-    if (!deleteTarget) return;
-    try {
-      await expenseService.remove(deleteTarget.id);
-      toast('EXPENSE DELETED');
-      setDeleteTarget(null);
-      await load();
-    } catch {
-      toast('FAILED TO DELETE');
-    }
   };
 
   if (loading) return <SkeletonList rows={5} />;
@@ -178,7 +166,7 @@ export function GroupDetailScreen({
     if (expenses.length === 0) return null;
     return (
       <Animated.View entering={FadeInDown.duration(400).delay(delay)}>
-        <SectionHeader title={title.toUpperCase()} />
+        <SectionHeader title={title} />
         {expenses.map(renderExpenseCard)}
       </Animated.View>
     );
@@ -194,39 +182,36 @@ export function GroupDetailScreen({
         {/* Balance Summary */}
         {summary && (
           <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
-            <View style={{ flex: 1 }}>
-              <BalanceCard
-                title="TOTAL SPENT"
-                amount={`$${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
-                icon="cash-multiple"
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <BalanceCard
-                title="YOUR BALANCE"
-                amount={`$${Math.abs(userBalance).toFixed(2)}`}
-                subtitle={userBalance > 0 ? 'YOU ARE OWED' : userBalance < 0 ? 'YOU OWE' : 'SETTLED UP'}
-                variant={userBalance > 0 ? 'success' : userBalance < 0 ? 'danger' : 'default'}
-              />
-            </View>
+            <BalanceCard
+              title="Total Spent"
+              amount={`$${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
+              icon="cash-multiple"
+            />
+            <BalanceCard
+              title="Your Balance"
+              amount={`$${Math.abs(userBalance).toFixed(2)}`}
+              subtitle={userBalance > 0 ? 'You are owed' : userBalance < 0 ? 'You owe' : 'Settled up'}
+              variant={userBalance > 0 ? 'success' : userBalance < 0 ? 'danger' : 'default'}
+              icon={userBalance >= 0 ? 'trending-up' : 'trending-down'}
+            />
           </Animated.View>
         )}
 
         {/* Members */}
         <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.membersSection}>
           <SectionHeader
-            title="MEMBERS"
-            action="VIEW ALL"
+            title="Members"
+            action="View All"
             onActionPress={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />
-          <View style={[styles.membersRow, { borderColor: colors.border }]}>
+          <View style={[styles.membersRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <MemberAvatarStack
               members={members.map((m) => ({ userId: m.userId, name: m.name, avatarUrl: m.avatarUrl }))}
               maxVisible={6}
-              size={48}
+              size={40}
             />
             <Text style={[styles.memberCount, { color: colors.text_secondary }]}>
-              {members.length} MEMBERS
+              {members.length} members involved
             </Text>
           </View>
         </Animated.View>
@@ -238,47 +223,43 @@ export function GroupDetailScreen({
             onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
             style={{ flex: 1 }}
           >
-            ADD EXPENSE
+            Add Expense
           </Button>
           <Button 
             variant="secondary" 
             onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}
             style={{ flex: 1 }}
           >
-            SETTLE UP
+            Settle Up
           </Button>
         </View>
 
         {/* Expense History */}
-        {renderExpenseSection('TODAY', groupedExpenses.today, 300)}
-        {renderExpenseSection('THIS WEEK', groupedExpenses.week, 400)}
-        {renderExpenseSection('OLDER', groupedExpenses.older, 500)}
+        {renderExpenseSection('Today', groupedExpenses.today, 300)}
+        {renderExpenseSection('This Week', groupedExpenses.week, 400)}
+        {renderExpenseSection('Older', groupedExpenses.older, 500)}
 
         {expenses.length === 0 && (
-          <EmptyState kind="no_expenses" title="NO EXPENSES YET" />
+          <EmptyState kind="no_expenses" title="No expenses yet" />
         )}
       </ScrollView>
 
       <FloatingActionButton
         onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
-        icon="plus-thick"
       />
 
       {/* Delete Modal */}
       <Modal transparent visible={Boolean(deleteTarget)} animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <View style={styles.modalShadow} />
-            <View style={styles.modalContentInner}>
-               <MaterialCommunityIcons name="alert-decagram" size={48} color={colors.danger} />
-               <Text style={[styles.modalTitle, { color: colors.text_primary }]}>DELETE EXPENSE?</Text>
-               <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>{deleteTarget?.description.toUpperCase()}</Text>
-               <View style={styles.modalActions}>
-                  <Button variant="danger" onPress={() => void deleteExpense()} style={{ flex: 1 }}>DELETE</Button>
-                  <Button variant="secondary" onPress={() => setDeleteTarget(null)} style={{ flex: 1 }}>CANCEL</Button>
-               </View>
-            </View>
-          </View>
+           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.danger} />
+              <Text style={[styles.modalTitle, { color: colors.text_primary }]}>Delete Expense?</Text>
+              <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>This action cannot be undone.</Text>
+              <View style={styles.modalActions}>
+                  <Button variant="danger" onPress={() => void expenseService.remove(deleteTarget?.id!).then(load)} style={{ flex: 1 }}>Delete</Button>
+                  <Button variant="secondary" onPress={() => setDeleteTarget(null)} style={{ flex: 1 }}>Cancel</Button>
+              </View>
+           </View>
         </View>
       </Modal>
     </View>
@@ -300,15 +281,14 @@ const styles = StyleSheet.create({
   membersRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.md,
-    borderWidth: 2,
-    backgroundColor: '#FFFFFF', // Keeping consistent with cards
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   memberCount: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 13,
+    fontWeight: '500',
   },
   actionRow: {
     flexDirection: 'row',
@@ -319,46 +299,28 @@ const styles = StyleSheet.create({
     width: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    marginLeft: spacing.lg,
-    borderWidth: 2,
-    borderColor: '#000000',
+    marginBottom: spacing.md,
+    marginLeft: spacing.md,
+    borderRadius: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     padding: spacing.xl,
   },
   modalContent: {
-    position: 'relative',
-    height: 300,
-  },
-  modalShadow: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: -8,
-    bottom: -8,
-    backgroundColor: '#000000',
-  },
-  modalContentInner: {
-    flex: 1,
-    borderWidth: 3,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     padding: spacing.xl,
     alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.md,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontWeight: '700',
   },
   modalDesc: {
     fontSize: 14,
-    fontWeight: '700',
     textAlign: 'center',
     marginBottom: spacing.md,
   },

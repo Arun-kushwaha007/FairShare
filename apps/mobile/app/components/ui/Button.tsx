@@ -1,97 +1,123 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { Button as PaperButton, ButtonProps } from 'react-native-paper';
 import { useAppTheme } from '../../theme/useAppTheme';
+import { spacing } from '../../theme/spacing';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+interface ButtonProps {
+  children: React.ReactNode;
+  onPress: () => void;
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  style?: ViewStyle;
+  loading?: boolean;
+}
 
-type Props = ButtonProps & {
-  variant?: ButtonVariant;
-};
-
-export function Button({ variant = 'primary', style, ...props }: Props) {
+export function Button({ children, onPress, variant = 'primary', style, loading }: ButtonProps) {
   const { colors, isDark } = useAppTheme();
-  const shadowOffset = useSharedValue(4);
+  const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: 4 - shadowOffset.value }, { translateY: 4 - shadowOffset.value }],
+    transform: [{ scale: scale.value }],
   }));
 
-  const variantStyles: Record<ButtonVariant, { mode: ButtonProps['mode']; buttonColor?: string; textColor?: string; borderColor?: string }> = {
-    primary: { mode: 'contained', buttonColor: colors.primary, textColor: isDark ? '#000000' : '#FFFFFF', borderColor: colors.border },
-    secondary: { mode: 'outlined', buttonColor: colors.surface, textColor: colors.text_primary, borderColor: colors.border },
-    danger: { mode: 'contained', buttonColor: colors.danger, textColor: '#FFFFFF', borderColor: colors.border },
-    ghost: { mode: 'text', textColor: colors.text_primary },
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'primary':
+        return {
+          background: colors.primary,
+          text: '#FFFFFF',
+          shadow: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 102, 255, 0.2)',
+        };
+      case 'secondary':
+        return {
+          background: colors.surface,
+          text: colors.primary,
+          shadow: colors.elevation_low,
+          border: colors.border,
+        };
+      case 'danger':
+        return {
+          background: colors.danger,
+          text: '#FFFFFF',
+          shadow: 'rgba(255, 23, 68, 0.2)',
+        };
+      case 'ghost':
+        return {
+          background: 'transparent',
+          text: colors.primary,
+          shadow: 'transparent',
+        };
+      default:
+        return {
+          background: colors.primary,
+          text: '#FFFFFF',
+          shadow: colors.elevation_low,
+        };
+    }
   };
 
-  const vs = variantStyles[variant];
-
-  if (variant === 'ghost') {
-    return (
-      <PaperButton
-        {...props}
-        mode="text"
-        textColor={props.textColor ?? vs.textColor}
-        style={[{ borderRadius: 0 }, style as any]}
-        labelStyle={{ fontWeight: '800', fontSize: 14, textTransform: 'uppercase' }}
-      />
-    );
-  }
+  const v = getVariantStyles();
 
   return (
-    <View style={styles.buttonContainer}>
-      {/* Hard Shadow Layer */}
-      <View style={[styles.shadow, { backgroundColor: colors.border, borderRadius: 2 }]} />
-      
-      <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
-        <PaperButton
-          {...props}
-          mode={vs.mode}
-          buttonColor={props.buttonColor ?? vs.buttonColor}
-          textColor={props.textColor ?? vs.textColor}
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.97);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1);
+      }}
+      style={[
+        styles.wrapper,
+        style,
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            backgroundColor: v.background,
+            borderColor: v.border || 'transparent',
+            borderWidth: v.border ? 1 : 0,
+            // Skeuomorphic Shadow
+            shadowColor: v.shadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 1,
+            shadowRadius: 8,
+            elevation: 4,
+          },
+          animatedStyle,
+        ]}
+      >
+        <Text
           style={[
-            styles.button,
-            { 
-              borderRadius: 2, 
-              borderWidth: 2, 
-              borderColor: vs.borderColor ?? colors.border 
-            },
-            style as any
+            styles.text,
+            { color: v.text },
           ]}
-          contentStyle={{ paddingVertical: 6 }}
-          labelStyle={{ fontWeight: '900', fontSize: 14, textTransform: 'uppercase' }}
-          onPressIn={(event) => {
-            shadowOffset.value = withSpring(0, { damping: 20, stiffness: 300 });
-            props.onPressIn?.(event);
-          }}
-          onPressOut={(event) => {
-            shadowOffset.value = withSpring(4, { damping: 20, stiffness: 300 });
-            props.onPressOut?.(event);
-          }}
-        />
+        >
+          {children}
+        </Text>
       </Animated.View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonContainer: {
-    position: 'relative',
-    marginBottom: 4,
-    marginRight: 4,
+  wrapper: {
+    borderRadius: 12,
   },
-  shadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
+  container: {
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    borderRadius: 12,
   },
-  animatedWrapper: {
-    width: '100%',
-  },
-  button: {
-    borderWidth: 2,
+  text: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2, // Back to standard letter spacing for better readability
   },
 });

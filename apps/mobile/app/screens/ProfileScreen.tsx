@@ -11,7 +11,7 @@ import { SectionHeader } from '../components/SectionHeader';
 export function ProfileScreen({ navigation }: { navigation: { navigate: (route: string) => void } }) {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(' ');
@@ -21,13 +21,13 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
 
   const menuItems = [
     {
-      icon: 'cog' as const,
-      label: 'SETTINGS',
+      icon: 'cog-outline' as const,
+      label: 'Settings',
       onPress: () => navigation.navigate('Settings'),
     },
     {
       icon: 'logout' as const,
-      label: 'LOGOUT',
+      label: 'Logout',
       danger: true,
       onPress: () => void clearSession(),
     },
@@ -38,69 +38,71 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scrollContent}
     >
-      <SectionHeader title="PROFILE" />
+      <SectionHeader title="Profile" />
 
       {/* Profile Header */}
-      <Animated.View entering={FadeInDown.duration(400)} style={styles.headerWrapper}>
-        <View style={styles.headerShadow} />
+      <Animated.View entering={FadeInDown.duration(400)}>
         <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
             <Text style={styles.avatarText}>
-              {getInitials(user?.name ?? 'G')}
+              {getInitials(user?.name ?? 'Guest')}
             </Text>
           </View>
           <View style={styles.userInfo}>
             <Text style={[styles.name, { color: colors.text_primary }]}>
-              {user?.name?.toUpperCase() ?? 'GUEST'}
+              {user?.name ?? 'Guest'}
             </Text>
             <Text style={[styles.email, { color: colors.text_secondary }]}>
-              {user?.email?.toUpperCase() ?? 'NOT SIGNED IN'}
+              {user?.email ?? 'Not signed in'}
             </Text>
           </View>
         </View>
       </Animated.View>
 
       {/* Menu Items */}
-      <SectionHeader title="ACCOUNT" />
-      <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.menuSection}>
-        {menuItems.map((item) => (
+      <View style={styles.menuSection}>
+        <SectionHeader title="Account" />
+        {menuItems.map((item, i) => (
           <TouchableOpacity
             key={item.label}
-            style={styles.menuItemWrapper}
+            style={[
+              styles.menuItem,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
             onPress={item.onPress}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
-            <View style={styles.menuItemShadow} />
-            <View style={[styles.menuItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View
-                style={[
-                  styles.menuIconBg,
-                  {
-                    backgroundColor: item.danger ? colors.danger : colors.primary,
-                  },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={item.icon}
-                  size={24}
-                  color={colors.background}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.menuLabel,
-                  {
-                    color: item.danger ? colors.danger : colors.text_primary,
-                  },
-                ]}
-              >
-                {item.label}
-              </Text>
-              <MaterialCommunityIcons name="chevron-right" size={24} color={colors.primary} />
+            <View
+              style={[
+                styles.menuIconBg,
+                {
+                  backgroundColor: item.danger ? `${colors.danger}15` : `${colors.primary}15`,
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={item.icon}
+                size={22}
+                color={item.danger ? colors.danger : colors.primary}
+              />
             </View>
+            <Text
+              style={[
+                styles.menuLabel,
+                {
+                  color: item.danger ? colors.danger : colors.text_primary,
+                },
+              ]}
+            >
+              {item.label}
+            </Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
           </TouchableOpacity>
         ))}
-      </Animated.View>
+      </View>
     </ScrollView>
   );
 }
@@ -108,87 +110,75 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
 const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
-    paddingBottom: 120,
-  },
-  headerWrapper: {
-    position: 'relative',
-    marginBottom: spacing.xl,
-  },
-  headerShadow: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: -8,
-    bottom: -8,
-    backgroundColor: '#000000',
+    paddingBottom: 40,
   },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.xl,
-    borderWidth: 3,
-    gap: spacing.xl,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: spacing.xl,
+    // Soft shadow
+    shadowColor: 'rgba(0,0,0,0.05)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   avatar: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#000000',
+    marginRight: spacing.xl,
   },
   avatarText: {
     color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 28,
+    fontWeight: '800',
+    fontSize: 24,
   },
   userInfo: {
     flex: 1,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   email: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 4,
-    letterSpacing: 1,
+    fontSize: 14,
+    marginTop: 2,
   },
   menuSection: {
-    gap: spacing.lg,
-  },
-  menuItemWrapper: {
-    position: 'relative',
-    height: 72,
-  },
-  menuItemShadow: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: -6,
-    bottom: -6,
-    backgroundColor: '#000000',
+    gap: spacing.sm,
   },
   menuItem: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    borderWidth: 3,
-    gap: spacing.lg,
+    padding: spacing.lg,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+    // Subtle shadow
+    shadowColor: 'rgba(0,0,0,0.03)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   menuIconBg: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuLabel: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

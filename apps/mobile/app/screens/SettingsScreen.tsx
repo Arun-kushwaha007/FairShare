@@ -12,14 +12,14 @@ export function SettingsScreen() {
   const { themeMode, setThemeMode } = useThemeStore();
 
   const themeOptions: { mode: ThemeMode; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
-    { mode: 'light', label: 'LIGHT MODE', icon: 'white-balance-sunny' },
-    { mode: 'dark', label: 'DARK MODE', icon: 'moon-waning-crescent' },
-    { mode: 'system', label: 'SYSTEM DEFAULT', icon: 'cellphone-cog' },
+    { mode: 'light', label: 'Light Mode', icon: 'white-balance-sunny' },
+    { mode: 'dark', label: 'Dark Mode', icon: 'moon-waning-crescent' },
+    { mode: 'system', label: 'System Default', icon: 'cellphone-cog' },
   ];
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <SectionHeader title="APPEARANCE" />
+      <SectionHeader title="Appearance" />
       
       <View style={styles.optionsContainer}>
         {themeOptions.map((option) => (
@@ -29,29 +29,39 @@ export function SettingsScreen() {
               styles.option,
               {
                 backgroundColor: themeMode === option.mode ? colors.primary : colors.surface,
-                borderColor: colors.border,
+                borderColor: themeMode === option.mode ? colors.primary : colors.border,
+                // Soft shadow if active
+                shadowColor: themeMode === option.mode ? colors.primary : 'rgba(0,0,0,0.05)',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: themeMode === option.mode ? 0.3 : 1,
+                shadowRadius: themeMode === option.mode ? 8 : 4,
+                elevation: themeMode === option.mode ? 6 : 2,
               },
             ]}
             onPress={() => setThemeMode(option.mode)}
             activeOpacity={0.8}
           >
-            {themeMode === option.mode && <View style={styles.optionShadow} />}
             <View style={styles.optionContent}>
-              <MaterialCommunityIcons 
-                name={option.icon} 
-                size={24} 
-                color={themeMode === option.mode ? colors.background : colors.text_primary} 
-              />
+              <View style={[
+                  styles.iconBg, 
+                  { backgroundColor: themeMode === option.mode ? '#FFFFFF20' : `${colors.primary}10` }
+                ]}>
+                <MaterialCommunityIcons 
+                  name={option.icon} 
+                  size={24} 
+                  color={themeMode === option.mode ? '#FFFFFF' : colors.primary} 
+                />
+              </View>
               <Text 
                 style={[
                   styles.optionLabel, 
-                  { color: themeMode === option.mode ? colors.background : colors.text_primary }
+                  { color: themeMode === option.mode ? '#FFFFFF' : colors.text_primary }
                 ]}
               >
                 {option.label}
               </Text>
               {themeMode === option.mode && (
-                <MaterialCommunityIcons name="check-bold" size={20} color={colors.background} />
+                <MaterialCommunityIcons name="check-circle" size={24} color="#FFFFFF" />
               )}
             </View>
           </TouchableOpacity>
@@ -71,29 +81,26 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   option: {
-    height: 60,
-    position: 'relative',
-  },
-  optionShadow: {
-    position: 'absolute',
-    top: 4,
-    left: 4,
-    right: -4,
-    bottom: -4,
-    backgroundColor: '#000000',
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
   },
   optionContent: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    borderWidth: 2,
-    gap: spacing.md,
+    padding: spacing.lg,
+    gap: spacing.lg,
+  },
+  iconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionLabel: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

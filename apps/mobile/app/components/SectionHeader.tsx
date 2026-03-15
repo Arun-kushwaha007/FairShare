@@ -21,17 +21,17 @@ export function SectionHeader({ title, action, onActionPress }: SectionHeaderPro
           { color: colors.text_primary },
         ]}
       >
-        {title.toUpperCase()}
+        {title}
       </Text>
       {action ? (
         <TouchableOpacity 
           onPress={onActionPress} 
-          style={[styles.actionBadge, { backgroundColor: colors.primary }]}
+          style={styles.actionContainer}
         >
           <Text
-            style={[styles.action, { color: colors.background }]}
+            style={[styles.action, { color: colors.primary }]}
           >
-            {action.toUpperCase()}
+            {action}
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -43,22 +43,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.md,
+    alignItems: 'flex-end',
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 2,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  actionBadge: {
+  actionContainer: {
+    paddingVertical: 4,
     paddingHorizontal: 8,
-    paddingVertical: 2,
   },
   action: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

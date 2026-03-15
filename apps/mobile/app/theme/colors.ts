@@ -1,31 +1,39 @@
+/**
+ * Minimalist-Skeuomorphic Color Palette
+ * Softened backgrounds with bold "hard color" accents for a professional yet unique feel.
+ */
+
 export const colors = {
   light: {
-    background: '#FFFFFF',
-    surface: '#FFFFFF',
+    primary: '#0066FF',    // Vibrant Blue
+    secondary: '#FF3D00',  // Hard Orange
+    success: '#00C853',    // Vibrant Green
+    danger: '#FF1744',     // Hard Red
+    warning: '#FFEA00',    // Caution Yellow
+    background: '#F8F9FA', // Soft Gray-White
+    surface: '#FFFFFF',    // Pure White
     card: '#FFFFFF',
-    primary: '#000000', // Brutalist Black
-    success: '#00FF41', // Matrix Green
-    danger: '#FF3131',  // Electric Red
-    warning: '#FFEE00', // Caution Yellow
-    text_primary: '#000000',
-    text_secondary: '#404040',
-    muted: '#808080',
-    border: '#000000',  // Heavy Black Border
-    shadow: '#000000',
+    text_primary: '#1A1A1B',
+    text_secondary: '#666666',
+    border: '#E0E4E8',     // Subtler border
+    muted: '#94A3B8',
+    elevation_low: 'rgba(0, 0, 0, 0.05)',
+    elevation_high: 'rgba(0, 0, 0, 0.1)',
   },
   dark: {
-    background: '#000000',
-    surface: '#000000',
-    card: '#121212',
-    primary: '#FFFFFF', // Brutalist White
-    success: '#00FF41',
-    danger: '#FF3131',
-    warning: '#FFEE00',
-    text_primary: '#FFFFFF',
-    text_secondary: '#A0A0A0',
-    muted: '#606060',
-    border: '#FFFFFF',  // Heavy White Border
-    shadow: '#FFFFFF',
+    primary: '#3399FF',    // Slightly Lighter Blue for Dark
+    secondary: '#FF6333', 
+    success: '#00E676',
+    danger: '#FF5252',
+    warning: '#FFFF00',
+    background: '#0F172A', // Deep Navy-Gray (Slate 900) - Better for readability than pure black
+    surface: '#1E293B',    // Slate 800 - Good contrast
+    card: '#1E293B',
+    text_primary: '#F8FAFC',
+    text_secondary: '#94A3B8',
+    border: '#334155',     // Slate 700
+    muted: '#475569',
+    elevation_low: 'rgba(0, 0, 0, 0.2)',
+    elevation_high: 'rgba(0, 0, 0, 0.4)',
   },
 };
-

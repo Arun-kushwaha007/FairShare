@@ -1,72 +1,42 @@
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Button, Text } from 'react-native-paper';
-import { useAppTheme } from '../../theme/useAppTheme';
+import { useAppTheme } from './Avatar'; // Using theme context
+import { useAppTheme as useTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
+import { Button } from './Button';
 
-type EmptyStateKind = 'no_groups' | 'no_expenses' | 'no_activity' | 'default';
-
-const iconByKind: Record<EmptyStateKind, keyof typeof MaterialCommunityIcons.glyphMap> = {
-  no_groups: 'account-group-outline',
-  no_expenses: 'file-document-outline',
-  no_activity: 'timeline-clock-outline',
-  default: 'information-outline',
-};
-
-const subtitleByKind: Record<EmptyStateKind, string> = {
-  no_groups: 'Create your first group to start splitting expenses',
-  no_expenses: 'Add an expense to track spending',
-  no_activity: 'Activity will appear here when things happen',
-  default: '',
-};
-
-export function EmptyState({
-  title,
-  kind = 'default',
-  subtitle,
-  actionLabel,
-  onAction,
-}: {
+interface EmptyStateProps {
+  kind: 'no_groups' | 'no_expenses' | 'no_members' | 'error';
   title: string;
-  kind?: EmptyStateKind;
-  subtitle?: string;
+  description?: string;
   actionLabel?: string;
   onAction?: () => void;
-}) {
-  const { colors, isDark } = useAppTheme();
+}
+
+const KIND_METADATA = {
+  no_groups: { icon: 'account-group-outline', desc: "You haven't joined any groups yet." },
+  no_expenses: { icon: 'cash-off', desc: "No expenses recorded in this group." },
+  no_members: { icon: 'account-multiple-remove-outline', desc: "No members found." },
+  error: { icon: 'alert-circle-outline', desc: "Something went wrong. Please try again." },
+};
+
+export function EmptyState({ kind, title, description, actionLabel, onAction }: EmptyStateProps) {
+  const { colors } = useTheme();
+  const meta = KIND_METADATA[kind];
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: isDark ? colors.card : colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <View style={[styles.iconBg, { backgroundColor: `${colors.primary}12` }]}>
-        <MaterialCommunityIcons
-          name={iconByKind[kind]}
-          size={48}
-          color={colors.muted}
-        />
+    <View style={styles.container}>
+      <View style={[styles.iconBg, { backgroundColor: `${colors.primary}10` }]}>
+        <MaterialCommunityIcons name={meta.icon as any} size={48} color={colors.primary} />
       </View>
-      <Text
-        style={[styles.title, { color: colors.text_primary }]}
-      >
-        {title}
-      </Text>
-      <Text style={[styles.subtitle, { color: colors.text_secondary }]}>
-        {subtitle ?? subtitleByKind[kind]}
+      <Text style={[styles.title, { color: colors.text_primary }]}>{title}</Text>
+      <Text style={[styles.description, { color: colors.text_secondary }]}>
+        {description || meta.desc}
       </Text>
       {actionLabel && onAction && (
-        <Button
-          mode="contained"
-          onPress={onAction}
-          style={styles.button}
-          contentStyle={styles.buttonContent}
-        >
+        <Button variant="primary" onPress={onAction} style={styles.button}>
           {actionLabel}
         </Button>
       )}
@@ -76,37 +46,33 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   container: {
-    padding: spacing.xxl,
-    alignItems: 'center',
-    borderRadius: 16,
-    borderWidth: 1,
-    marginHorizontal: spacing.lg,
-    gap: spacing.sm,
-  },
-  iconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    padding: spacing.xxl,
+    marginTop: spacing.xxxl,
+  },
+  iconBg: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xl,
   },
   title: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
     marginBottom: spacing.sm,
   },
-  button: {
-    marginTop: spacing.md,
-    borderRadius: 8,
+  description: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: spacing.xxl,
+    lineHeight: 22,
   },
-  buttonContent: {
-    paddingHorizontal: spacing.md,
+  button: {
+    minWidth: 200,
   },
 });

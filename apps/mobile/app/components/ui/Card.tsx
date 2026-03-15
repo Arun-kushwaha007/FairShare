@@ -12,43 +12,31 @@ export function Card({ children, style }: CardProps) {
   const { colors } = useAppTheme();
 
   return (
-    <View style={styles.container}>
-      {/* Hard Shadow */}
-      <View style={[styles.shadow, { backgroundColor: colors.border }]} />
-      
-      <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-          },
-          style,
-        ]}
-      >
-        {children}
-      </View>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          shadowColor: colors.elevation_low,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 4,
+          elevation: 2,
+        },
+        style,
+      ]}
+    >
+      {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    marginBottom: 8,
-    marginRight: 8,
-  },
-  card: {
-    borderRadius: 4,
+    borderRadius: 16,
+    borderWidth: 1, // Subtle border instead of 3px
     padding: spacing.lg,
-    borderWidth: 2,
-  },
-  shadow: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: -6,
-    bottom: -6,
-    borderRadius: 4,
+    marginVertical: spacing.xs,
   },
 });

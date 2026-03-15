@@ -26,7 +26,7 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
       const data = await groupService.list();
       setGroups(data);
     } catch {
-      toast('FAILED TO LOAD GROUPS');
+      toast('Failed to load groups');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -39,8 +39,8 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'GROUPS',
-      headerTitleStyle: { fontWeight: '900', letterSpacing: 1 },
+      headerTitle: 'Groups',
+      headerTitleStyle: { fontWeight: '700' },
       headerRight: () => <HeaderPlusButton onPress={() => navigation.navigate('CreateGroup')} />,
     });
   }, [navigation]);
@@ -68,10 +68,10 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
         }
         ListHeaderComponent={
           <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-            <Text style={[styles.heading, { color: colors.text_primary }]}>GROUPS</Text>
-            <View style={styles.badge}>
-              <Text style={[styles.badgeText, { color: colors.background }]}>
-                {groups.length} TOTAL
+            <Text style={[styles.heading, { color: colors.text_primary }]}>Your Groups</Text>
+            <View style={[styles.badge, { backgroundColor: `${colors.primary}15` }]}>
+              <Text style={[styles.badgeText, { color: colors.primary }]}>
+                {groups.length} total
               </Text>
             </View>
           </Animated.View>
@@ -80,8 +80,8 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
           !loading ? (
             <EmptyState
               kind="no_groups"
-              title="NO GROUPS YET"
-              actionLabel="CREATE GROUP"
+              title="No groups yet"
+              actionLabel="Create Group"
               onAction={() => navigation.navigate('CreateGroup')}
             />
           ) : null
@@ -89,9 +89,9 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>
             <ListItem
-              title={item.name.toUpperCase()}
-              description={item.currency.toUpperCase()}
-              leftIcon="account-group"
+              title={item.name}
+              description={item.currency}
+              leftIcon="account-group-outline"
               onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
             />
           </Animated.View>
@@ -100,7 +100,7 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
 
       <FloatingActionButton
         onPress={() => navigation.navigate('CreateGroup')}
-        icon="plus-thick"
+        icon="plus"
       />
     </View>
   );
@@ -109,27 +109,29 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 120,
+    paddingTop: spacing.md,
   },
   header: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   heading: {
     fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: 2,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   badge: {
-    backgroundColor: '#000000',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 4,
+    borderRadius: 20,
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: '900',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
 
@@ -137,7 +139,7 @@ function HeaderPlusButton({ onPress }: { onPress: () => void }) {
   const { colors } = useAppTheme();
   return (
     <TouchableOpacity onPress={onPress} style={{ marginRight: spacing.md }}>
-      <MaterialCommunityIcons name="plus-thick" size={24} color={colors.primary} />
+      <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
     </TouchableOpacity>
   );
 }

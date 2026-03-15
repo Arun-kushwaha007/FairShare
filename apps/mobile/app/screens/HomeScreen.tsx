@@ -1,311 +1,148 @@
 import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { groupService } from '../services/group.service';
-import { useToastStore } from '../store/toastStore';
 import { useAuthStore } from '../store/authStore';
+import { useGroupStore } from '../store/groupStore';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
 import { BalanceCard } from '../components/BalanceCard';
 import { SectionHeader } from '../components/SectionHeader';
-import { FloatingActionButton } from '../components/FloatingActionButton';
-import { startScreenLoad, endScreenLoad } from '../utils/perf';
+import { ActivityItem } from '../components/ActivityItem';
+import { Button } from '../components/ui/Button';
 
-interface QuickActionItem {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  label: string;
-  onPress: () => void;
-  color: string;
-}
-
-export function HomeScreen({ navigation }: { navigation: { navigate: (route: string, params?: any) => void } }) {
-  const [firstGroupId, setFirstGroupId] = React.useState<string>('');
-  const [totalGroups, setTotalGroups] = React.useState(0);
-  const [recentActivities, setRecentActivities] = React.useState<
-    Array<{ type: string; createdAt: string }>
-  >([]);
-  const toast = useToastStore((state) => state.show);
+export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
+  const groups = useGroupStore((state) => state.groups);
   const { colors } = useAppTheme();
 
-  React.useEffect(() => {
-    startScreenLoad('Dashboard');
-    const load = async () => {
-      try {
-        const groups = await groupService.list();
-        setTotalGroups(groups.length);
-        if (groups.length === 0) {
-          return;
-        }
-
-        setFirstGroupId(groups[0].id);
-        const activity = await groupService.activity(groups[0].id);
-        if (activity.items.length > 0) {
-          setRecentActivities(
-            activity.items.slice(0, 5).map((item) => ({
-              type: item.type.replace(/_/g, ' '),
-              createdAt: item.createdAt,
-            })),
-          );
-        }
-      } catch {
-        toast('Failed to load dashboard');
-      } finally {
-        endScreenLoad('Dashboard');
-      }
-    };
-
-    void load();
-  }, [toast]);
-
-  const quickActions: QuickActionItem[] = [
-    {
-      icon: 'plus-thick',
-      label: 'ADD EXPENSE',
-      color: colors.primary,
-      onPress: () => {
-        if (!firstGroupId) {
-          navigation.navigate('CreateGroup');
-          return;
-        }
-        navigation.navigate('AddExpense', { groupId: firstGroupId });
-      },
-    },
-    {
-      icon: 'handshake',
-      label: 'SETTLE UP',
-      color: colors.success,
-      onPress: () => {
-        if (!firstGroupId) {
-          navigation.navigate('CreateGroup');
-          return;
-        }
-        navigation.navigate('SettleUp', { groupId: firstGroupId });
-      },
-    },
-    {
-      icon: 'account-group',
-      label: 'GROUPS',
-      color: colors.warning,
-      onPress: () => navigation.navigate('Groups' as any),
-    },
+  const quickActions = [
+    { label: 'Add Expense', icon: 'plus-circle', color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Create Group', icon: 'account-group', color: colors.secondary, onPress: () => navigation.navigate('CreateGroup') },
+    { label: 'Settle Up', icon: 'handshake', color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
   ];
 
-  const formatRelativeTime = (iso: string) => {
-    const now = Date.now();
-    const ts = new Date(iso).getTime();
-    const diff = Math.floor((now - ts) / 1000);
-    if (diff < 60) return `${diff}S AGO`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}M AGO`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}H AGO`;
-    return `${Math.floor(diff / 86400)}D AGO`;
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.text_secondary }]}>
-              WELCOME BACK,
-            </Text>
-            <Text style={[styles.name, { color: colors.text_primary }]}>
-              {user?.name?.toUpperCase() ?? 'GUEST'}
-            </Text>
-          </View>
-        </Animated.View>
+    <ScrollView 
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.welcome, { color: colors.text_secondary }]}>Welcome back,</Text>
+          <Text style={[styles.name, { color: colors.text_primary }]}>{user?.name ?? 'Friend'}</Text>
+        </View>
+        <MaterialCommunityIcons name="bell-outline" size={24} color={colors.text_primary} />
+      </View>
 
-        {/* Balance Cards */}
-        <Animated.View entering={FadeInDown.duration(500).delay(100)} style={styles.balanceRow}>
-          <View style={{ flex: 1 }}>
-            <BalanceCard
-              title="GROUPS"
-              amount={String(totalGroups)}
-              subtitle="ACTIVE"
-              icon="account-group"
-              variant="default"
-            />
-          </View>
-        </Animated.View>
+      {/* Balance Summary */}
+      <Animated.View entering={FadeInDown.duration(400)} style={styles.summarySection}>
+        <BalanceCard
+          title="Total Balance"
+          amount="$420.69"
+          subtitle="You are owed"
+          variant="success"
+          icon="trending-up"
+        />
+      </Animated.View>
 
-        {/* Quick Actions */}
-        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-          <SectionHeader title="QUICK ACTIONS" />
-          <View style={styles.quickActionRow}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.label}
-                style={[styles.quickAction, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                onPress={action.onPress}
-                activeOpacity={0.8}
-              >
-                <View style={styles.quickActionShadow} />
-                <View style={styles.quickActionContent}>
-                  <MaterialCommunityIcons name={action.icon} size={28} color={action.color} />
-                  <Text style={[styles.quickLabel, { color: colors.text_primary }]}>
-                    {action.label}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* Recent Activity */}
-        <Animated.View entering={FadeInDown.duration(500).delay(400)}>
-          <SectionHeader title="RECENT ACTIVITY" />
-          {recentActivities.length === 0 ? (
-            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-               <View style={styles.emptyCardShadow} />
-               <View style={styles.emptyCardContent}>
-                <MaterialCommunityIcons name="history" size={48} color={colors.muted} />
-                <Text style={[styles.emptyText, { color: colors.text_secondary }]}>
-                  NO RECENT ACTIVITY
-                </Text>
+      {/* Quick Actions */}
+      <SectionHeader title="Quick Actions" />
+      <View style={styles.quickActions}>
+        {quickActions.map((action, i) => (
+          <Animated.View 
+            key={action.label} 
+            entering={FadeInDown.duration(400).delay(100 + i * 100)}
+            style={styles.actionItem}
+          >
+            <Button
+              variant="secondary"
+              onPress={action.onPress}
+              style={styles.actionButton}
+            >
+              <View style={styles.actionContent}>
+                <MaterialCommunityIcons name={action.icon as any} size={20} color={action.color} />
+                <Text style={styles.actionLabel}>{action.label}</Text>
               </View>
-            </View>
-          ) : (
-            recentActivities.map((activity, i) => (
-              <View key={i} style={[styles.activityItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={[styles.activityDot, { backgroundColor: colors.primary }]} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.activityText, { color: colors.text_primary }]}>
-                    {activity.type.toUpperCase()}
-                  </Text>
-                  <Text style={[styles.activityTime, { color: colors.text_secondary }]}>
-                    {formatRelativeTime(activity.createdAt)}
-                  </Text>
-                </View>
-              </View>
-            ))
-          )}
-        </Animated.View>
-      </ScrollView>
+            </Button>
+          </Animated.View>
+        ))}
+      </View>
 
-      <FloatingActionButton
-        onPress={() => {
-          if (!firstGroupId) {
-            navigation.navigate('CreateGroup');
-            return;
-          }
-          navigation.navigate('AddExpense', { groupId: firstGroupId });
-        }}
+      {/* Recent Activity */}
+      <SectionHeader 
+        title="Recent Activity" 
+        action="See all" 
+        onActionPress={() => {}} 
       />
-    </View>
+      <View style={styles.activityList}>
+        {[1, 2, 3].map((item, i) => (
+          <Animated.View 
+            key={item} 
+            entering={FadeInDown.duration(400).delay(400 + i * 100)}
+          >
+            <ActivityItem 
+              title="Dinner at Joe's" 
+              subtitle="Paid by you in Trip to Bali" 
+              amount="$45.00"
+              date="2h ago"
+            />
+          </Animated.View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: 40,
   },
   header: {
-    marginBottom: spacing.xxl,
-    marginTop: spacing.md,
-    borderLeftWidth: 8,
-    borderLeftColor: '#00FF41', // Accent stripe
-    paddingLeft: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+    marginTop: spacing.sm,
   },
-  greeting: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 2,
+  welcome: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   name: {
-    fontSize: 36,
-    fontWeight: '900',
-    lineHeight: 40,
-    marginTop: 4,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  balanceRow: {
-    flexDirection: 'row',
+  summarySection: {
     marginBottom: spacing.xl,
   },
-  quickActionRow: {
-    flexDirection: 'column',
-    gap: spacing.lg,
-  },
-  quickAction: {
-    height: 72,
-    position: 'relative',
-  },
-  quickActionShadow: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: -6,
-    bottom: -6,
-    backgroundColor: '#000000',
-    borderRadius: 0,
-  },
-  quickActionContent: {
-    flex: 1,
+  quickActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    borderWidth: 3,
-    backgroundColor: '#FFFFFF',
-    gap: spacing.lg,
-  },
-  quickLabel: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  emptyCard: {
-    height: 160,
-    position: 'relative',
-  },
-  emptyCardShadow: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: -8,
-    bottom: -8,
-    backgroundColor: '#000000',
-  },
-  emptyCardContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    backgroundColor: '#FFFFFF',
     gap: spacing.md,
+    marginBottom: spacing.xl,
   },
-  emptyText: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
+  actionItem: {
+    flex: 1,
   },
-  activityItem: {
-    flexDirection: 'row',
+  actionButton: {
+    paddingHorizontal: 0,
+    height: 80,
+  },
+  actionContent: {
     alignItems: 'center',
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    borderWidth: 2,
-    gap: spacing.lg,
+    gap: 8,
   },
-  activityDot: {
-    width: 12,
-    height: 12,
-  },
-  activityText: {
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  activityTime: {
+  actionLabel: {
     fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-    letterSpacing: 1,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  activityList: {
+    gap: spacing.sm,
   },
 });

@@ -30,53 +30,52 @@ export const BalanceCard = memo(function BalanceCard({
         : colors.primary;
 
   return (
-    <View style={styles.wrapper}>
-      <View style={[styles.shadow, { backgroundColor: colors.border }]} />
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={styles.header}>
-          <View style={[styles.iconBg, { backgroundColor: accentColor }]}>
-            <MaterialCommunityIcons name={icon} size={24} color={colors.background} />
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          shadowColor: colors.elevation_low,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 1,
+          shadowRadius: 8,
+          elevation: 4,
+        },
+      ]}
+    >
+      <View style={styles.header}>
+        <View style={[styles.iconBg, { backgroundColor: `${accentColor}15` }]}>
+          <MaterialCommunityIcons name={icon} size={22} color={accentColor} />
+        </View>
+        <Text style={[styles.title, { color: colors.text_secondary }]}>
+          {title}
+        </Text>
+      </View>
+      
+      <View style={styles.content}>
+        <Text style={[styles.amount, { color: colors.text_primary }]}>
+          {amount}
+        </Text>
+        {subtitle ? (
+          <View style={[styles.subtitleBadge, { backgroundColor: `${accentColor}15` }]}>
+            <Text style={[styles.subtitleText, { color: accentColor }]}>
+              {subtitle}
+            </Text>
           </View>
-          <Text style={[styles.title, { color: colors.text_secondary }]}>
-            {title.toUpperCase()}
-          </Text>
-        </View>
-        
-        <View style={styles.content}>
-          <Text style={[styles.amount, { color: colors.text_primary }]}>
-            {amount}
-          </Text>
-          {subtitle ? (
-            <View style={[styles.subtitleBadge, { backgroundColor: accentColor }]}>
-              <Text style={[styles.subtitleText, { color: colors.background }]}>
-                {subtitle.toUpperCase()}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+        ) : null}
       </View>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
-  wrapper: {
-    position: 'relative',
-    marginBottom: 8,
-    marginRight: 8,
-  },
-  shadow: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    right: -6,
-    bottom: -6,
-    backgroundColor: '#000000',
-  },
   card: {
     padding: spacing.lg,
-    borderWidth: 3,
+    borderRadius: 20,
+    borderWidth: 1,
     gap: spacing.md,
+    marginVertical: spacing.xs,
   },
   header: {
     flexDirection: 'row',
@@ -86,13 +85,15 @@ const styles = StyleSheet.create({
   iconBg: {
     width: 40,
     height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 2,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   content: {
     flexDirection: 'row',
@@ -101,17 +102,17 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   amount: {
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: -1,
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   subtitleBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
+    borderRadius: 8,
   },
   subtitleText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
