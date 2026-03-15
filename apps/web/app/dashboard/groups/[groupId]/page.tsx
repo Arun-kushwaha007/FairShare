@@ -7,7 +7,7 @@ import {
 import { notFound } from 'next/navigation';
 
 import { DashboardLayout } from '../../../../src/components/layout';
-import { MemberList, ExpenseTable } from '../../../../src/components/groups';
+import { MemberList, ExpenseTable, GroupActions } from '../../../../src/components/groups';
 import { backendFetch } from '../../../../src/lib/backend';
 
 interface GroupDetailPageProps {
@@ -66,18 +66,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             
             <aside className="space-y-10">
               <MemberList groupId={groupId} members={members} />
-              
-              <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-6 shadow-[var(--fs-shadow-soft)]">
-                <h3 className="text-lg font-bold text-[var(--fs-text-primary)] mb-4">Actions</h3>
-                <div className="grid gap-3">
-                  <button className="btn-royal w-full text-center">
-                    Record expense
-                  </button>
-                  <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-medium text-[var(--fs-text-muted)]">
-                    Use the member panel to invite teammates and assign roles.
-                  </div>
-                </div>
-              </div>
+              <GroupActions groupId={groupId} currency={group.currency} members={members} />
             </aside>
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use server';
 
+import { CreateExpenseRequestDto, ExpenseDto } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
 import { authCookies } from './authCookies';
@@ -27,4 +28,29 @@ export async function inviteMemberAction(groupId: string, email: string) {
   }
 
   return { success: true };
+}
+
+export async function createExpenseAction(groupId: string, payload: CreateExpenseRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/expenses`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to create expense',
+    };
+  }
+
+  return { success: true, expense: data as ExpenseDto };
 }
