@@ -1,6 +1,12 @@
 'use server';
 
-import { CreateExpenseRequestDto, ExpenseDto, CreateSettlementRequestDto, SettlementDto } from '@fairshare/shared-types';
+import {
+  CreateExpenseRequestDto,
+  ExpenseDto,
+  CreateSettlementRequestDto,
+  SettlementDto,
+  PresignedReceiptUrlResponseDto,
+} from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
 import { authCookies } from './authCookies';
@@ -78,4 +84,26 @@ export async function createSettlementAction(groupId: string, payload: CreateSet
   }
 
   return { success: true, settlement: data as SettlementDto };
+}
+
+export async function createReceiptUrlAction(expenseId: string, extension?: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/expenses/${expenseId}/receipt-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(extension ? { extension } : {}),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to create receipt upload URL' };
+  }
+
+  return { success: true, presign: data as PresignedReceiptUrlResponseDto };
 }
