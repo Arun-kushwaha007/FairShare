@@ -7,7 +7,7 @@ import { spacing } from '../../theme/spacing';
 import { Button } from './Button';
 
 interface EmptyStateProps {
-  kind: 'no_groups' | 'no_expenses' | 'no_members' | 'error';
+  kind: 'no_groups' | 'no_expenses' | 'no_members' | 'no_activity' | 'error';
   title: string;
   description?: string;
   actionLabel?: string;
