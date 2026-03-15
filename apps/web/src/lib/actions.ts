@@ -1,6 +1,6 @@
 'use server';
 
-import { CreateExpenseRequestDto, ExpenseDto } from '@fairshare/shared-types';
+import { CreateExpenseRequestDto, ExpenseDto, CreateSettlementRequestDto, SettlementDto } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
 import { authCookies } from './authCookies';
@@ -53,4 +53,29 @@ export async function createExpenseAction(groupId: string, payload: CreateExpens
   }
 
   return { success: true, expense: data as ExpenseDto };
+}
+
+export async function createSettlementAction(groupId: string, payload: CreateSettlementRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/settlements`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to record settlement',
+    };
+  }
+
+  return { success: true, settlement: data as SettlementDto };
 }

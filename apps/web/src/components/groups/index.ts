@@ -3,3 +3,4 @@ export * from './MemberList';
 export * from './ExpenseTable';
 export * from './CreateExpenseModal';
 export * from './GroupActions';
+export * from './SettlementList';
