@@ -12,6 +12,7 @@ interface BalanceCardProps {
   subtitle?: string;
   icon?: keyof typeof MaterialCommunityIcons.glyphMap;
   variant?: 'default' | 'success' | 'danger';
+  currency?: string;
 }
 
 export const BalanceCard = memo(function BalanceCard({
@@ -20,6 +21,7 @@ export const BalanceCard = memo(function BalanceCard({
   subtitle,
   icon = 'wallet',
   variant = 'default',
+  currency = 'USD',
 }: BalanceCardProps) {
   const { colors, typography } = useAppTheme();
 

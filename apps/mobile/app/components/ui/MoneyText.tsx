@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { StyleSheet, Text as RNText } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 
@@ -6,11 +6,13 @@ interface MoneyTextProps {
   cents: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'success' | 'danger';
+  currency?: string;
 }
 
-export function MoneyText({ cents, size = 'md', variant = 'default' }: MoneyTextProps) {
+export function MoneyText({ cents, size = 'md', variant = 'default', currency = 'USD' }: MoneyTextProps) {
   const { colors } = useAppTheme();
   const amount = Number(cents) / 100;
+  const symbol = currency === 'INR' ? '₹' : '$';
 
   const colorMap = {
     default: colors.text_primary,
@@ -33,9 +35,9 @@ export function MoneyText({ cents, size = 'md', variant = 'default' }: MoneyText
           fontSize: sizeMap[size],
         },
       ]}
-      accessibilityLabel={`$${amount.toFixed(2)}`}
+      accessibilityLabel={`${symbol}${amount.toFixed(2)}`}
     >
-      ${amount.toFixed(2)}
+      {symbol}{amount.toFixed(2)}
     </RNText>
   );
 }

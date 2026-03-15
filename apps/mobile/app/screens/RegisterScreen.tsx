@@ -61,7 +61,10 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
                 error={Boolean(errors.name)} 
                 mode="outlined"
                 outlineStyle={{ borderRadius: 12 }}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface }]}
+                textColor={colors.text_primary}
+                outlineColor={colors.border}
+                activeOutlineColor={colors.primary}
               />
             )}
           />
@@ -86,7 +89,11 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
                 error={Boolean(errors.email)}
                 mode="outlined"
                 outlineStyle={{ borderRadius: 12 }}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface }]}
+                textColor={colors.text_primary}
+                outlineColor={colors.border}
+                activeOutlineColor={colors.primary}
+                secureTextEntry
               />
             )}
           />
@@ -154,7 +161,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    marginBottom: spacing.xs,
   },
   registerButton: {
     marginTop: spacing.md,

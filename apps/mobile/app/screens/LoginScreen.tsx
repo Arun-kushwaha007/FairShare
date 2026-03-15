@@ -90,7 +90,10 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (route: st
                 error={Boolean(errors.password)}
                 mode="outlined"
                 outlineStyle={{ borderRadius: 12 }}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface }]}
+                textColor={colors.text_primary}
+                outlineColor={colors.border}
+                activeOutlineColor={colors.primary}
               />
             )}
           />
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    marginBottom: spacing.xs,
   },
   loginButton: {
     marginTop: spacing.md,

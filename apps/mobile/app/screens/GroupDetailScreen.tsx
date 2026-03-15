@@ -4,7 +4,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import type { ExpenseDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
+import type { ExpenseDto, GroupMemberSummaryDto, GroupDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
 import { realtimeService } from '../services/realtime.service';
@@ -35,6 +35,7 @@ export function GroupDetailScreen({
   const [loading, setLoading] = React.useState(true);
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
+  const [group, setGroup] = React.useState<GroupDto | null>(null);
   const [summary, setSummary] = React.useState<{
     totalExpensesCents: string;
     topSpenderUserId: string | null;
@@ -52,15 +53,17 @@ export function GroupDetailScreen({
   const load = React.useCallback(async () => {
     startScreenLoad('GroupDetail');
     try {
-      const [expenseData, balanceData, memberData] = await Promise.all([
+      const [expenseData, balanceData, memberData, groupData] = await Promise.all([
         expenseService.list(route.params.groupId),
         groupService.balances(route.params.groupId),
         groupService.members(route.params.groupId),
+        groupService.get(route.params.groupId),
       ]);
       const summaryData = await groupService.summary(route.params.groupId);
       setExpenses(route.params.groupId, expenseData.items);
       setBalances(balanceData);
       setMembers(memberData);
+      setGroup(groupData);
       setSummary({
         totalExpensesCents: summaryData.totalExpensesCents,
         topSpenderUserId: summaryData.topSpenderUserId,
@@ -135,6 +138,8 @@ export function GroupDetailScreen({
     const payer = memberById.get(expense.payerId);
     const participantCount = expense.splits?.length ?? 0;
 
+    const symbol = group?.currency === 'INR' ? '₹' : '$';
+
     return (
       <Swipeable
         key={expense.id}
@@ -149,7 +154,7 @@ export function GroupDetailScreen({
       >
         <ExpenseCard
           description={expense.description}
-          amount={`$${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
+          amount={`${symbol}${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
           payerName={payer?.name ?? 'Unknown'}
           payerInitials={getInitials(payer?.name ?? 'U')}
           participantCount={participantCount}
@@ -180,17 +185,21 @@ export function GroupDetailScreen({
         showsVerticalScrollIndicator={false}
       >
         {/* Balance Summary */}
-        {summary && (
+        {summary && group && (
           <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
             <BalanceCard
-              title="Total Spent"
-              amount={`$${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
+              title="Total Group Spending"
+              amount={`${group.currency === 'INR' ? '₹' : '$'}${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
               icon="cash-multiple"
             />
             <BalanceCard
-              title="Your Balance"
-              amount={`$${Math.abs(userBalance).toFixed(2)}`}
-              subtitle={userBalance > 0 ? 'You are owed' : userBalance < 0 ? 'You owe' : 'Settled up'}
+              title="Your Personal Balance"
+              amount={`${group.currency === 'INR' ? '₹' : '$'}${Math.abs(userBalance).toFixed(2)}`}
+              subtitle={
+                userBalance !== 0 
+                  ? `${userBalance > 0 ? 'You are owed' : 'You owe'} (${((Math.abs(userBalance) * 100) / (Number(summary.totalExpensesCents) / 100 || 1)).toFixed(1)}% of total)`
+                  : 'Settled up'
+              }
               variant={userBalance > 0 ? 'success' : userBalance < 0 ? 'danger' : 'default'}
               icon={userBalance >= 0 ? 'trending-up' : 'trending-down'}
             />
