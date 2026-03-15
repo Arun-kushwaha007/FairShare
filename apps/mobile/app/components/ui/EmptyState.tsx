@@ -19,12 +19,13 @@ const KIND_METADATA = {
   no_groups: { icon: 'account-group-outline', desc: "You haven't joined any groups yet." },
   no_expenses: { icon: 'cash-off', desc: "No expenses recorded in this group." },
   no_members: { icon: 'account-multiple-remove-outline', desc: "No members found." },
+  no_activity: { icon: 'history', desc: "No activity recorded yet." },
   error: { icon: 'alert-circle-outline', desc: "Something went wrong. Please try again." },
 };
 
-export function EmptyState({ kind, title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ kind = 'error', title, description, actionLabel, onAction }: EmptyStateProps & { kind?: any }) {
   const { colors } = useTheme();
-  const meta = KIND_METADATA[kind];
+  const meta = KIND_METADATA[kind as keyof typeof KIND_METADATA] || KIND_METADATA.error;
 
   return (
     <View style={styles.container}>

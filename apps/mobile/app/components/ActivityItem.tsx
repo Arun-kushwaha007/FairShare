@@ -13,7 +13,7 @@ interface ActivityItemProps {
   icon?: keyof typeof MaterialCommunityIcons.glyphMap;
 }
 
-export function ActivityItem({ title, subtitle, amount, date, icon = 'cash-outline' }: ActivityItemProps) {
+export function ActivityItem({ title, subtitle, amount, date, icon = 'cash' }: ActivityItemProps) {
   const { colors } = useAppTheme();
 
   return (
