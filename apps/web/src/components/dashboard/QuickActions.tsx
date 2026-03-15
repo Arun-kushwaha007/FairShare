@@ -2,36 +2,38 @@ import Link from 'next/link';
 
 export function QuickActions({ groupId }: { groupId?: string }) {
   return (
-    <div className="neo-border bg-zinc-900 p-8 shadow-[6px_6px_0px_0px_#facc15]">
-      <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-8">Override Actions</h2>
+    <div className="card-royal p-8 brutal-accent-line bg-[var(--surface)]">
+      <h2 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)] mb-6">Quick Override</h2>
       <div className="grid gap-3">
         <Link
           href="/dashboard/groups"
-          className="neo-pop-hover border-2 border-white bg-white px-4 py-3 text-sm font-black uppercase tracking-tighter text-black flex justify-between items-center group shadow-[2px_2px_0px_0px_#facc15]"
+          className="group flex justify-between items-center px-4 py-3 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm font-bold text-[var(--text-primary)] hover:border-[var(--primary)] transition-all"
         >
           <span>Browse Groups</span>
-          <span className="text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">GO_TO_DIR</span>
+          <span className="text-[10px] font-bold text-[var(--text-muted)] opacity-50 group-hover:opacity-100 transition-opacity">DIR</span>
         </Link>
         <Link
           href={groupId ? `/dashboard/groups/${encodeURIComponent(groupId)}` : '/dashboard/groups'}
-          className="neo-pop-hover border-2 border-white bg-black px-4 py-3 text-sm font-black uppercase tracking-tighter text-white flex justify-between items-center group shadow-[2px_2px_0px_0px_#22d3ee]"
+          className="group flex justify-between items-center px-4 py-3 bg-[var(--primary)]/5 border border-[var(--primary)]/10 rounded-xl text-sm font-bold text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-all"
         >
           <span>Open Active Group</span>
-          <span className="text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">MOUNT_FS</span>
+          <span className="text-[10px] font-bold text-[var(--primary)] opacity-50 group-hover:opacity-100 transition-opacity">MOUNT</span>
         </Link>
         <Link
           href="/dashboard/activity"
-          className="neo-pop-hover border-2 border-zinc-800 bg-black px-4 py-3 text-sm font-black uppercase tracking-tighter text-zinc-500 flex justify-between items-center group hover:text-white hover:border-white transition-all shadow-[2px_2px_0px_0px_#ec4899]"
+          className="group flex justify-between items-center px-4 py-3 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm font-bold text-[var(--text-primary)] hover:border-[var(--accent)] transition-all"
         >
           <span>Activity Timeline</span>
-          <span className="text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">READ_LOGS</span>
+          <span className="text-[10px] font-bold text-[var(--text-muted)] opacity-50 group-hover:opacity-100 transition-opacity">LOGS</span>
         </Link>
       </div>
-      <p className="mt-6 text-[10px] font-mono font-bold uppercase text-zinc-600">
-        INFO: EXPENSE_CREATION_LOCKED. ACCESS_GROUP_VIEW_TO_POST.
-      </p>
+      
+      <div className="mt-6 flex items-start gap-2 bg-[var(--accent)]/10 p-3 rounded-lg border border-[var(--accent)]/20">
+        <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-1" />
+        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent)] leading-relaxed">
+          Info: Expense creation limited to active group views.
+        </p>
+      </div>
     </div>
   );
 }
-
-

@@ -28,7 +28,7 @@ export default function RegisterPage() {
       if (!response.ok) {
         throw new Error('Register failed');
       }
-      (await response.json()) as RegisterResponse;
+      await response.json();
       router.push('/dashboard');
     } catch {
       setError('Registration failed');
@@ -38,76 +38,75 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="mx-auto max-w-md px-6 py-24 min-h-screen flex flex-col justify-center">
-      <div className="text-center mb-12">
-        <h1 className="text-6xl font-black italic tracking-tighter uppercase mb-4 glitch-text" data-text="JOIN US">
-          JOIN US
+    <main className="mx-auto max-w-lg px-6 min-h-screen flex flex-col justify-center">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-extrabold tracking-tight text-[var(--text-primary)] mb-3">
+          Join FairShare
         </h1>
-        <p className="text-lg font-bold uppercase tracking-widest text-zinc-400">
-          Initialize your profile.
+        <p className="text-[var(--text-secondary)] font-medium">
+          Start your royal expense sharing journey
         </p>
       </div>
 
-      <form
-        className="neo-border neo-shadow-cyan bg-zinc-900 p-8 space-y-6"
-        onSubmit={onSubmit}
-      >
-        <div>
-          <label className="block text-sm font-black uppercase tracking-tighter mb-2 text-zinc-300">Display Name</label>
-          <input
-            className="w-full neo-border bg-black p-4 font-bold text-white placeholder:text-zinc-600 outline-none focus:bg-zinc-800 transition-colors"
-            placeholder="NAME"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-black uppercase tracking-tighter mb-2 text-zinc-300">Email Address</label>
-          <input
-            className="w-full neo-border bg-black p-4 font-bold text-white placeholder:text-zinc-600 outline-none focus:bg-zinc-800 transition-colors"
-            placeholder="YOU@EMAIL.XYZ"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-black uppercase tracking-tighter mb-2 text-zinc-300">Password</label>
-          <input
-            className="w-full neo-border bg-black p-4 font-bold text-white placeholder:text-zinc-600 outline-none focus:bg-zinc-800 transition-colors"
-            placeholder="••••••••"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </div>
-
-        {error ? (
-          <div className="neo-border border-pink-500 bg-pink-500/10 p-4 text-pink-500 font-black uppercase tracking-tighter text-sm">
-            ERROR: {error}
+      <div className="card-royal p-10 bg-[var(--surface)]">
+        <form className="space-y-6" onSubmit={onSubmit}>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[var(--text-primary)]">Full Name</label>
+            <input
+              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              placeholder="Royal Name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
           </div>
-        ) : null}
 
-        <button
-          className="w-full neo-pop-hover bg-white p-4 font-black uppercase text-black shadow-[4px_4px_0px_0px_#22d3ee] hover:bg-zinc-200 transition-all disabled:opacity-50"
-          disabled={loading}
-          type="submit"
-        >
-          {loading ? 'INITIALIZING...' : 'CREATE ACCOUNT'}
-        </button>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[var(--text-primary)]">Email Address</label>
+            <input
+              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              placeholder="name@company.com"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
 
-        <p className="text-center text-sm font-bold uppercase tracking-widest text-zinc-500">
-          Already a member?{' '}
-          <Link className="text-white underline decoration-purple-400 decoration-2 underline-offset-4 hover:text-purple-400 transition-colors" href="/login">
-            Sign in
-          </Link>
-        </p>
-      </form>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[var(--text-primary)]">Password</label>
+            <input
+              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              placeholder="••••••••"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </div>
+
+          {error ? (
+            <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-rose-600 dark:text-rose-400 font-bold text-sm text-center">
+              {error}
+            </div>
+          ) : null}
+
+          <button
+            className="btn-royal w-full"
+            disabled={loading}
+            type="submit"
+          >
+            {loading ? 'Initializing...' : 'Create Account'}
+          </button>
+
+          <p className="text-center text-sm font-bold text-[var(--text-secondary)]">
+            Already have an account?{' '}
+            <Link className="text-[var(--primary)] hover:underline decoration-2 underline-offset-4" href="/login">
+              Sign in
+            </Link>
+          </p>
+        </form>
+      </div>
     </main>
   );
 }

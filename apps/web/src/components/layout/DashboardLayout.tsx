@@ -6,18 +6,17 @@ import { Topbar } from './Topbar';
 export function DashboardLayout({ children, topbarRight }: { children: ReactNode; topbarRight?: ReactNode }) {
   return (
     <AppLayout>
-      <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-        <div className="grid gap-12 md:grid-cols-[300px_1fr]">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+        <div className="grid gap-8 md:grid-cols-[280px_1fr]">
           <Sidebar />
-          <main className="min-h-[80vh]">
+          <main className="min-h-[80vh] flex flex-col">
             <Topbar rightSlot={topbarRight} />
-            <div className="bg-zinc-900/50 neo-border p-8 min-h-full">
+            <div className="flex-grow">
               {children}
             </div>
           </main>
         </div>
       </div>
     </AppLayout>
-
   );
 }
