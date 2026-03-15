@@ -22,9 +22,9 @@ const KIND_METADATA = {
   error: { icon: 'alert-circle-outline', desc: "Something went wrong. Please try again." },
 };
 
-export function EmptyState({ kind = 'error', title, description, actionLabel, onAction }: EmptyStateProps & { kind?: any }) {
+export function EmptyState({ kind = 'error', title, description, actionLabel, onAction }: EmptyStateProps) {
   const { colors } = useTheme();
-  const meta = KIND_METADATA[kind as keyof typeof KIND_METADATA] || KIND_METADATA.error;
+  const meta = KIND_METADATA[kind] || KIND_METADATA.error;
 
   return (
     <View style={styles.container}>
