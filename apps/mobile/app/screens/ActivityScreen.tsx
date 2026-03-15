@@ -140,7 +140,7 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
           accessibilityLabel={actionText(item)}
         >
           <View style={[styles.iconBg, { backgroundColor: `${iconColor}18` }]}>
-            <MaterialCommunityIcons name={iconByType[item.type]} size={20} color={iconColor} />
+            <MaterialCommunityIcons name={iconByType[item.type] || 'information-outline'} size={20} color={iconColor} />
           </View>
           <View style={styles.content}>
             <Text style={[styles.title, { color: colors.text_primary }]} numberOfLines={1}>

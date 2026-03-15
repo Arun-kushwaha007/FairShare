@@ -80,7 +80,8 @@ function MainTabs() {
             Activity: 'history',
             Profile: 'account-circle',
           };
-          return <MaterialCommunityIcons name={iconByRoute[route.name]} size={size} color={color} />;
+          const iconName = iconByRoute[route.name] || 'information';
+          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
       })}
     >
