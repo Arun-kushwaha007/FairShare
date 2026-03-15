@@ -3,10 +3,10 @@
 Last updated: March 15, 2026
 
 ## Snapshot
-- Monorepo with NestJS API, Expo mobile client, and a Next.js marketing site managed via Turbo + pnpm.
+- Monorepo with NestJS API, Expo mobile client, and a Next.js web app managed via Turbo + pnpm.
 - Core expense, settlement, receipt, notification, realtime, and payment primitives are implemented server-side with Prisma/PostgreSQL (Supabase URL) and Redis/BullMQ.
 - Mobile app ships full flows (auth, groups, expenses, settle-up, activity, profile/settings) with offline queueing, push tokens, realtime sockets, and UPI deep-link helper; UI built with React Native Paper + Reanimated.
-- Web app is currently a single-page marketing/landing experience with Framer Motion; no dashboard/auth wiring yet.
+- Web app now includes authenticated dashboard: JWT cookie auth, middleware guards, groups, expenses, settlement suggestions, receipt upload, realtime Socket.IO updates, and Playwright e2e coverage.
 - Observability (Sentry, OpenTelemetry, Prometheus metrics) and security hardening (helmet, throttling, CSRF on refresh, JWT + refresh cookies) are wired in backend startup.
 
 ## Project Structure
@@ -67,9 +67,17 @@ Last updated: March 15, 2026
 - Tests: basic Jest + testing-library specs for login, group list, add expense screens; TypeScript lint via `tsc --noEmit`.
 
 ## Web (apps/web)
-- Next.js 15 single-page marketing site with Framer Motion animations, Lucide icons, Tailwind utility styles.
-- Sections: hero CTA, feature grid, comparison table, FAQ/dev log, newsletter form, footer links.
-- No auth or API wiring yet; currently a static experience suitable for marketing/landing only.
+- Stack: Next.js 15 (app router), Tailwind tokens, Framer Motion accents, Lucide icons, Socket.IO client.
+- Design system: Royal SaaS tokens (light/dark), CSS variables, glass/neo accents, Manrope/Space Grotesk typography, shared spacing/radii/shadows.
+- Auth: /login and /register pages call proxy API routes that set httpOnly JWT + refresh cookies; middleware enforces protected /dashboard routes; auth context + refresh check.
+- Layout: AppLayout/Sidebar/Topbar/DashboardLayout with responsive shell and quick actions.
+- Dashboard: balance summary cards, recent activity list, quick actions, realtime updates.
+- Groups: list and detail pages, member panel with invites, expense ledger, actions panel.
+- Expenses: CreateExpenseModal with equal/exact/percentage split logic (shared with mobile), payer selection, participant guard, server action to POST /groups/:id/expenses.
+- Settlements: /dashboard/groups/[groupId]/settle renders simplify suggestions and confirm flows hitting /groups/:id/settlements.
+- Receipts: per-expense upload modal uses presigned PUT from /expenses/:id/receipt-url with preview.
+- Realtime: Socket.IO client joins group rooms and refreshes on expense/settlement/member events via backend gateway.
+- Tests: Playwright e2e (opt-in with RUN_E2E=true) covers auth → group → expense → settlement lifecycle.
 
 ## Shared Types (packages/shared-types)
 - Zod/TypeScript DTOs for auth payloads, expenses, balances, settlements, receipts, activity feeds, payments, notifications; consumed by backend controllers and mobile client.
@@ -81,17 +89,17 @@ Last updated: March 15, 2026
 - Infra: Terraform stubs for AWS ECS/RDS/S3; CI assumed via GitHub Actions (see README claim) though pipeline files not present in repo root.
 
 ## Known Gaps / Risks
-- Web app is marketing-only; product dashboard, auth, and API integration are not implemented.
-- Payments: mobile flow currently bypasses Stripe; settles via UPI link + manual settlement API. Stripe PaymentIntent UX is not exposed to clients yet.
+- Web payments UI not implemented; mobile still bypasses Stripe in favor of UPI + manual settlement API.
 - Receipt processing queue lacks worker implementation; uploads are stored but no OCR/parsing pipeline exists.
 - Offline queue can replay POSTs without deduplication beyond backend idempotency keys; ensure idempotency keys are supplied for settlements/payments when adding clients.
 - Expo SDK 54 with React Native 0.81/React 19 stack may emit peer warnings; verify compatibility before release builds.
 - CI configuration for lint/test/e2e is referenced but not included in the repo snapshot.
+- Socket.IO client token is fetched from /api/auth/token; confirm refresh/token lifecycle in production deployments.
 
 ## Next Steps
 1. Decide on in-app payment path: surface Stripe PaymentIntent client flow or keep UPI-only and disable PaymentIntent endpoint if unused.
-2. Implement receipt-processing worker (OCR or at least validation) for queued jobs; expose receipt retrieval in UI.
-3. Build authenticated web dashboard (groups/expenses/settlements) reusing shared-types + backend APIs.
-4. Add end-to-end tests (Playwright) for critical flows: auth, expense creation, settlement, receipt upload.
+2. Implement receipt-processing worker (OCR or validation) and surface stored receipt previews in clients.
+3. Expand web to surface balances per member, activity filters, and profile/settings parity with mobile.
+4. Add CI pipeline files (GitHub Actions) to run lint/test/build/Playwright; enable RUN_E2E toggles in CI.
 5. Tighten mobile offline/idempotency by attaching idempotency keys and surfacing retry status to users.
-6. Add CI pipeline files (GitHub Actions) to run lint/test/build on PRs and publish metrics artifacts.
+6. Add web performance profiling (React profiler/Next metrics) and cache tuning for large activity/expense lists.
