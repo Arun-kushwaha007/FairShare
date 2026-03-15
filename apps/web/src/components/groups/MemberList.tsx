@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { UserPlus } from 'lucide-react';
-import { InviteModal } from './InviteModal';
+import dynamic from 'next/dynamic';
 import { glassPanel } from '../layout/layoutStyles';
+
+const InviteModal = dynamic(() => import('./InviteModal').then((mod) => mod.InviteModal), { ssr: false });
 
 interface MemberListProps {
   groupId: string;

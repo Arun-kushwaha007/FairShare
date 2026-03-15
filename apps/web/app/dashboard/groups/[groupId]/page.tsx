@@ -5,6 +5,7 @@ import {
   PaginatedExpensesResponseDto
 } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 
 import { DashboardLayout } from '../../../../src/components/layout';
 import { MemberList, ExpenseTable, GroupActions } from '../../../../src/components/groups';
@@ -65,8 +66,12 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             </div>
             
             <aside className="space-y-10">
-              <MemberList groupId={groupId} members={members} />
-              <GroupActions groupId={groupId} currency={group.currency} members={members} />
+              <Suspense fallback={<div className="h-52 rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] animate-pulse" />}>
+                <MemberList groupId={groupId} members={members} />
+              </Suspense>
+              <Suspense fallback={<div className="h-40 rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] animate-pulse" />}>
+                <GroupActions groupId={groupId} currency={group.currency} members={members} />
+              </Suspense>
             </aside>
           </div>
         </div>

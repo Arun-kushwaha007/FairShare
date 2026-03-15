@@ -4,7 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { PlusCircle } from 'lucide-react';
-import { CreateExpenseModal } from './CreateExpenseModal';
+import dynamic from 'next/dynamic';
+
+const CreateExpenseModal = dynamic(
+  () => import('./CreateExpenseModal').then((mod) => mod.CreateExpenseModal),
+  { ssr: false },
+);
 
 type GroupActionsProps = {
   groupId: string;

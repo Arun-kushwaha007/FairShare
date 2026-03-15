@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { ExpenseDto } from '@fairshare/shared-types';
-import { ReceiptUploadModal } from './ReceiptUploadModal';
+import dynamic from 'next/dynamic';
+
+const ReceiptUploadModal = dynamic(
+  () => import('./ReceiptUploadModal').then((mod) => mod.ReceiptUploadModal),
+  { ssr: false },
+);
 
 export function ExpenseRow({ expense }: { expense: ExpenseDto }) {
   const [open, setOpen] = useState(false);
