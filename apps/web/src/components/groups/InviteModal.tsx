@@ -68,34 +68,34 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="w-full max-w-md pointer-events-auto overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-10 shadow-[var(--shadow-elevated)]"
+              className="w-full max-w-md pointer-events-auto overflow-hidden rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-surface)] p-10 shadow-[var(--fs-shadow-elevated)]"
             >
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-4">
-                  <div className="p-3.5 bg-[var(--primary)]/10 rounded-2xl">
-                    <UserPlus className="w-6 h-6 text-[var(--primary)]" />
+                  <div className="p-3.5 bg-[var(--fs-primary)]/10 rounded-2xl">
+                    <UserPlus className="w-6 h-6 text-[var(--fs-primary)]" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)]">Invite Member</h2>
-                    <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mt-0.5">Royal Invitation</p>
+                    <h2 className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Invite Member</h2>
+                    <p className="text-xs font-bold text-[var(--fs-text-muted)] uppercase tracking-wider mt-0.5">Royal Invitation</p>
                   </div>
                 </div>
-                <button onClick={onClose} className="p-2.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--background)] rounded-xl transition-all" title="Close">
+                <button onClick={onClose} className="p-2.5 text-[var(--fs-text-muted)] hover:text-[var(--fs-text-primary)] hover:bg-[var(--fs-background)] rounded-xl transition-all" title="Close">
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-2.5">
-                  <label className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-secondary)] ml-1">Email Address</label>
+                  <label className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--fs-text-secondary)] ml-1">Email Address</label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--fs-text-muted)] group-focus-within:text-[var(--fs-primary)] transition-colors" />
                     <input
                       type="email"
                       placeholder="e.g. friend@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-2xl py-4.5 pl-12 pr-4 text-[var(--text-primary)] font-semibold focus:border-[var(--primary)] focus:outline-none transition-all placeholder:text-[var(--text-muted)]"
+                      className="w-full bg-[var(--fs-background)] border border-[var(--fs-border)] rounded-2xl py-4.5 pl-12 pr-4 text-[var(--fs-text-primary)] font-semibold focus:border-[var(--fs-primary)] focus:outline-none transition-all placeholder:text-[var(--fs-text-muted)]"
                       disabled={isSubmitting}
                     />
                   </div>
@@ -109,7 +109,7 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
                   >
                     {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
                   </button>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] text-center opacity-80">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--fs-text-muted)] text-center opacity-80">
                     Invitation will be active immediately • Non-users auto-join on signup
                   </p>
                 </div>

@@ -26,12 +26,12 @@ export function Sidebar() {
       <div className="glass-panel p-6 rounded-3xl min-h-[600px] flex flex-col">
         {/* Brand */}
         <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="w-10 h-10 bg-[var(--primary)] rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-[var(--fs-primary)] rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-black text-xl">F</span>
           </div>
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-[var(--text-primary)]">FairShare</h2>
-            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Royal Edition</p>
+            <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">FairShare</h2>
+            <p className="text-[10px] font-bold text-[var(--fs-text-muted)] uppercase tracking-wider">Royal Edition</p>
           </div>
         </div>
 
@@ -46,12 +46,12 @@ export function Sidebar() {
                 className={[
                   'group flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 font-bold',
                   active
-                    ? 'bg-[var(--primary)] text-white shadow-lg'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]',
+                    ? 'bg-[var(--fs-primary)] text-white shadow-lg'
+                    : 'text-[var(--fs-text-secondary)] hover:bg-[var(--fs-primary)]/10 hover:text-[var(--fs-primary)]',
                 ].join(' ')}
               >
                 <svg
-                  className={`w-5 h-5 ${active ? 'text-white' : 'text-[var(--text-muted)] group-hover:text-[var(--primary)]'}`}
+                  className={`w-5 h-5 ${active ? 'text-white' : 'text-[var(--fs-text-muted)] group-hover:text-[var(--fs-primary)]'}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -68,16 +68,16 @@ export function Sidebar() {
         </nav>
 
         {/* System Info */}
-        <div className="mt-auto pt-6 border-t border-[var(--border)]">
-          <div className="bg-[var(--background)] px-4 py-3 rounded-2xl border border-[var(--border)]">
+        <div className="mt-auto pt-6 border-t border-[var(--fs-border)]">
+          <div className="bg-[var(--fs-background)] px-4 py-3 rounded-2xl border border-[var(--fs-border)]">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">System</span>
+              <span className="text-[10px] font-bold text-[var(--fs-text-muted)] uppercase">System</span>
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Stable</span>
               </div>
             </div>
-            <p className="text-xs font-bold text-[var(--text-primary)]">FairShare v1.2.0</p>
+            <p className="text-xs font-bold text-[var(--fs-text-primary)]">FairShare v1.2.0</p>
           </div>
         </div>
       </div>

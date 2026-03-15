@@ -40,20 +40,20 @@ export default function RegisterPage() {
   return (
     <main className="mx-auto max-w-lg px-6 min-h-screen flex flex-col justify-center">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight text-[var(--text-primary)] mb-3">
+        <h1 className="text-4xl font-extrabold tracking-tight text-[var(--fs-text-primary)] mb-3">
           Join FairShare
         </h1>
-        <p className="text-[var(--text-secondary)] font-medium">
+        <p className="text-[var(--fs-text-secondary)] font-medium">
           Start your royal expense sharing journey
         </p>
       </div>
 
-      <div className="card-royal p-10 bg-[var(--surface)]">
+      <div className="card-royal p-10 bg-[var(--fs-surface)]">
         <form className="space-y-6" onSubmit={onSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-[var(--text-primary)]">Full Name</label>
+            <label className="text-sm font-bold text-[var(--fs-text-primary)]">Full Name</label>
             <input
-              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              className="w-full bg-[var(--fs-background)] border border-[var(--fs-border)] rounded-xl p-4 font-medium text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)] transition-all"
               placeholder="Royal Name"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -62,9 +62,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-[var(--text-primary)]">Email Address</label>
+            <label className="text-sm font-bold text-[var(--fs-text-primary)]">Email Address</label>
             <input
-              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              className="w-full bg-[var(--fs-background)] border border-[var(--fs-border)] rounded-xl p-4 font-medium text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)] transition-all"
               placeholder="name@company.com"
               type="email"
               value={email}
@@ -74,9 +74,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-[var(--text-primary)]">Password</label>
+            <label className="text-sm font-bold text-[var(--fs-text-primary)]">Password</label>
             <input
-              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all"
+              className="w-full bg-[var(--fs-background)] border border-[var(--fs-border)] rounded-xl p-4 font-medium text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)] transition-all"
               placeholder="••••••••"
               type="password"
               value={password}
@@ -99,9 +99,9 @@ export default function RegisterPage() {
             {loading ? 'Initializing...' : 'Create Account'}
           </button>
 
-          <p className="text-center text-sm font-bold text-[var(--text-secondary)]">
+          <p className="text-center text-sm font-bold text-[var(--fs-text-secondary)]">
             Already have an account?{' '}
-            <Link className="text-[var(--primary)] hover:underline decoration-2 underline-offset-4" href="/login">
+            <Link className="text-[var(--fs-primary)] hover:underline decoration-2 underline-offset-4" href="/login">
               Sign in
             </Link>
           </p>
