@@ -22,6 +22,11 @@ export class GroupsController {
     return this.groupsService.list(user.sub);
   }
 
+  @Get('summary')
+  getUserSummary(@CurrentUser() user: JwtPayload) {
+    return this.groupsService.getUserSummary(user.sub);
+  }
+
   @Get(':id')
   getById(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.groupsService.getById(id, user.sub);

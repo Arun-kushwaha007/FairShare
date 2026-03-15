@@ -9,10 +9,17 @@ export const groupService = {
   summary: async (id: string) => (await api.get<GroupSummaryDto>(`/groups/${id}/summary`)).data,
   invite: async (id: string, payload: InviteMemberRequestDto) => (await api.post(`/groups/${id}/invite`, payload)).data,
   balances: async (id: string) => (await api.get(`/groups/${id}/balances`)).data,
+  userSummary: async () => (await api.get<{ totalBalanceCents: string }>('/groups/summary')).data,
   simplify: async (id: string) => (await api.get(`/groups/${id}/simplify`)).data,
   activity: async (id: string, cursor = 0, limit = 20) =>
     (
-      await api.get<{ items: ActivityDto[]; nextCursor: number | null }>(`/groups/${id}/activity`, {
+      await api.get<{ items: ActivityDto[]; nextCursor: number | null }>(`/activity/group/${id}`, {
+        params: { cursor, limit },
+      })
+    ).data,
+  userActivity: async (cursor = 0, limit = 20) =>
+    (
+      await api.get<{ items: ActivityDto[]; nextCursor: number | null }>('/activity', {
         params: { cursor, limit },
       })
     ).data,

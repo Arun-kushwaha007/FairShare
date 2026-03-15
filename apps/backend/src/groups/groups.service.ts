@@ -196,6 +196,19 @@ export class GroupsService {
     return response;
   }
 
+  async getUserSummary(userId: string): Promise<{ totalBalanceCents: string }> {
+    const balances = await this.prisma.balance.findMany({
+      where: { userId },
+      select: { amountCents: true },
+    });
+
+    const totalBalance = balances.reduce((acc, curr) => acc + curr.amountCents, 0n);
+
+    return {
+      totalBalanceCents: totalBalance.toString(),
+    };
+  }
+
   async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
     await this.assertMembership(groupId, actorUserId);
     const email = dto.email.toLowerCase();

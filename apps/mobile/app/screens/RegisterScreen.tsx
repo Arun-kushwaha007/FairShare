@@ -41,7 +41,7 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
         <View style={styles.header}>
           <Text style={[typography.h1, { color: colors.text_primary }]}>Join FairShare</Text>
           <Text style={[typography.bodyMedium, { color: colors.text_secondary, marginTop: spacing.xs }]}>
-            Start your royal expense journey
+            Start your expense era ✨
           </Text>
         </View>
 

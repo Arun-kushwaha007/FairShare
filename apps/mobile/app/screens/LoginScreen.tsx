@@ -44,7 +44,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (route: st
           </View>
           <Text style={[typography.h1, { color: colors.text_primary, marginTop: spacing.lg }]}>FairShare</Text>
           <Text style={[typography.bodyMedium, { color: colors.text_secondary, marginTop: spacing.xs }]}>
-            Sign in to your royal dashboard
+            Secure the vibes, sign in
           </Text>
         </View>
 

@@ -9,6 +9,7 @@ import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, FadeInDow
 import type { GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { groupService } from '../services/group.service';
+import type { GroupDto } from '@fairshare/shared-types';
 import { useToastStore } from '../store/toastStore';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
@@ -28,7 +29,7 @@ const STEPS = [
   { title: 'Payer', subtitle: 'Who paid the bill?' },
   { title: 'Participants', subtitle: 'Who is splitting this?' },
   { title: 'Split', subtitle: 'How should we divide it?' },
-  { title: 'Review', subtitle: 'Does everything look royal?' },
+  { title: 'Review', subtitle: 'Vibe check before we post?' },
 ];
 
 export function AddExpenseScreen({
@@ -42,6 +43,7 @@ export function AddExpenseScreen({
     defaultValues: { description: '', amountCents: '0' },
   });
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
+  const [group, setGroup] = React.useState<GroupDto | null>(null);
   const [payerId, setPayerId] = React.useState<string>('');
   const [splitType, setSplitType] = React.useState<SplitType>('equal');
   const [selectedParticipantIds, setSelectedParticipantIds] = React.useState<string[]>([]);
@@ -60,11 +62,15 @@ export function AddExpenseScreen({
   React.useEffect(() => {
     const loadMembers = async () => {
       try {
-        const data = await groupService.members(route.params.groupId);
-        setMembers(data);
-        if (data.length > 0) {
-          setPayerId(data[0].userId);
-          setSelectedParticipantIds(data.map((member) => member.userId));
+        const [memberData, groupData] = await Promise.all([
+          groupService.members(route.params.groupId),
+          groupService.get(route.params.groupId),
+        ]);
+        setMembers(memberData);
+        setGroup(groupData);
+        if (memberData.length > 0) {
+          setPayerId(memberData[0].userId);
+          setSelectedParticipantIds(memberData.map((member) => member.userId));
         }
       } catch {
         toast('Failed to load members');
@@ -131,7 +137,7 @@ export function AddExpenseScreen({
         payerId,
         description: values.description,
         totalAmountCents: String(totalAmount),
-        currency: 'USD',
+        currency: group?.currency ?? 'USD',
         splits: selectedParticipantIds.map((userId) => ({
           userId,
           owedAmountCents: String(shares[userId] ?? 0),
@@ -142,7 +148,7 @@ export function AddExpenseScreen({
       setSuccessOpen(true);
       setTimeout(() => {
         setSuccessOpen(false);
-        toast('Expense created');
+        toast('Bet! Split recorded 🤝');
         navigation.goBack();
       }, 700);
     } catch {
@@ -186,7 +192,7 @@ export function AddExpenseScreen({
                   mode="outlined"
                   outlineStyle={{ borderRadius: 16 }}
                   style={styles.input}
-                  left={<TextInput.Affix text="$" />}
+                  left={<TextInput.Affix text={group?.currency === 'INR' ? '₹' : '$'} />}
                 />
               )}
             />
@@ -301,7 +307,9 @@ export function AddExpenseScreen({
                 </View>
                 <View style={styles.reviewItem}>
                   <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
-                  <Text style={[typography.h1, { color: colors.primary }]}>${(totalAmount / 100).toFixed(2)}</Text>
+                  <Text style={[typography.h1, { color: colors.primary }]}>
+                    {group?.currency === 'INR' ? '₹' : '$'}{(totalAmount / 100).toFixed(2)}
+                  </Text>
                 </View>
                 <View style={styles.reviewItem}>
                   <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
@@ -325,7 +333,9 @@ export function AddExpenseScreen({
                         <Avatar name={member?.name ?? 'U'} size={20} />
                         <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>{member?.name ?? 'Unknown'}</Text>
                       </View>
-                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>${(shareAmount / 100).toFixed(2)}</Text>
+                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
+                        {group?.currency === 'INR' ? '₹' : '$'}{(shareAmount / 100).toFixed(2)}
+                      </Text>
                     </View>
                   );
                 })}
@@ -398,7 +408,7 @@ export function AddExpenseScreen({
               loop={false}
               style={{ width: 140, height: 140 }}
             />
-            <Text style={[typography.h2, { color: colors.text_primary }]}>Royal Success!</Text>
+            <Text style={[typography.h2, { color: colors.text_primary }]}>No cap, success! ✨</Text>
             <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center' }]}>
               The expense has been successfully split.
             </Text>

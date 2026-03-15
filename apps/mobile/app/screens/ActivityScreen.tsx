@@ -80,16 +80,10 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   const [nextCursor, setNextCursor] = React.useState<number | null>(0);
 
   const loadFirstPage = React.useCallback(async () => {
-    if (!groupId) {
-      setEvents([]);
-      setNextCursor(null);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-
     try {
-      const data = await groupService.activity(groupId, 0, PAGE_SIZE);
+      const data = groupId 
+        ? await groupService.activity(groupId, 0, PAGE_SIZE)
+        : await groupService.userActivity(0, PAGE_SIZE);
       setEvents(data.items);
       setNextCursor(data.nextCursor);
     } catch {
@@ -105,12 +99,12 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
   }, [loadFirstPage]);
 
   const loadMore = async () => {
-    if (!groupId || nextCursor === null) {
-      return;
-    }
+    if (nextCursor === null) return;
 
     try {
-      const data = await groupService.activity(groupId, nextCursor, PAGE_SIZE);
+      const data = groupId
+        ? await groupService.activity(groupId, nextCursor, PAGE_SIZE)
+        : await groupService.userActivity(nextCursor, PAGE_SIZE);
       setEvents((prev) => [...prev, ...data.items]);
       setNextCursor(data.nextCursor);
     } catch {

@@ -9,20 +9,50 @@ import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
 import { BalanceCard } from '../components/BalanceCard';
 import { SectionHeader } from '../components/SectionHeader';
-import { ActivityItem } from '../components/ActivityItem';
-import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
+import { groupService } from '../services/group.service';
+import type { ActivityDto } from '@fairshare/shared-types';
+import { useToastStore } from '../store/toastStore';
 
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
   const groups = useGroupStore((state) => state.groups);
   const { colors, typography } = useAppTheme();
+  const [summary, setSummary] = React.useState<{ totalBalanceCents: string } | null>(null);
+  const [activities, setActivities] = React.useState<ActivityDto[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const toast = useToastStore((state) => state.show);
+
+  const loadData = React.useCallback(async () => {
+    try {
+      const [summaryData, activityData] = await Promise.all([
+        groupService.userSummary(),
+        groupService.userActivity(0, 5),
+      ]);
+      setSummary(summaryData);
+      setActivities(activityData.items);
+    } catch (err) {
+      console.error(err);
+      toast('Failed to sync your vibes');
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  React.useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const quickActions = [
-    { label: 'Add Expense', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
-    { label: 'Groups', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
-    { label: 'Settle Up', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Split it', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Squads', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
+    { label: 'Clear Air', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
   ];
+
+  const totalBalance = Number(summary?.totalBalanceCents ?? 0) / 100;
+  const balanceLabel = totalBalance >= 0 ? 'Securing the bag' : 'Lowkey in debt';
+  const balanceVariant = totalBalance >= 0 ? 'success' : 'danger';
+  const balanceIcon = totalBalance >= 0 ? 'trending-up' : 'trending-down';
 
   return (
     <ScrollView 
@@ -33,8 +63,8 @@ export function HomeScreen({ navigation }: { navigation: any }) {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Welcome back,</Text>
-          <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Friend'}</Text>
+          <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back ✌️</Text>
+          <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Bestie'}</Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
           <Avatar name={user?.name ?? 'U'} size={48} />
@@ -44,16 +74,16 @@ export function HomeScreen({ navigation }: { navigation: any }) {
       {/* Balance Summary */}
       <Animated.View entering={FadeInDown.duration(400)} style={styles.summarySection}>
         <BalanceCard
-          title="Total Balance"
-          amount="$420.69"
-          subtitle="You are owed"
-          variant="success"
-          icon="trending-up"
+          title="The Bag 💰"
+          amount={`$${Math.abs(totalBalance).toFixed(2)}`}
+          subtitle={balanceLabel}
+          variant={balanceVariant}
+          icon={balanceIcon}
         />
       </Animated.View>
 
       {/* Quick Actions */}
-      <SectionHeader title="Quick Actions" />
+      <SectionHeader title="Fast Moves" />
       <View style={styles.quickActions}>
         {quickActions.map((action, i) => (
           <Animated.View 
@@ -77,25 +107,31 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
       {/* Recent Activity */}
       <SectionHeader 
-        title="Recent Activity" 
+        title="The Tea ☕" 
         action="See all" 
-        onActionPress={() => {}} 
+        onActionPress={() => navigation.navigate('Activity')} 
       />
       <View style={styles.activityList}>
-        {[1, 2, 3].map((item, i) => (
-          <Animated.View 
-            key={item} 
-            entering={FadeInDown.duration(400).delay(400 + i * 100)}
-          >
-            <ActivityItem 
-              title="Dinner at Joe's" 
-              subtitle="Paid by you in Trip to Bali" 
-              amount="$45.00"
-              date="2h ago"
-              icon="receipt"
-            />
-          </Animated.View>
-        ))}
+        {activities.length > 0 ? (
+          activities.map((activity, i) => (
+            <Animated.View 
+              key={activity.id} 
+              entering={FadeInDown.duration(400).delay(400 + i * 100)}
+            >
+              <ActivityItem 
+                title={activity.type.replace('_', ' ')} 
+                subtitle={`${activity.actorUserId} in group`} 
+                amount={activity.metadata?.totalAmountCents ? `$${(Number(activity.metadata.totalAmountCents) / 100).toFixed(2)}` : undefined}
+                date={new Date(activity.createdAt).toLocaleDateString()}
+                icon="receipt"
+              />
+            </Animated.View>
+          ))
+        ) : (
+          <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center', marginTop: spacing.lg }]}>
+            No tea to spill yet.
+          </Text>
+        )}
       </View>
     </ScrollView>
   );

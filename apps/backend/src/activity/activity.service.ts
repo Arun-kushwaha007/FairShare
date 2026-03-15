@@ -55,4 +55,41 @@ export class ActivityService {
       nextCursor: events.length === safeLimit ? safeCursor + safeLimit : null,
     };
   }
+
+  async getUserActivity(
+    userId: string,
+    cursor = 0,
+    limit = 20,
+  ): Promise<{ items: ActivityDto[]; nextCursor: number | null }> {
+    const safeCursor = Number.isFinite(cursor) && cursor >= 0 ? cursor : 0;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+
+    const events = await this.prisma.activity.findMany({
+      where: {
+        group: {
+          members: {
+            some: { userId },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: safeCursor,
+      take: safeLimit,
+    });
+
+    const items = events.map((event) => ({
+      id: event.id,
+      groupId: event.groupId,
+      actorUserId: event.actorUserId,
+      type: event.type,
+      entityId: event.entityId,
+      metadata: event.metadata as Record<string, unknown>,
+      createdAt: event.createdAt.toISOString(),
+    }));
+
+    return {
+      items,
+      nextCursor: events.length === safeLimit ? safeCursor + safeLimit : null,
+    };
+  }
 }
