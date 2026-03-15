@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { ActivityDto } from '@fairshare/shared-types';
+import { Clock } from 'lucide-react';
+import { glassPanel } from '../layout/layoutStyles';
 
 function labelForType(type: ActivityDto['type']): string {
   switch (type) {
@@ -22,31 +24,46 @@ function labelForType(type: ActivityDto['type']): string {
 
 export function ActivityList({ items, groupId }: { items: ActivityDto[]; groupId: string }) {
   return (
-    <div className="neo-border bg-zinc-900 p-8 shadow-[6px_6px_0px_0px_#ec4899]">
-      <div className="flex items-center justify-between gap-3 mb-8">
-        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">System Logs</h2>
+    <div className={`${glassPanel} p-7`}>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Recent Activity</h2>
         <Link
           href={`/dashboard/activity?groupId=${encodeURIComponent(groupId)}`}
-          className="text-xs font-mono font-bold uppercase tracking-widest text-zinc-500 hover:text-pink-500 underline decoration-2 underline-offset-4 transition-colors"
+          className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)] hover:text-[var(--fs-primary)] transition-colors"
         >
-          Access Buffer
+          View timeline
         </Link>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item) => (
-          <div key={item.id} className="neo-border border-zinc-800 bg-black p-4 flex justify-between items-center group hover:border-pink-500 transition-colors">
+          <div
+            key={item.id}
+            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3 hover:border-[var(--fs-primary)] transition-colors"
+          >
             <div>
-              <p className="text-sm font-black uppercase tracking-tighter text-white">{labelForType(item.type)}</p>
-              <p className="text-[10px] font-mono font-bold uppercase text-zinc-600 mt-1">TIMESTAMP // {new Date(item.createdAt).toLocaleString()}</p>
+              <p className="text-sm font-semibold text-[var(--fs-text-primary)]">{labelForType(item.type)}</p>
+              <p className="text-[11px] font-medium text-[var(--fs-text-muted)] flex items-center gap-2">
+                <Clock size={14} strokeWidth={2} />
+                {new Date(item.createdAt).toLocaleString()}
+              </p>
             </div>
-            <div className="h-2 w-2 rounded-full bg-zinc-800 group-hover:bg-pink-500 transition-colors" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--fs-primary)] bg-[var(--fs-primary)]/10 px-3 py-1 rounded-lg">
+              {item.type.replace('_', ' ')}
+            </span>
           </div>
         ))}
-        {items.length === 0 ? <p className="text-sm font-mono font-bold uppercase text-zinc-700 text-center py-8">NO_DATA_FOUND</p> : null}
+
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/50 px-6 py-8 text-center">
+            <p className="text-sm font-semibold text-[var(--fs-text-primary)] mb-1">No activity yet</p>
+            <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
+              New expenses and settlements will surface here in real time.
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
-
 

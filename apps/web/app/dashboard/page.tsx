@@ -43,27 +43,37 @@ export default async function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-12">
-        <section className="grid gap-6 md:grid-cols-3">
-          <SummaryCard title="ACTIVE_GROUPS" value={groups.length} hint="Directory count" />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[var(--fs-text-primary)]">Balance summary</h2>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
+              Updated realtime
+            </span>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+          <SummaryCard title="Active groups" value={groups.length} hint="Registered ensembles" />
           <SummaryCard
-            title="LIABILITIES"
+            title="Liabilities"
             value={formatUsd(oweCents)}
-            hint={activeGroupId ? `REF: ${activeGroupId.slice(0, 8)}...` : 'NULL_PTR'}
+            hint={activeGroupId ? `Group ref: ${activeGroupId.slice(0, 8)}...` : 'No active group'}
           />
           <SummaryCard
-            title="ASSETS"
+            title="Assets"
             value={formatUsd(owedToMeCents)}
-            hint={me ? `USER: ${me.email}` : 'AUTH_OK'}
+            hint={me ? `Linked to: ${me.email}` : 'Sign in to track personal totals'}
           />
+          </div>
         </section>
 
         <section className="grid gap-12 lg:grid-cols-[1fr_350px]">
           {activeGroupId ? (
             <ActivityList groupId={activeGroupId} items={activity} />
           ) : (
-            <div className="neo-border bg-zinc-900 p-12 text-center">
-              <p className="text-xl font-black uppercase tracking-tighter text-zinc-500 mb-2">NO_ACTIVE_GROUP_DETECTED</p>
-              <p className="text-sm font-mono text-zinc-600">Initialize a group to begin expense monitoring.</p>
+            <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-10 text-center shadow-[var(--fs-shadow-soft)]">
+              <p className="text-xl font-bold text-[var(--fs-text-primary)] mb-2">No active group detected</p>
+              <p className="text-sm font-medium text-[var(--fs-text-muted)]">
+                Create or select a group to start tracking balances and activity.
+              </p>
             </div>
           )}
           <QuickActions groupId={activeGroupId} />
@@ -72,4 +82,3 @@ export default async function DashboardPage() {
     </DashboardLayout>
   );
 }
-

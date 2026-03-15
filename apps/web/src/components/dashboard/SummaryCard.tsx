@@ -10,7 +10,8 @@ export function SummaryCard({
   hint?: ReactNode;
 }) {
   return (
-    <div className="card-royal p-8 flex flex-col justify-between relative overflow-hidden">
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-7 shadow-[var(--fs-shadow-soft)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--fs-primary)]/4 via-transparent to-[var(--fs-accent)]/8 pointer-events-none" />
       <div>
         <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--fs-text-secondary)] mb-2">
           {title}
@@ -29,8 +30,7 @@ export function SummaryCard({
         </div>
       ) : null}
 
-      {/* Subtle Skeuomorphic Highlight */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-white/20 dark:bg-white/5" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-white/30 dark:bg-white/5" />
     </div>
   );
 }
