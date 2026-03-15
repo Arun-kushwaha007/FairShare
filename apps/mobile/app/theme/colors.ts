@@ -1,39 +1,96 @@
 /**
- * Minimalist-Skeuomorphic Color Palette
- * Softened backgrounds with bold "hard color" accents for a professional yet unique feel.
+ * Royal SaaS Design System Palette
+ * 
+ * Philosophy:
+ * - Base: Minimalism
+ * - Depth: Skeuomorphic shadows and highlights
+ * - Accent: 10% Brutalist contrast
+ * - Tone: Royal SaaS (Purple + Gold)
  */
 
 export const colors = {
   light: {
-    primary: '#0066FF',    // Vibrant Blue
-    secondary: '#FF3D00',  // Hard Orange
-    success: '#00C853',    // Vibrant Green
-    danger: '#FF1744',     // Hard Red
-    warning: '#FFEA00',    // Caution Yellow
-    background: '#F8F9FA', // Soft Gray-White
-    surface: '#FFFFFF',    // Pure White
+    // Brand Colors
+    primary: '#6D28D9',       // Royal Purple
+    primaryDark: '#4C1D95',   // Deep Royal Purple
+    accent: '#F59E0B',        // Royal Gold
+    accentSoft: '#FCD34D',    // Soft Gold
+    success: '#22C55E',       // Emerald
+    danger: '#EF4444',        // Crimson
+    warning: '#F59E0B',       // Amber
+
+    // Backgrounds
+    background: '#F8F6F2',    // Main background
+    surface: '#FFFFFF',       // Surface
+    glass: 'rgba(255, 255, 255, 0.65)',
+    
+    // Cards
     card: '#FFFFFF',
-    text_primary: '#1A1A1B',
-    text_secondary: '#666666',
-    border: '#E0E4E8',     // Subtler border
-    muted: '#94A3B8',
-    elevation_low: 'rgba(0, 0, 0, 0.05)',
-    elevation_high: 'rgba(0, 0, 0, 0.1)',
+    cardElevated: '#F3F0EA',
+    cardBorder: 'rgba(0, 0, 0, 0.06)',
+
+    // Text
+    text_primary: '#1A1A1A',
+    text_secondary: '#5B5B5B',
+    muted: '#8A8A8A',
+
+    // Buttons
+    button_primary: '#6D28D9',
+    button_primary_hover: '#5B21B6',
+    button_secondary: '#FCD34D',
+
+    // Borders
+    border: '#E8E6E1',        // Soft border
+    borderHard: '#111111',    // Brutalist accent
+
+    // Shadows (Skeuomorphic)
+    shadowSoft: 'rgba(0,0,0,0.06)',
+    shadowElevated: 'rgba(0,0,0,0.12)',
+    insetHighlight: 'rgba(255,255,255,0.6)',
+    
+    // Gradients
+    gradient: ['#6D28D9', '#8B5CF6'],
   },
   dark: {
-    primary: '#3399FF',    // Slightly Lighter Blue for Dark
-    secondary: '#FF6333', 
-    success: '#00E676',
-    danger: '#FF5252',
-    warning: '#FFFF00',
-    background: '#0F172A', // Deep Navy-Gray (Slate 900) - Better for readability than pure black
-    surface: '#1E293B',    // Slate 800 - Good contrast
-    card: '#1E293B',
-    text_primary: '#F8FAFC',
-    text_secondary: '#94A3B8',
-    border: '#334155',     // Slate 700
-    muted: '#475569',
-    elevation_low: 'rgba(0, 0, 0, 0.2)',
-    elevation_high: 'rgba(0, 0, 0, 0.4)',
+    // Brand Colors
+    primary: '#8B5CF6',       // Royal Purple (Lightened for dark mode)
+    primaryDark: '#7C3AED',
+    accent: '#F59E0B',
+    accentSoft: '#FCD34D',
+    success: '#22C55E',
+    danger: '#EF4444',
+    warning: '#F59E0B',
+
+    // Backgrounds
+    background: '#0E0E11',    // Main background
+    surface: '#141418',       // Secondary background
+    glass: 'rgba(255, 255, 255, 0.06)',
+
+    // Cards
+    card: '#1B1B22',          // Primary card
+    cardElevated: '#23232B',  // Elevated card
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+
+    // Text
+    text_primary: '#F5F5F7',
+    text_secondary: '#A1A1AA',
+    muted: '#6B6B72',
+
+    // Buttons
+    button_primary: '#8B5CF6',
+    button_primary_hover: '#7C3AED',
+    button_secondary: '#FCD34D',
+
+    // Borders
+    border: 'rgba(255, 255, 255, 0.08)', // Soft border
+    borderHard: '#FFFFFF',             // Brutalist accent
+
+    // Shadows (Skeuomorphic)
+    shadowSoft: 'rgba(0,0,0,0.5)',
+    shadowElevated: 'rgba(0,0,0,0.7)',
+    insetHighlight: 'rgba(255,255,255,0.05)',
+
+    // Gradients
+    gradient: ['#7C3AED', '#A78BFA'],
   },
 };
