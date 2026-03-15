@@ -4,6 +4,7 @@ import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
+import { Card } from './ui/Card';
 
 interface BalanceCardProps {
   title: string;
@@ -20,7 +21,7 @@ export const BalanceCard = memo(function BalanceCard({
   icon = 'wallet',
   variant = 'default',
 }: BalanceCardProps) {
-  const { colors } = useAppTheme();
+  const { colors, typography } = useAppTheme();
 
   const accentColor =
     variant === 'success'
@@ -30,52 +31,42 @@ export const BalanceCard = memo(function BalanceCard({
         : colors.primary;
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: colors.elevation_low,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 1,
-          shadowRadius: 8,
-          elevation: 4,
-        },
-      ]}
-    >
+    <Card variant="elevated" style={styles.card}>
       <View style={styles.header}>
-        <View style={[styles.iconBg, { backgroundColor: `${accentColor}15` }]}>
+        <View style={[styles.iconBg, { backgroundColor: `${accentColor}12` }]}>
           <MaterialCommunityIcons name={icon} size={22} color={accentColor} />
         </View>
-        <Text style={[styles.title, { color: colors.text_secondary }]}>
+        <Text style={[typography.caption, { color: colors.text_secondary }]}>
           {title}
         </Text>
       </View>
       
       <View style={styles.content}>
-        <Text style={[styles.amount, { color: colors.text_primary }]}>
+        <Text style={[typography.h1, { color: colors.text_primary, marginBottom: 0 }]}>
           {amount}
         </Text>
         {subtitle ? (
-          <View style={[styles.subtitleBadge, { backgroundColor: `${accentColor}15` }]}>
+          <View style={[styles.subtitleBadge, { backgroundColor: `${accentColor}12` }]}>
             <Text style={[styles.subtitleText, { color: accentColor }]}>
               {subtitle}
             </Text>
           </View>
         ) : null}
       </View>
-    </View>
+      
+      {/* 10% Brutalist Accent: Sharp bottom line for selected/primary card */}
+      {variant !== 'default' && (
+        <View style={[styles.brutalistAccent, { backgroundColor: accentColor }]} />
+      )}
+    </Card>
   );
 });
 
 const styles = StyleSheet.create({
   card: {
-    padding: spacing.lg,
-    borderRadius: 20,
-    borderWidth: 1,
+    padding: spacing.xl,
     gap: spacing.md,
-    marginVertical: spacing.xs,
+    marginVertical: spacing.sm,
   },
   header: {
     flexDirection: 'row',
@@ -83,36 +74,35 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
   content: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: spacing.md,
-  },
-  amount: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    marginTop: spacing.xs,
   },
   subtitleBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   subtitleText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
+  },
+  brutalistAccent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 20,
+    right: 20,
+    height: 3,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
 });

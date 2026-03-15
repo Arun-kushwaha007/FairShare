@@ -4,6 +4,8 @@ import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
+import { Card } from './ui/Card';
+import { Avatar } from './ui/Avatar';
 
 interface ExpenseCardProps {
   description: string;
@@ -24,57 +26,50 @@ export const ExpenseCard = memo(function ExpenseCard({
   date,
   onPress,
 }: ExpenseCardProps) {
-  const { colors } = useAppTheme();
+  const { colors, typography, isDark } = useAppTheme();
 
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: 'rgba(0,0,0,0.05)',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 1,
-          shadowRadius: 4,
-          elevation: 2,
-        },
-      ]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
       accessibilityLabel={`Expense: ${description}, ${amount}`}
       accessibilityRole="button"
     >
-      <View style={styles.topRow}>
-        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={styles.avatarText}>{payerInitials}</Text>
+      <Card variant="glass" style={styles.card}>
+        <View style={styles.topRow}>
+          <Avatar name={payerName} size={44} />
+          <View style={styles.descriptionContainer}>
+            <Text style={[typography.h3, { color: colors.text_primary }]} numberOfLines={1}>
+              {description}
+            </Text>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary, marginTop: 2 }]}>
+              paid by <Text style={{ fontWeight: '700', color: colors.primary }}>{payerName}</Text>
+            </Text>
+          </View>
+          <View style={styles.amountContainer}>
+            <Text style={[typography.h3, { color: colors.text_primary, textAlign: 'right' }]}>
+              {amount}
+            </Text>
+          </View>
         </View>
-        <View style={styles.descriptionContainer}>
-          <Text style={[styles.description, { color: colors.text_primary }]} numberOfLines={1}>
-            {description}
-          </Text>
-          <Text style={[styles.payer, { color: colors.text_secondary }]}>
-            by {payerName}
-          </Text>
-        </View>
-        <Text style={[styles.amount, { color: colors.text_primary }]}>
-          {amount}
-        </Text>
-      </View>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: colors.border, opacity: isDark ? 0.3 : 1 }]} />
 
-      <View style={styles.bottomRow}>
-        <View style={styles.metaItem}>
-          <MaterialCommunityIcons name="account-multiple-outline" size={14} color={colors.primary} />
-          <Text style={[styles.metaText, { color: colors.text_secondary }]}>
-            {participantCount} involved
+        <View style={styles.bottomRow}>
+          <View style={[styles.metaItem, { backgroundColor: `${colors.accent}12` }]}>
+            <MaterialCommunityIcons name="account-multiple-outline" size={14} color={colors.accent} />
+            <Text style={[styles.metaText, { color: colors.accent, fontWeight: '700' }]}>
+              {participantCount} members
+            </Text>
+          </View>
+          <Text style={[typography.caption, { color: colors.muted, opacity: 0.8 }]}>
+            {date}
           </Text>
         </View>
-        <Text style={[styles.date, { color: colors.text_secondary }]}>
-          {date}
-        </Text>
-      </View>
+        
+        {/* 10% Brutalist Accent: Subtle left border for high-value or specific items if needed, 
+            here we just use a clean minimalist layout with skeuomorphic glass effect */}
+      </Card>
     </TouchableOpacity>
   );
 });
@@ -82,8 +77,6 @@ export const ExpenseCard = memo(function ExpenseCard({
 const styles = StyleSheet.create({
   card: {
     padding: spacing.lg,
-    borderRadius: 16,
-    borderWidth: 1,
     marginBottom: spacing.md,
   },
   topRow: {
@@ -91,36 +84,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontWeight: '700',
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
   descriptionContainer: {
     flex: 1,
   },
-  description: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  payer: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  amount: {
-    fontSize: 17,
-    fontWeight: '700',
+  amountContainer: {
+    minWidth: 80,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: spacing.md,
+    height: 1,
+    marginVertical: spacing.lg,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -130,12 +102,12 @@ const styles = StyleSheet.create({
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   metaText: {
-    fontSize: 12,
-  },
-  date: {
     fontSize: 12,
   },
 });

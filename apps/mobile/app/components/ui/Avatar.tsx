@@ -10,58 +10,85 @@ interface AvatarProps {
   size?: number;
 }
 
-const AVATAR_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-function hashCode(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-}
-
 export function Avatar({ name, avatarUrl, size = 40 }: AvatarProps) {
-  const { colors } = useAppTheme();
+  const { colors, shadows } = useAppTheme();
 
   const initials = name
     .split(' ')
+    .filter(Boolean)
     .map((part) => part[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
 
-  const bgColor = AVATAR_COLORS[hashCode(name) % AVATAR_COLORS.length];
+  // Royal SaaS uses Primary Royal Purple as the default avatar background
+  const bgColor = colors.primary;
 
-  if (avatarUrl) {
-    return (
-      <Image
-        source={{ uri: avatarUrl }}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-        }}
-        contentFit="cover"
-        accessibilityLabel={`${name}'s avatar`}
-      />
-    );
-  }
-
-  return (
-    <View
+  const content = avatarUrl ? (
+    <Image
+      source={{ uri: avatarUrl }}
       style={{
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: bgColor,
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
+      contentFit="cover"
+      accessibilityLabel={`${name}'s avatar`}
+    />
+  ) : (
+    <View
+      style={[
+        styles.initialsContainer,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: bgColor,
+        },
+      ]}
       accessibilityLabel={`${name}'s avatar`}
     >
-      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: size * 0.38 }}>
+      <Text style={[styles.initialsText, { fontSize: size * 0.38 }]}>
         {initials}
       </Text>
+      {/* Inset highlight for skeuomorphism */}
+      <View style={[styles.highlight, { borderRadius: size / 2, backgroundColor: colors.insetHighlight }]} />
+    </View>
+  );
+
+  return (
+    <View style={[styles.wrapper, { width: size, height: size }, shadows.soft]}>
+      {content}
+      {/* Subtle outer border for contrast */}
+      <View style={[styles.border, { width: size, height: size, borderRadius: size / 2, borderColor: colors.cardBorder }]} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+  },
+  initialsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  initialsText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  highlight: {
+    position: 'absolute',
+    top: 0,
+    left: 1,
+    right: 1,
+    height: 3,
+    opacity: 0.5,
+  },
+  border: {
+    position: 'absolute',
+    borderWidth: 1,
+  }
+});

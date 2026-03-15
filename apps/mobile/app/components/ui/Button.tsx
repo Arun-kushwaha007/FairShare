@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
@@ -14,7 +15,8 @@ interface ButtonProps {
 }
 
 export function Button({ children, onPress, variant = 'primary', style, loading }: ButtonProps) {
-  const { colors, isDark } = useAppTheme();
+  const theme = useAppTheme();
+  const { colors, shadows, isDark } = theme;
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -25,99 +27,115 @@ export function Button({ children, onPress, variant = 'primary', style, loading 
     switch (variant) {
       case 'primary':
         return {
-          background: colors.primary,
+          gradient: colors.gradient,
           text: '#FFFFFF',
-          shadow: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 102, 255, 0.2)',
+          shadow: shadows.soft,
         };
       case 'secondary':
         return {
-          background: colors.surface,
+          background: colors.cardElevated,
           text: colors.primary,
-          shadow: colors.elevation_low,
+          shadow: shadows.soft,
           border: colors.border,
         };
       case 'danger':
         return {
           background: colors.danger,
           text: '#FFFFFF',
-          shadow: 'rgba(255, 23, 68, 0.2)',
+          shadow: shadows.soft,
         };
       case 'ghost':
         return {
           background: 'transparent',
           text: colors.primary,
-          shadow: 'transparent',
+          shadow: null,
         };
       default:
         return {
           background: colors.primary,
           text: '#FFFFFF',
-          shadow: colors.elevation_low,
+          shadow: shadows.soft,
         };
     }
   };
 
   const v = getVariantStyles();
 
+  const content = (
+    <Animated.View
+      style={[
+        styles.container,
+        !v.gradient && { backgroundColor: v.background },
+        v.border && { borderColor: v.border, borderWidth: 1 },
+        v.shadow,
+        animatedStyle,
+      ]}
+    >
+      <Text style={[styles.text, { color: v.text }]}>
+        {children}
+      </Text>
+      {/* Inset highlight for skeuomorphism */}
+      <View style={[styles.highlight, { backgroundColor: colors.insetHighlight }]} />
+    </Animated.View>
+  );
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={onPress}
       onPressIn={() => {
-        scale.value = withSpring(0.97);
+        scale.value = withSpring(0.96);
       }}
       onPressOut={() => {
         scale.value = withSpring(1);
       }}
-      style={[
-        styles.wrapper,
-        style,
-      ]}
+      style={[styles.wrapper, style]}
     >
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            backgroundColor: v.background,
-            borderColor: v.border || 'transparent',
-            borderWidth: v.border ? 1 : 0,
-            // Skeuomorphic Shadow
-            shadowColor: v.shadow,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 1,
-            shadowRadius: 8,
-            elevation: 4,
-          },
-          animatedStyle,
-        ]}
-      >
-        <Text
-          style={[
-            styles.text,
-            { color: v.text },
-          ]}
+      {v.gradient ? (
+        <LinearGradient
+          colors={v.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientWrapper}
         >
-          {children}
-        </Text>
-      </Animated.View>
+          {content}
+        </LinearGradient>
+      ) : (
+        content
+      )}
     </TouchableOpacity>
   );
 }
 
+import { View } from 'react-native';
+
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  gradientWrapper: {
+    borderRadius: 16,
   },
   container: {
-    height: 52,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
-    borderRadius: 12,
+    borderRadius: 16,
+    position: 'relative',
   },
   text: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.2, // Back to standard letter spacing for better readability
+    letterSpacing: 0.5,
   },
+  highlight: {
+    position: 'absolute',
+    top: 0,
+    left: 2,
+    right: 2,
+    height: 1,
+    borderRadius: 8,
+  }
 });

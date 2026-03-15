@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
 
@@ -10,26 +11,25 @@ interface FloatingActionButtonProps {
 }
 
 export function FloatingActionButton({ onPress, icon = 'plus' }: FloatingActionButtonProps) {
-  const { colors, isDark } = useAppTheme();
+  const { colors, shadows } = useAppTheme();
 
   return (
     <View style={styles.wrapper}>
       <TouchableOpacity
-        style={[
-          styles.container,
-          {
-            backgroundColor: colors.primary,
-            shadowColor: isDark ? 'rgba(0, 0, 0, 0.5)' : colors.primary,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 8,
-          },
-        ]}
+        style={[styles.container, shadows.elevated]}
         onPress={onPress}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
       >
-        <MaterialCommunityIcons name={icon} size={28} color="#FFFFFF" />
+        <LinearGradient
+          colors={colors.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <MaterialCommunityIcons name={icon} size={30} color="#FFFFFF" />
+          {/* Skeuomorphic highlight */}
+          <View style={[styles.highlight, { backgroundColor: colors.insetHighlight }]} />
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -42,10 +42,26 @@ const styles = StyleSheet.create({
     bottom: spacing.xxl,
   },
   container: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'transparent',
+  },
+  gradient: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
+  highlight: {
+    position: 'absolute',
+    top: 2,
+    left: 10,
+    right: 10,
+    height: 4,
+    opacity: 0.6,
+    borderRadius: 20,
+  }
 });
