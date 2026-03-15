@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAppTheme } from './Avatar'; // Using theme context
 import { useAppTheme as useTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
 import { Button } from './Button';

@@ -75,7 +75,7 @@ export function GroupMembersScreen({ route }: { route: { params: { groupId: stri
       </Button>
 
       {members.length === 0 ? (
-        <EmptyState title="No members found" />
+        <EmptyState kind="no_members" title="No members found" />
       ) : (
         members.map((member) => (
           <ListItem key={member.memberId} title={member.name} description={`${member.email} • ${member.role}`} />
