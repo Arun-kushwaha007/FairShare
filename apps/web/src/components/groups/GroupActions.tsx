@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { CurrencyCode, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { PlusCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -13,7 +13,7 @@ const CreateExpenseModal = dynamic(
 
 type GroupActionsProps = {
   groupId: string;
-  currency: string;
+  currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
 };
 

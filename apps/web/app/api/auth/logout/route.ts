@@ -4,7 +4,7 @@ import { authCookies } from '../../../../src/lib/authCookies';
 import { getBackendBaseUrl } from '../../../../src/lib/env';
 
 export async function POST() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const refreshToken = cookieStore.get(authCookies.refreshToken)?.value;
 
   if (refreshToken) {

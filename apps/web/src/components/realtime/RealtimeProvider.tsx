@@ -11,7 +11,7 @@ function getRealtimeOrigin(): string {
     const url = new URL(base);
     return `${url.protocol}//${url.host}`;
   } catch {
-    return base.replace(/\\/api\\/v1.*$/, '');
+    return base.replace(/\/api\/v1.*$/, '');
   }
 }
 
@@ -68,7 +68,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     const socket = socketRef.current;
     if (!socket) return;
 
-    const match = pathname.match(/\\/dashboard\\/groups\\/([^/]+)/);
+    const match = pathname.match(/\/dashboard\/groups\/([^/]+)/);
     const groupId = match ? match[1] : null;
 
     if (groupId && joinedGroup !== groupId) {

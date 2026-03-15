@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { CurrencyCode, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { X, Sparkles } from 'lucide-react';
 import { createExpenseAction } from '../../lib/actions';
 import { SplitType, equalShares, exactShares, percentageShares, sumShares } from '../../lib/split';
@@ -10,7 +10,7 @@ import { useToast } from '../ui/Toaster';
 
 type CreateExpenseModalProps = {
   groupId: string;
-  currency: string;
+  currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
   open: boolean;
   onClose: () => void;
