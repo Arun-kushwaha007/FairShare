@@ -1,3 +1,4 @@
-export const glassClassName =
-  'rounded-2xl border border-border bg-card shadow-glass backdrop-blur-glass supports-[backdrop-filter]:bg-card';
+export const glassPanel =
+  'rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] shadow-[var(--fs-shadow-soft)] backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--fs-card)]';
 
+export const shellPadding = 'px-4 sm:px-6 lg:px-10';

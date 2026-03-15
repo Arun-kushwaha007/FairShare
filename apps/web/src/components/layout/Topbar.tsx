@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { glassPanel } from './layoutStyles';
 
 function titleFromPath(pathname: string): string {
   if (pathname === '/dashboard') return 'Dashboard';
@@ -16,9 +17,9 @@ export function Topbar({ rightSlot }: { rightSlot?: React.ReactNode }) {
   const title = titleFromPath(pathname);
 
   return (
-    <header className="flex items-center justify-between p-6 mb-8 bg-transparent">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
+    <header className={`${glassPanel} flex items-center justify-between px-5 sm:px-6 py-4`}>
+      <div className="space-y-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
           {title}
         </h1>
         <div className="flex items-center gap-2 mt-1.5">
@@ -28,7 +29,7 @@ export function Topbar({ rightSlot }: { rightSlot?: React.ReactNode }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-6">{rightSlot}</div>
+      <div className="flex items-center gap-4 sm:gap-6">{rightSlot}</div>
     </header>
   );
 }

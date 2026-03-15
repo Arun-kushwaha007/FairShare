@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { glassPanel } from './layoutStyles';
 
 const items = [
   { href: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -22,11 +23,11 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="md:sticky md:top-6 h-fit">
-      <div className="glass-panel p-6 rounded-3xl min-h-[600px] flex flex-col">
+    <aside className="lg:sticky lg:top-10 h-fit">
+      <div className={`${glassPanel} p-6 md:p-7 min-h-[520px] flex flex-col`}>
         {/* Brand */}
         <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="w-10 h-10 bg-[var(--fs-primary)] rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-[var(--fs-primary)] rounded-xl flex items-center justify-center shadow-lg border border-white/20">
             <span className="text-white font-black text-xl">F</span>
           </div>
           <div>
