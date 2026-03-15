@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
-
-type LoginResponse = { user: unknown | null };
+import { useAuth } from '../../src/components/auth/AuthProvider';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -20,19 +20,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-      await response.json();
+      await login({ email, password });
       const next = searchParams.get('next') || '/dashboard';
       router.push(next);
-    } catch {
-      setError('Login failed');
+    } catch (err) {
+      setError((err as Error).message || 'Login failed');
     } finally {
       setLoading(false);
     }

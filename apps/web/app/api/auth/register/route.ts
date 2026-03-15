@@ -1,38 +1,30 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { getBackendBaseUrl } from '../../../../src/lib/env';
 import { accessCookieOptions, authCookies, refreshCookieOptions } from '../../../../src/lib/authCookies';
+import { getBackendBaseUrl } from '../../../../src/lib/env';
 
-type AuthTokens = {
-  accessToken: string;
-  refreshToken: string;
-  user?: unknown;
-};
-
-export async function POST(req: Request) {
-  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body) {
-    return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
-  }
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
 
   const response = await fetch(`${getBackendBaseUrl()}/auth/register`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body ?? {}),
     cache: 'no-store',
   });
 
-  const payloadText = await response.text();
-  if (!response.ok) {
-    return new NextResponse(payloadText, { status: response.status });
+  const payload = (await response.json().catch(() => null)) as
+    | { accessToken?: string; refreshToken?: string; user?: unknown; message?: string }
+    | null;
+
+  if (!response.ok || !payload?.accessToken || !payload?.refreshToken) {
+    return NextResponse.json(
+      { message: payload?.message ?? 'Registration failed' },
+      { status: response.status || 400 },
+    );
   }
 
-  const payload = JSON.parse(payloadText) as AuthTokens;
-
-  const cookieStore = await cookies();
-  cookieStore.set(authCookies.accessToken, payload.accessToken, accessCookieOptions);
-  cookieStore.set(authCookies.refreshToken, payload.refreshToken, refreshCookieOptions);
-
-  return NextResponse.json({ user: payload.user ?? null }, { status: 200 });
+  const res = NextResponse.json({ user: payload.user ?? null });
+  res.cookies.set(authCookies.accessToken, payload.accessToken, accessCookieOptions);
+  res.cookies.set(authCookies.refreshToken, payload.refreshToken, refreshCookieOptions);
+  return res;
 }
-

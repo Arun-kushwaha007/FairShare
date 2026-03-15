@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
-
-type RegisterResponse = { user: unknown | null };
+import { useAuth } from '../../src/components/auth/AuthProvider';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -13,6 +12,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { register } = useAuth();
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -20,18 +20,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
-      if (!response.ok) {
-        throw new Error('Register failed');
-      }
-      await response.json();
+      await register({ name, email, password });
       router.push('/dashboard');
-    } catch {
-      setError('Registration failed');
+    } catch (err) {
+      setError((err as Error).message || 'Registration failed');
     } finally {
       setLoading(false);
     }
