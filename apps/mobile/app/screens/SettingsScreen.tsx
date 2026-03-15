@@ -6,9 +6,10 @@ import { useAppTheme } from '../theme/useAppTheme';
 import { useThemeStore, ThemeMode } from '../store/themeStore';
 import { spacing } from '../theme/spacing';
 import { SectionHeader } from '../components/SectionHeader';
+import { Card } from '../components/ui/Card';
 
 export function SettingsScreen() {
-  const { colors } = useAppTheme();
+  const { colors, typography } = useAppTheme();
   const { themeMode, setThemeMode } = useThemeStore();
 
   const themeOptions: { mode: ThemeMode; label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap }[] = [
@@ -18,54 +19,61 @@ export function SettingsScreen() {
   ];
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
+    >
       <SectionHeader title="Appearance" />
       
       <View style={styles.optionsContainer}>
         {themeOptions.map((option) => (
           <TouchableOpacity
             key={option.mode}
-            style={[
-              styles.option,
-              {
-                backgroundColor: themeMode === option.mode ? colors.primary : colors.surface,
-                borderColor: themeMode === option.mode ? colors.primary : colors.border,
-                // Soft shadow if active
-                shadowColor: themeMode === option.mode ? colors.primary : 'rgba(0,0,0,0.05)',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: themeMode === option.mode ? 0.3 : 1,
-                shadowRadius: themeMode === option.mode ? 8 : 4,
-                elevation: themeMode === option.mode ? 6 : 2,
-              },
-            ]}
             onPress={() => setThemeMode(option.mode)}
             activeOpacity={0.8}
           >
-            <View style={styles.optionContent}>
-              <View style={[
+            <Card 
+              variant={themeMode === option.mode ? 'elevated' : 'default'}
+              style={[
+                styles.optionCard,
+                themeMode === option.mode && { borderColor: colors.primary, borderWidth: 2 }
+              ]}
+            >
+              <View style={styles.optionContent}>
+                <View style={[
                   styles.iconBg, 
-                  { backgroundColor: themeMode === option.mode ? '#FFFFFF20' : `${colors.primary}10` }
+                  { backgroundColor: themeMode === option.mode ? `${colors.primary}15` : `${colors.primary}08` }
                 ]}>
-                <MaterialCommunityIcons 
-                  name={option.icon} 
-                  size={24} 
-                  color={themeMode === option.mode ? '#FFFFFF' : colors.primary} 
-                />
+                  <MaterialCommunityIcons 
+                    name={option.icon} 
+                    size={24} 
+                    color={themeMode === option.mode ? colors.primary : colors.muted} 
+                  />
+                </View>
+                <Text 
+                  style={[
+                    styles.optionLabel, 
+                    { color: themeMode === option.mode ? colors.text_primary : colors.text_secondary }
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                {themeMode === option.mode && (
+                  <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />
+                )}
               </View>
-              <Text 
-                style={[
-                  styles.optionLabel, 
-                  { color: themeMode === option.mode ? '#FFFFFF' : colors.text_primary }
-                ]}
-              >
-                {option.label}
-              </Text>
-              {themeMode === option.mode && (
-                <MaterialCommunityIcons name="check-circle" size={24} color="#FFFFFF" />
-              )}
-            </View>
+            </Card>
           </TouchableOpacity>
         ))}
+      </View>
+
+      <View style={styles.infoSection}>
+        <SectionHeader title="About FairShare" />
+        <Card style={styles.infoCard}>
+           <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>
+             FairShare is built for royal expense management. Split bills with elegance and precision.
+           </Text>
+        </Card>
       </View>
     </ScrollView>
   );
@@ -74,16 +82,17 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+  },
+  scrollContent: {
+    padding: spacing.xl,
   },
   optionsContainer: {
-    gap: spacing.md,
+    gap: spacing.sm,
     marginTop: spacing.md,
   },
-  option: {
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
+  optionCard: {
+    padding: 0,
+    marginBottom: spacing.xs,
   },
   optionContent: {
     flexDirection: 'row',
@@ -92,15 +101,25 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   iconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionLabel: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
+  infoSection: {
+    marginTop: spacing.xxl,
+  },
+  infoCard: {
+    marginTop: spacing.sm,
+    padding: spacing.xl,
+    backgroundColor: 'transparent',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+  }
 });

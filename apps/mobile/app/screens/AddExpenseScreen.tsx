@@ -15,6 +15,8 @@ import { spacing } from '../theme/spacing';
 import { SplitSelector } from '../components/ui/SplitSelector';
 import { SplitType, equalShares, exactShares, percentageShares, sumShares, toCents } from '../utils/split';
 import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Avatar } from '../components/ui/Avatar';
 
 type FormData = {
   description: string;
@@ -23,10 +25,10 @@ type FormData = {
 
 const STEPS = [
   { title: 'Details', subtitle: 'What was the expense?' },
-  { title: 'Payer', subtitle: 'Who paid?' },
-  { title: 'Participants', subtitle: 'Who was involved?' },
-  { title: 'Split', subtitle: 'How to split?' },
-  { title: 'Review', subtitle: 'Confirm and create' },
+  { title: 'Payer', subtitle: 'Who paid the bill?' },
+  { title: 'Participants', subtitle: 'Who is splitting this?' },
+  { title: 'Split', subtitle: 'How should we divide it?' },
+  { title: 'Review', subtitle: 'Does everything look royal?' },
 ];
 
 export function AddExpenseScreen({
@@ -50,7 +52,7 @@ export function AddExpenseScreen({
   const [currentStep, setCurrentStep] = React.useState(0);
   const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward');
   const toast = useToastStore((state) => state.show);
-  const { colors, isDark } = useAppTheme();
+  const { colors, typography, isDark } = useAppTheme();
 
   const watchedDescription = watch('description');
   const watchedAmount = watch('amountCents');
@@ -71,12 +73,6 @@ export function AddExpenseScreen({
 
     void loadMembers();
   }, [route.params.groupId, toast]);
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
 
   const buildShares = (totalAmount: number): Record<string, number> => {
     if (splitType === 'equal') {
@@ -173,10 +169,7 @@ export function AddExpenseScreen({
                   value={value}
                   onChangeText={onChange}
                   mode="outlined"
-                  outlineStyle={{ borderRadius: 12 }}
-                  outlineColor={colors.border}
-                  activeOutlineColor={colors.primary}
-                  textColor={colors.text_primary}
+                  outlineStyle={{ borderRadius: 16 }}
                   style={styles.input}
                 />
               )}
@@ -191,11 +184,9 @@ export function AddExpenseScreen({
                   onChangeText={onChange}
                   keyboardType="numeric"
                   mode="outlined"
-                  outlineStyle={{ borderRadius: 12 }}
-                  outlineColor={colors.border}
-                  activeOutlineColor={colors.primary}
-                  textColor={colors.text_primary}
+                  outlineStyle={{ borderRadius: 16 }}
                   style={styles.input}
+                  left={<TextInput.Affix text="$" />}
                 />
               )}
             />
@@ -205,69 +196,75 @@ export function AddExpenseScreen({
       case 1:
         return (
           <Animated.View key="step1" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-            {members.map((member) => (
-              <TouchableOpacity
-                key={member.memberId}
-                style={[
-                  styles.memberOption,
-                  {
-                    backgroundColor: payerId === member.userId ? `${colors.primary}10` : colors.surface,
-                    borderColor: payerId === member.userId ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => setPayerId(member.userId)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
-                </View>
-                <Text style={[styles.memberName, { color: colors.text_primary }]}>
-                  {member.name}
-                </Text>
-                {payerId === member.userId && (
-                  <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ gap: spacing.sm }}>
+                {members.map((member) => (
+                  <TouchableOpacity
+                    key={member.memberId}
+                    onPress={() => setPayerId(member.userId)}
+                    activeOpacity={0.8}
+                  >
+                    <Card
+                      variant={payerId === member.userId ? 'elevated' : 'default'}
+                      style={[
+                        styles.memberCard,
+                        payerId === member.userId && { borderColor: colors.primary, borderWidth: 1.5 }
+                      ]}
+                    >
+                      <Avatar name={member.name} size={40} />
+                      <Text style={[styles.memberName, { color: colors.text_primary }]}>
+                        {member.name}
+                      </Text>
+                      {payerId === member.userId && (
+                        <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />
+                      )}
+                    </Card>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
           </Animated.View>
         );
 
       case 2:
         return (
           <Animated.View key="step2" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-            {members.map((member) => {
-              const selected = selectedParticipantIds.includes(member.userId);
-              return (
-                <TouchableOpacity
-                  key={member.memberId}
-                  style={[
-                    styles.memberOption,
-                    {
-                      backgroundColor: selected ? `${colors.primary}10` : colors.surface,
-                      borderColor: selected ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setSelectedParticipantIds((prev) =>
-                      selected
-                        ? prev.filter((id) => id !== member.userId)
-                        : [...prev, member.userId],
-                    );
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.avatar, { backgroundColor: selected ? colors.primary : colors.muted }]}>
-                    <Text style={styles.avatarText}>{getInitials(member.name)}</Text>
-                  </View>
-                  <Text style={[styles.memberName, { color: colors.text_primary }]}>
-                    {member.name}
-                  </Text>
-                  {selected && (
-                    <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ gap: spacing.sm }}>
+                {members.map((member) => {
+                  const selected = selectedParticipantIds.includes(member.userId);
+                  return (
+                    <TouchableOpacity
+                      key={member.memberId}
+                      onPress={() => {
+                        setSelectedParticipantIds((prev) =>
+                          selected
+                            ? prev.filter((id) => id !== member.userId)
+                            : [...prev, member.userId],
+                        );
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Card
+                        variant={selected ? 'elevated' : 'default'}
+                        style={[
+                          styles.memberCard,
+                          selected && { borderColor: colors.primary, borderWidth: 1.5 }
+                        ]}
+                      >
+                        <Avatar name={member.name} size={40} />
+                        <Text style={[styles.memberName, { color: colors.text_primary }]}>
+                          {member.name}
+                        </Text>
+                        {selected && (
+                          <MaterialCommunityIcons name="check-circle" size={24} color={colors.primary} />
+                        )}
+                      </Card>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
           </Animated.View>
         );
 
@@ -297,34 +294,42 @@ export function AddExpenseScreen({
         const shares = totalAmount > 0 ? buildShares(totalAmount) : {};
         return (
           <Animated.View key="step4" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-             <View style={[styles.reviewCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+             <Card variant="elevated" style={styles.reviewCard}>
                 <View style={styles.reviewItem}>
-                  <Text style={[styles.reviewLabel, { color: colors.text_secondary }]}>Description</Text>
-                  <Text style={[styles.reviewValue, { color: colors.text_primary }]}>{watchedDescription}</Text>
+                  <Text style={[typography.caption, { color: colors.muted }]}>DESCRIPTION</Text>
+                  <Text style={[typography.h3, { color: colors.text_primary }]}>{watchedDescription}</Text>
                 </View>
                 <View style={styles.reviewItem}>
-                  <Text style={[styles.reviewLabel, { color: colors.text_secondary }]}>Amount</Text>
-                  <Text style={[styles.reviewValue, { color: colors.text_primary, fontSize: 24 }]}>${(totalAmount / 100).toFixed(2)}</Text>
+                  <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
+                  <Text style={[typography.h1, { color: colors.primary }]}>${(totalAmount / 100).toFixed(2)}</Text>
                 </View>
                 <View style={styles.reviewItem}>
-                  <Text style={[styles.reviewLabel, { color: colors.text_secondary }]}>Paid by</Text>
-                  <Text style={[styles.reviewValue, { color: colors.text_primary }]}>{payerMember?.name ?? 'Unknown'}</Text>
+                  <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
+                  <View style={styles.payerRow}>
+                    <Avatar name={payerMember?.name ?? 'U'} size={24} />
+                    <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                      {payerMember?.name ?? 'Unknown'}
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                <Text style={[styles.reviewLabel, { color: colors.text_secondary, marginBottom: spacing.sm }]}>Splits ({splitType})</Text>
+                <Text style={[typography.caption, { color: colors.muted, marginBottom: spacing.md }]}>SPLITS ({splitType.toUpperCase()})</Text>
                 {selectedParticipantIds.map((userId) => {
                   const member = members.find((m) => m.userId === userId);
                   const shareAmount = shares[userId] ?? 0;
                   return (
                     <View key={userId} style={styles.splitRow}>
-                      <Text style={[styles.splitUser, { color: colors.text_primary }]}>{member?.name ?? 'Unknown'}</Text>
-                      <Text style={[styles.splitAmount, { color: colors.primary }]}>${(shareAmount / 100).toFixed(2)}</Text>
+                      <View style={styles.splitUserCol}>
+                        <Avatar name={member?.name ?? 'U'} size={20} />
+                        <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>{member?.name ?? 'Unknown'}</Text>
+                      </View>
+                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>${(shareAmount / 100).toFixed(2)}</Text>
                     </View>
                   );
                 })}
-             </View>
+             </Card>
           </Animated.View>
         );
       }
@@ -335,63 +340,69 @@ export function AddExpenseScreen({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Progress Dots */}
-      <View style={styles.progressRow}>
-        {STEPS.map((_, i) => (
-          <View 
-            key={i} 
-            style={[
-              styles.progressDot, 
-              { backgroundColor: i <= currentStep ? colors.primary : colors.border }
-            ]} 
-          />
-        ))}
-      </View>
+      <View style={styles.header}>
+        <View style={styles.progressRow}>
+          {STEPS.map((_, i) => (
+            <View 
+              key={i} 
+              style={[
+                styles.progressDot, 
+                { backgroundColor: i <= currentStep ? colors.primary : colors.border, width: i === currentStep ? 24 : 8 }
+              ]} 
+            />
+          ))}
+        </View>
 
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.text_primary }]}>{STEPS[currentStep].title}</Text>
-        <Text style={[styles.stepSubtitle, { color: colors.text_secondary }]}>{STEPS[currentStep].subtitle}</Text>
+        <View style={styles.stepHeader}>
+          <Text style={[typography.h1, { color: colors.text_primary }]}>{STEPS[currentStep].title}</Text>
+          <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>{STEPS[currentStep].subtitle}</Text>
+        </View>
       </View>
 
       <View style={{ flex: 1 }}>
         {renderStep()}
       </View>
 
-      {inlineError ? (
-        <Animated.View entering={FadeInDown} style={[styles.errorBox, { backgroundColor: `${colors.danger}10`, borderColor: colors.danger }]}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.danger} />
-          <Text style={[styles.errorText, { color: colors.danger }]}>{inlineError}</Text>
-        </Animated.View>
-      ) : null}
+      <View style={styles.bottomSection}>
+        {inlineError ? (
+          <Animated.View entering={FadeInDown} style={[styles.errorBox, { backgroundColor: `${colors.danger}10`, borderColor: colors.danger }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={colors.danger} />
+            <Text style={[styles.errorText, { color: colors.danger }]}>{inlineError}</Text>
+          </Animated.View>
+        ) : null}
 
-      <View style={styles.footer}>
-        <Button 
-          variant="secondary" 
-          onPress={currentStep === 0 ? () => navigation.goBack() : goBack}
-          style={{ flex: 1 }}
-        >
-          {currentStep === 0 ? 'Cancel' : 'Back'}
-        </Button>
-        <Button 
-          variant="primary" 
-          onPress={currentStep === STEPS.length - 1 ? onSubmit : goNext}
-          style={{ flex: 2 }}
-        >
-          {currentStep === STEPS.length - 1 ? 'Confirm & Create' : 'Next'}
-        </Button>
+        <View style={styles.footer}>
+          <Button 
+            variant="secondary" 
+            onPress={currentStep === 0 ? () => navigation.goBack() : goBack}
+            style={{ flex: 1 }}
+          >
+            {currentStep === 0 ? 'Cancel' : 'Back'}
+          </Button>
+          <Button 
+            variant="primary" 
+            onPress={currentStep === STEPS.length - 1 ? onSubmit : goNext}
+            style={{ flex: 2 }}
+          >
+            {currentStep === STEPS.length - 1 ? 'Confirm & Create' : 'Next'}
+          </Button>
+        </View>
       </View>
 
       <Modal visible={successOpen} transparent animationType="fade">
         <View style={styles.overlay}>
-          <View style={[styles.successBox, { backgroundColor: colors.surface }]}>
+          <Card variant="elevated" style={styles.successCard}>
             <LottieView
               source={require('../assets/animations/expense-success.json')}
               autoPlay
               loop={false}
-              style={{ width: 160, height: 160 }}
+              style={{ width: 140, height: 140 }}
             />
-            <Text style={[styles.successTitle, { color: colors.text_primary }]}>Success!</Text>
-          </View>
+            <Text style={[typography.h2, { color: colors.text_primary }]}>Royal Success!</Text>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center' }]}>
+              The expense has been successfully split.
+            </Text>
+          </Card>
         </View>
       </Modal>
     </View>
@@ -401,109 +412,72 @@ export function AddExpenseScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.xl,
+  },
+  header: {
+    marginBottom: spacing.xl,
   },
   progressRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: spacing.xl,
-    marginTop: spacing.sm,
+    gap: 6,
+    marginBottom: spacing.lg,
   },
   progressDot: {
-    width: 8,
     height: 8,
     borderRadius: 4,
   },
   stepHeader: {
-    marginBottom: spacing.xl,
-  },
-  stepTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  stepSubtitle: {
-    fontSize: 15,
-    marginTop: 4,
+    gap: 4,
   },
   stepContent: {
+    flex: 1,
     gap: spacing.lg,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
-  memberOption: {
+  memberCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: spacing.md,
-    // Soft shadow
-    shadowColor: 'rgba(0,0,0,0.03)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
   },
   memberName: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   reviewCard: {
     padding: spacing.xl,
-    borderRadius: 24,
-    borderWidth: 1,
-    shadowColor: 'rgba(0,0,0,0.05)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 8,
   },
   reviewItem: {
     marginBottom: spacing.lg,
   },
-  reviewLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  reviewValue: {
-    fontSize: 18,
-    fontWeight: '700',
+  payerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 4,
   },
   divider: {
     height: 1,
-    marginVertical: spacing.lg,
+    marginVertical: spacing.xl,
+    opacity: 0.5,
   },
   splitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  splitUser: {
-    fontSize: 14,
-    fontWeight: '500',
+  splitUserCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  splitAmount: {
-    fontSize: 14,
-    fontWeight: '700',
+  bottomSection: {
+    paddingTop: spacing.lg,
   },
   errorBox: {
     flexDirection: 'row',
@@ -516,27 +490,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   footer: {
     flexDirection: 'row',
     gap: spacing.md,
-    paddingTop: spacing.lg,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: spacing.xl,
   },
-  successBox: {
+  successCard: {
     padding: spacing.xxl,
-    borderRadius: 32,
     alignItems: 'center',
+    width: '100%',
     gap: spacing.md,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '800',
   },
 });

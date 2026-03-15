@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -11,16 +11,17 @@ import { BalanceCard } from '../components/BalanceCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { ActivityItem } from '../components/ActivityItem';
 import { Button } from '../components/ui/Button';
+import { Avatar } from '../components/ui/Avatar';
 
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
   const groups = useGroupStore((state) => state.groups);
-  const { colors } = useAppTheme();
+  const { colors, typography } = useAppTheme();
 
   const quickActions = [
-    { label: 'Add Expense', icon: 'plus-circle', color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
-    { label: 'Create Group', icon: 'account-group', color: colors.secondary, onPress: () => navigation.navigate('CreateGroup') },
-    { label: 'Settle Up', icon: 'handshake', color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Add Expense', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Groups', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
+    { label: 'Settle Up', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
   ];
 
   return (
@@ -32,10 +33,12 @@ export function HomeScreen({ navigation }: { navigation: any }) {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={[styles.welcome, { color: colors.text_secondary }]}>Welcome back,</Text>
-          <Text style={[styles.name, { color: colors.text_primary }]}>{user?.name ?? 'Friend'}</Text>
+          <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Welcome back,</Text>
+          <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Friend'}</Text>
         </View>
-        <MaterialCommunityIcons name="bell-outline" size={24} color={colors.text_primary} />
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <Avatar name={user?.name ?? 'U'} size={48} />
+        </TouchableOpacity>
       </View>
 
       {/* Balance Summary */}
@@ -58,16 +61,16 @@ export function HomeScreen({ navigation }: { navigation: any }) {
             entering={FadeInDown.duration(400).delay(100 + i * 100)}
             style={styles.actionItem}
           >
-            <Button
-              variant="secondary"
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={action.onPress}
-              style={styles.actionButton}
+              activeOpacity={0.8}
             >
-              <View style={styles.actionContent}>
-                <MaterialCommunityIcons name={action.icon as any} size={20} color={action.color} />
-                <Text style={styles.actionLabel}>{action.label}</Text>
+              <View style={[styles.actionIconBg, { backgroundColor: `${action.color}10` }]}>
+                <MaterialCommunityIcons name={action.icon} size={24} color={action.color} />
               </View>
-            </Button>
+              <Text style={[styles.actionLabel, { color: colors.text_primary }]}>{action.label}</Text>
+            </TouchableOpacity>
           </Animated.View>
         ))}
       </View>
@@ -89,6 +92,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
               subtitle="Paid by you in Trip to Bali" 
               amount="$45.00"
               date="2h ago"
+              icon="receipt"
             />
           </Animated.View>
         ))}
@@ -99,27 +103,18 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    padding: spacing.lg,
+    padding: spacing.xl,
     paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
     marginTop: spacing.sm,
   },
-  welcome: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
   summarySection: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
   },
   quickActions: {
     flexDirection: 'row',
@@ -130,17 +125,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionButton: {
-    paddingHorizontal: 0,
-    height: 80,
-  },
-  actionContent: {
+    padding: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
+    // Soft shadow
+    shadowColor: 'rgba(0,0,0,0.04)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  actionIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
-    textTransform: 'uppercase',
+    textAlign: 'center',
   },
   activityList: {
     gap: spacing.sm,

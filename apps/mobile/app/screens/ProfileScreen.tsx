@@ -7,23 +7,29 @@ import { useAuthStore } from '../store/authStore';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
 import { SectionHeader } from '../components/SectionHeader';
+import { Card } from '../components/ui/Card';
+import { Avatar } from '../components/ui/Avatar';
 
 export function ProfileScreen({ navigation }: { navigation: { navigate: (route: string) => void } }) {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
-  const { colors, isDark } = useAppTheme();
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
+  const { colors, typography } = useAppTheme();
 
   const menuItems = [
     {
       icon: 'cog-outline' as const,
       label: 'Settings',
       onPress: () => navigation.navigate('Settings'),
+    },
+    {
+      icon: 'shield-check-outline' as const,
+      label: 'Privacy & Security',
+      onPress: () => {},
+    },
+    {
+      icon: 'help-circle-outline' as const,
+      label: 'Help & Support',
+      onPress: () => {},
     },
     {
       icon: 'logout' as const,
@@ -37,71 +43,72 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
     >
-      <SectionHeader title="Profile" />
-
-      {/* Profile Header */}
+      <View style={styles.headerSpacer} />
+      
+      {/* Profile Header Card */}
       <Animated.View entering={FadeInDown.duration(400)}>
-        <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>
-              {getInitials(user?.name ?? 'Guest')}
-            </Text>
-          </View>
+        <Card variant="elevated" style={styles.profileCard}>
+          <Avatar name={user?.name ?? 'Guest'} size={80} />
           <View style={styles.userInfo}>
-            <Text style={[styles.name, { color: colors.text_primary }]}>
+            <Text style={[typography.h2, { color: colors.text_primary }]}>
               {user?.name ?? 'Guest'}
             </Text>
-            <Text style={[styles.email, { color: colors.text_secondary }]}>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary, marginTop: 4 }]}>
               {user?.email ?? 'Not signed in'}
             </Text>
           </View>
-        </View>
+          {/* Brutalist Accent */}
+          <View style={[styles.brutalistAccent, { backgroundColor: colors.primary }]} />
+        </Card>
       </Animated.View>
 
-      {/* Menu Items */}
+      {/* Menu Sections */}
       <View style={styles.menuSection}>
-        <SectionHeader title="Account" />
+        <SectionHeader title="Account Management" />
         {menuItems.map((item, i) => (
-          <TouchableOpacity
+          <Animated.View 
             key={item.label}
-            style={[
-              styles.menuItem,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={item.onPress}
-            activeOpacity={0.7}
+            entering={FadeInDown.duration(400).delay(200 + i * 100)}
           >
-            <View
-              style={[
-                styles.menuIconBg,
-                {
-                  backgroundColor: item.danger ? `${colors.danger}15` : `${colors.primary}15`,
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={item.icon}
-                size={22}
-                color={item.danger ? colors.danger : colors.primary}
-              />
-            </View>
-            <Text
-              style={[
-                styles.menuLabel,
-                {
-                  color: item.danger ? colors.danger : colors.text_primary,
-                },
-              ]}
-            >
-              {item.label}
-            </Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
-          </TouchableOpacity>
+            <TouchableOpacity onPress={item.onPress} activeOpacity={0.8}>
+              <Card variant="default" style={styles.menuItem}>
+                <View
+                  style={[
+                    styles.menuIconBg,
+                    {
+                      backgroundColor: item.danger ? `${colors.danger}12` : `${colors.primary}12`,
+                    },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={item.icon}
+                    size={22}
+                    color={item.danger ? colors.danger : colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.menuLabel,
+                    {
+                      color: item.danger ? colors.danger : colors.text_primary,
+                    },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+                <MaterialCommunityIcons name="chevron-right" size={20} color={colors.muted} />
+              </Card>
+            </TouchableOpacity>
+          </Animated.View>
         ))}
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={[typography.caption, { color: colors.muted }]}>
+          FairShare Royal Edition v1.2.0
+        </Text>
       </View>
     </ScrollView>
   );
@@ -109,47 +116,21 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
 
 const styles = StyleSheet.create({
   scrollContent: {
-    padding: spacing.lg,
-    paddingBottom: 40,
+    padding: spacing.xl,
+    paddingBottom: 60,
+  },
+  headerSpacer: {
+    height: spacing.sm,
   },
   profileCard: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    padding: spacing.xl,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: spacing.xl,
-    // Soft shadow
-    shadowColor: 'rgba(0,0,0,0.05)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.xl,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 24,
+    padding: spacing.xxl,
+    marginBottom: spacing.xxl,
+    gap: spacing.md,
   },
   userInfo: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  email: {
-    fontSize: 14,
-    marginTop: 2,
+    alignItems: 'center',
   },
   menuSection: {
     gap: spacing.sm,
@@ -158,27 +139,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: spacing.md,
-    marginBottom: spacing.sm,
-    // Subtle shadow
-    shadowColor: 'rgba(0,0,0,0.03)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: spacing.xs,
   },
   menuIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuLabel: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
   },
+  brutalistAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 40,
+    bottom: 40,
+    width: 4,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+  },
+  footer: {
+    marginTop: spacing.xxxl,
+    alignItems: 'center',
+  }
 });
