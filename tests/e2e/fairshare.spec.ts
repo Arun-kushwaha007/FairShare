@@ -114,3 +114,84 @@ test('view activity after expense and settlement', async ({ request, baseURL }) 
   expect(activityPayload.some((item) => item.type === 'expense_created')).toBeTruthy();
   expect(activityPayload.some((item) => item.type === 'settlement_created')).toBeTruthy();
 });
+
+test('end-to-end lifecycle flow', async ({ request, baseURL }) => {
+  test.skip(process.env.RUN_E2E !== 'true', 'Set RUN_E2E=true to run backend e2e flow');
+  test.skip(!baseURL, 'Base URL is required');
+
+  const emailPayer = randomEmail();
+  const emailParticipant = randomEmail();
+  const password = 'Password123';
+  let participantId = '';
+
+  await test.step('register two users', async () => {
+    const registerPayer = await request.post('/auth/register', {
+      data: { name: 'Payer', email: emailPayer, password },
+    });
+    expect(registerPayer.ok()).toBeTruthy();
+
+    const registerParticipant = await request.post('/auth/register', {
+      data: { name: 'Participant', email: emailParticipant, password },
+    });
+    expect(registerParticipant.ok()).toBeTruthy();
+    const participantPayload = await registerParticipant.json();
+    participantId = participantPayload.user.id as string;
+  });
+
+  const login = await request.post('/auth/login', {
+    data: { email: emailPayer, password },
+  });
+  expect(login.ok()).toBeTruthy();
+  const loginPayload = await login.json();
+  const token = loginPayload.accessToken as string;
+  const authHeaders = { Authorization: `Bearer ${token}` };
+  const payerId = loginPayload.user.id as string;
+
+  const groupResp = await request.post('/groups', {
+    headers: authHeaders,
+    data: { name: 'Lifecycle Group', currency: 'USD' },
+  });
+  expect(groupResp.ok()).toBeTruthy();
+  const group = await groupResp.json();
+
+  const invite = await request.post(`/groups/${group.id}/invite`, {
+    headers: authHeaders,
+    data: { email: emailParticipant },
+  });
+  expect(invite.ok()).toBeTruthy();
+
+  await test.step('add expense', async () => {
+    const expense = await request.post(`/groups/${group.id}/expenses`, {
+      headers: authHeaders,
+      data: {
+        payerId,
+        description: 'Lifecycle Expense',
+        totalAmountCents: '2000',
+        currency: 'USD',
+        splits: [
+          { userId: payerId, owedAmountCents: '1000', paidAmountCents: '2000' },
+          { userId: participantId, owedAmountCents: '1000', paidAmountCents: '0' },
+        ],
+      },
+    });
+    expect(expense.ok()).toBeTruthy();
+  });
+
+  await test.step('simplify & settle', async () => {
+    const suggestions = await request.get(`/groups/${group.id}/simplify`, { headers: authHeaders });
+    expect(suggestions.ok()).toBeTruthy();
+    const suggestionPayload = (await suggestions.json()) as Array<{ fromUserId: string; toUserId: string; amountCents: string }>;
+    const firstSuggestion = suggestionPayload[0];
+    expect(firstSuggestion).toBeTruthy();
+
+    const settle = await request.post(`/groups/${group.id}/settlements`, {
+      headers: authHeaders,
+      data: {
+        payerId: firstSuggestion.fromUserId,
+        receiverId: firstSuggestion.toUserId,
+        amountCents: firstSuggestion.amountCents,
+      },
+    });
+    expect(settle.ok()).toBeTruthy();
+  });
+});
