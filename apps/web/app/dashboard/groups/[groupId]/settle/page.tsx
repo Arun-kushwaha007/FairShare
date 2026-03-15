@@ -1,7 +1,7 @@
 import { GroupDto, GroupMemberSummaryDto, SimplifySuggestionDto } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { DashboardLayout } from '../../../../../src/components/layout';
-import { SettlementList } from '../../../../../src/components/groups/SettlementList';
+import { SettlementList } from '../../../../../src/components/groups';
 import { backendFetch } from '../../../../../src/lib/backend';
 
 export default async function SettleGroupPage({ params }: { params: { groupId: string } }) {
