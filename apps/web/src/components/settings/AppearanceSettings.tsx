@@ -1,5 +1,6 @@
 'use client';
 
+import type { JSX } from 'react';
 import { Laptop, Moon, Sun } from 'lucide-react';
 import { useThemeMode } from '../theme/ThemeProvider';
 

@@ -1,5 +1,6 @@
 'use client';
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityDto, GroupDto } from '@fairshare/shared-types';
 import { ActivitySquare, BadgeCheck, Clock3, Mail, Receipt, RefreshCw, UsersRound } from 'lucide-react';
@@ -48,7 +49,8 @@ function labelFor(activity: ActivityDto): string {
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
   if (!cents) return null;
-  return (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency: activity.metadata?.currency ?? 'USD' });
+  const currency = typeof activity.metadata?.currency === 'string' ? activity.metadata.currency : 'USD';
+  return (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency });
 }
 
 function timeAgo(iso: string): string {
