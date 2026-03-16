@@ -5,6 +5,23 @@ import { Manrope, Space_Grotesk } from 'next/font/google';
 import { Providers } from '../src/components/Providers';
 import { themeStylesheet } from '../src/design/theme';
 
+const themeInitScript = `
+(function() {
+  try {
+    const storageKey = 'fs-theme';
+    const stored = localStorage.getItem(storageKey);
+    const mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
+    document.documentElement.dataset.theme = resolved;
+    document.body.dataset.theme = resolved;
+  } catch (_) {
+    document.documentElement.dataset.theme = 'light';
+    document.body.dataset.theme = 'light';
+  }
+})();
+`;
+
 export const metadata: Metadata = {
   title: 'FairShare | Smart Group Expense Sharing',
   description: 'Track shared expenses, simplify debts, and settle quickly with FairShare.',
@@ -24,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="light" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
       <head>
         <style id="fs-theme-vars">{themeStylesheet}</style>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen">
         <Providers>

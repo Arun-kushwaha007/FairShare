@@ -1,6 +1,6 @@
 import { GroupDto } from '@fairshare/shared-types';
 import { DashboardLayout } from '../../../src/components/layout';
-import { GroupCard } from '../../../src/components/groups';
+import { GroupCard, CreateGroupButton } from '../../../src/components/groups';
 import { backendFetch } from '../../../src/lib/backend';
 
 export default async function DashboardGroupsPage() {
@@ -12,7 +12,7 @@ export default async function DashboardGroupsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topbarRight={<CreateGroupButton />}>
       <div className="space-y-10">
         <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-8 shadow-[var(--fs-shadow-soft)]">
           <div className="flex items-center justify-between gap-4">

@@ -6,6 +6,8 @@ import {
   CreateSettlementRequestDto,
   SettlementDto,
   PresignedReceiptUrlResponseDto,
+  CreateGroupRequestDto,
+  GroupDto,
 } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
@@ -106,4 +108,26 @@ export async function createReceiptUrlAction(expenseId: string, extension?: stri
   }
 
   return { success: true, presign: data as PresignedReceiptUrlResponseDto };
+}
+
+export async function createGroupAction(payload: CreateGroupRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to create group' };
+  }
+
+  return { success: true, group: data as GroupDto };
 }

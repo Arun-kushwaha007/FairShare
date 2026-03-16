@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrencyCode, GroupMemberSummaryDto } from '@fairshare/shared-types';
-import { PlusCircle } from 'lucide-react';
+import Link from 'next/link';
+import { PlusCircle, Wallet } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const CreateExpenseModal = dynamic(
@@ -33,6 +34,13 @@ export function GroupActions({ groupId, currency, members }: GroupActionsProps) 
             <PlusCircle className="w-4 h-4" />
             Record expense
           </button>
+          <Link
+            href={`/dashboard/groups/${groupId}/settle`}
+            className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] flex items-center gap-2 justify-center"
+          >
+            <Wallet className="w-4 h-4 text-[var(--fs-primary)]" />
+            Settle up
+          </Link>
           <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-medium text-[var(--fs-text-muted)]">
             Invite teammates from the member panel to keep your ledger accurate.
           </div>
