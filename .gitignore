@@ -1,6 +1,8 @@
 node_modules
 .pnpm-store
 .env
+.env.*
+!.env.example
 .env.local
 dist
 .next
@@ -9,3 +11,11 @@ coverage
 .agent
 .turbo
 skills-lock.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.jks
