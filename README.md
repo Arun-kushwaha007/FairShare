@@ -1,154 +1,151 @@
-# 💸 FairShare
+# FairShare
 
-**A Production-Grade Monorepo for Collaborative Expense Sharing.**
+A production-grade monorepo for collaborative expense sharing across mobile, web, and backend services.
 
-FairShare is a high-performance, full-stack solution designed for seamless expense tracking and settlement. Built with a modern TypeScript-first architecture, it provides a unified experience across mobile, web, and backend services.
+## Overview
+FairShare simplifies shared living and group travel by providing accurate splits, real-time activity, and fast settlements. This repository contains a fully wired backend API, an Expo-powered mobile app, and a Next.js web dashboard.
 
----
+## What Is Implemented
 
-## 🚀 Overview
+### Mobile app
+- Authentication, registration, and profile management
+- Group creation, member management, and invitations
+- Expense creation (equal, exact, percentage splits)
+- Expense details with receipt preview/upload flow
+- Group activity timeline with pagination
+- Settlement flow with UPI deep link and mark-paid
+- Theme switching (light, dark, system)
 
-FairShare simplifies communal living and shared adventures. Whether you're splitting rent with roommates or tracking costs on a group trip, FairShare provides the tools to handle complex splits, automate settlements via UPI, and maintain real-time visibility into balances.
+### Web dashboard
+- Authentication, registration, and session handling
+- Dashboard summary, recent activity, and quick actions
+- Group list and group detail views
+- Expense creation and receipt upload
+- Member invitations
+- Settlement suggestions with confirm flow
+- Activity timeline with group filtering and pagination
+- Profile and settings pages with light/dark/system theme
 
-### Key Highlights
+### Backend API
+- NestJS API with Prisma + Supabase/Postgres
+- BigInt-based split arithmetic for precise balances
+- Redis for background jobs and caching
+- S3 for receipt storage
+- JWT auth with refresh tokens
+- Stripe hooks (optional) and Sentry hooks (optional)
 
-- **Cross-Platform**: Expo-powered mobile app and Next.js web dashboard.
-- **Robust Backend**: Scalable NestJS microservice with Prisma and Supabase.
-- **Financial Integrity**: High-precision BigInt arithmetic for accurate penny-perfect splits.
-- **Production Ready**: Fully Dockerized, Terraform-orchestrated, and CI/CD-integrated.
+## Architecture
 
----
-
-## 🛠 Tech Stack
-
-### Backend
-
-- **Framework**: NestJS (TypeScript strict)
-- **Database**: PostgreSQL (Supabase) + Prisma ORM
-- **Caching**: Redis (BullMQ for async jobs)
-- **Storage**: AWS S3 (Receipts & Assets)
-- **Security**: JWT Rotation, Google OAuth, Helmet, CSRF Protection
-- **Observability**: Prometheus metrics + Sentry + OpenTelemetry
-
-### Mobile
-
-- **Framework**: Expo Router (React Native)
-- **Styling**: React Native Paper + Reanimated animations
-- **State/Networking**: Axios + Socket.io + TanStack Query (planned)
-- **Native Hooks**: Haptic feedback, Lottie animations, UPI Deep-linking
-
-### Web
-
-- **Framework**: Next.js
-- **Styling**: TailwindCSS + Framer Motion
-- **SEO**: Dynamic metadata & SSR optimized
-
----
-
-## 📁 Project Structure
-
-This project uses **Turborepo** and **pnpm** for workspace management:
-
-```text
+```
 FairShare/
 ├── apps/
 │   ├── backend/      # NestJS API Service
 │   ├── mobile/       # Expo / React Native App
 │   └── web/          # Next.js Marketing & Dashboard
 ├── packages/
-│   └── shared-types/ # Shared TS interfaces & Zod schemas
-├── infra/            # Terraform modules (AWS ECS, RDS, S3)
-└── scripts/          # Automation & seeding utilities
+│   └── shared-types/ # Shared TS interfaces
+├── infra/            # Terraform modules
+└── scripts/          # Automation and seeding
 ```
 
----
+## Prerequisites
+- Node.js 18+
+- pnpm 8+
+- Docker (for local Postgres and Redis)
+- Optional: AWS S3 bucket for receipts
 
-## 🚦 Getting Started
+## Setup
 
-### Prerequisites
+### 1) Install dependencies
+```
+pnpm install
+```
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [pnpm](https://pnpm.io/) (v8+)
-- [Docker](https://www.docker.com/) (for local services)
+### 2) Configure environment variables
+Create `.env` at the repo root (used by backend and shared tooling):
 
-### Installation
+```
+cp .env.example .env
+```
 
-1. **Clone the repository**:
+Required variables in `.env`:
+- `SUPABASE_DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `REDIS_URL`
+- `CORS_ORIGINS` (include web + Expo dev URLs)
 
-   ```bash
-   git clone https://github.com/Arun-kushwaha007/FairShare.git
-   cd FairShare
-   ```
+Optional but supported:
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET`
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+- `SENTRY_DSN`, `EXPO_PUBLIC_SENTRY_DSN`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
-2. **Install dependencies**:
+Mobile app `.env` (used by Expo):
+```
+cp apps/mobile/.env.example apps/mobile/.env
+```
+Set:
+- `EXPO_PUBLIC_API_URL` (point to your API host, often your LAN IP)
+- `EXPO_PUBLIC_S3_BASE_URL` (optional, public S3 base URL)
 
-   ```bash
-   pnpm install
-   ```
+Web app environment:
+- `FAIRSHARE_API_URL` or `NEXT_PUBLIC_API_URL`
+- Defaults to `http://localhost:3001/api/v1`
 
-3. **Environment Setup**:
+### 3) Start local infrastructure
+```
+docker-compose up -d
+```
 
-   Copy `.env.example` to `.env` in the root and within `apps/backend/`.
+### 4) Run services
+```
+# All apps in parallel
+turbo run dev --parallel
 
-   ```bash
-   cp .env.example .env
-   ```
+# Or individually
+pnpm dev:backend
+pnpm dev:web
+pnpm dev:mobile
+```
 
-   > [!IMPORTANT]
-   > The backend requires several mandatory environment variables to bootstrap successfully. Ensure the following are set in `apps/backend/.env`:
-   > - `SUPABASE_DATABASE_URL`: Your PostgreSQL connection string.
-   > - `JWT_SECRET` & `JWT_REFRESH_SECRET`: Secure strings for token signing.
-   > - `STRIPE_SECRET_KEY`: Required for the payments module (starts with `sk_test_`).
-   > - `STRIPE_WEBHOOK_SECRET`: Required for processing payment events (starts with `whsec_`).
-   > - `GOOGLE_CLIENT_ID` & `SECRET`: For OAuth integration.
+## Development Guide
 
-4. **Start Development Services**:
+### Backend
+- API base URL: `http://localhost:3001/api/v1`
+- Seed data: `pnpm seed`
+- Ensure Redis and Postgres are running via Docker.
 
-   ```bash
-   # Start DB, Redis via Docker
-   docker-compose up -d
-   
-   # Run all apps in dev mode (Turbo)
-   pnpm dev
-   ```
+### Web
+- Next.js dashboard and marketing pages
+- Theme is controlled via `data-theme` and local storage
+- Build: `pnpm --filter web build`
 
-### 💻 Developing Locally
+### Mobile
+- Use Expo Go or a simulator
+- Make sure `EXPO_PUBLIC_API_URL` points to a reachable host
+- If using a device, replace `localhost` with your LAN IP
 
-You can also start specific services individually using the following commands from the root:
+## Useful Commands
 
-| Service | Command | Description |
-| :--- | :--- | :--- |
-| **All Service** | `pnpm dev` | Starts Backend, Mobile, and Web in parallel via Turbo. |
-| **Backend** | `pnpm dev:backend` | Starts the NestJS API with hot reload. |
-| **Mobile** | `pnpm dev:mobile` | Starts the Expo development server (Expo Go). |
-| **Web** | `pnpm dev:web` | Starts the Next.js development server. |
-| **Seeding** | `pnpm seed` | Populates the database with initial development data. |
-| **Building Mobile** | `pnpm mobile:build` | Triggers EAS build for production AAB/IPA. |
+```
+pnpm dev             # all apps
+pnpm dev:web         # web only
+pnpm dev:backend     # backend only
+pnpm dev:mobile      # mobile only
+pnpm lint            # lint all
+pnpm test            # tests all
+pnpm e2e             # Playwright
+pnpm format          # Prettier
+```
 
----
+## Troubleshooting
+- If mobile cannot reach the API, use your LAN IP in `EXPO_PUBLIC_API_URL`.
+- If you see CORS errors, add the web and Expo URLs to `CORS_ORIGINS`.
+- Receipt upload requires a configured S3 bucket and credentials.
 
-## 🔋 Core Features
+## Contributing
+See `CONTRIBUTING.md` for workflow and standards.
 
-- **Advanced Split Logic**: Supports equal, exact, and percentage-based splits.
-- **Fast Settlements**: Greedy simplification algorithm to minimize total payments.
-- **Real-time Activity**: Live updates via WebSockets for group actions.
-- **Offline Resilience**: Mobile-first architecture with offline queuing for expense entry.
-- **Push Notifications**: Intelligent reminders for pending settlements via Expo.
-
----
-
-## 🚢 Infrastructure & Deployment
-
-- **CI/CD**: GitHub Actions for automated type-checking, linting, and Playwright E2E testing.
-- **Cloud Hosting**: AWS ECS (Fargate) for backend, Vercel/Netlify for web, and EAS for mobile.
-- **IaC**: Terraform-managed VPC, ECS Cluster, RDS, and S3 buckets.
-
----
-
-## 📄 License & Documentation
-
-Refer to [doc.md](doc.md) for detailed technical architecture and production launch notes.
-
----
-
-*Developed with ❤️ by the FairShare Team.*
+## Documentation
+For architecture notes and deployment guidance, see `doc.md`.
