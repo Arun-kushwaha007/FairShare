@@ -8,7 +8,7 @@ import { spacing } from '../theme/spacing';
 interface ActivityItemProps {
   title: string;
   subtitle: string;
-  amount: string;
+  amount?: string;
   date: string;
   icon?: keyof typeof MaterialCommunityIcons.glyphMap;
 }

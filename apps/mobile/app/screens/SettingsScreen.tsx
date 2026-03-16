@@ -71,7 +71,7 @@ export function SettingsScreen() {
         <SectionHeader title="About FairShare" />
         <Card style={styles.infoCard}>
            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>
-             FairShare is built for royal expense management. Split bills with elegance and precision.
+             FairShare is built for expense management. Split bills with elegance and precision.
            </Text>
         </Card>
       </View>

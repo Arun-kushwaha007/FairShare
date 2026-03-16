@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     description: 'Smart group expense sharing app.',
     type: 'website',
   },
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });

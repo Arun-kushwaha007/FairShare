@@ -66,7 +66,7 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
 
       {/* Menu Sections */}
       <View style={styles.menuSection}>
-        <SectionHeader title="Account Vibes" />
+        <SectionHeader title="Account Management" />
         {menuItems.map((item, i) => (
           <Animated.View 
             key={item.label}
@@ -107,7 +107,7 @@ export function ProfileScreen({ navigation }: { navigation: { navigate: (route: 
 
       <View style={styles.footer}>
         <Text style={[typography.caption, { color: colors.muted }]}>
-          FairShare Gen-Z Edition v1.2.0
+          FairShare Edition v1.0.0
         </Text>
       </View>
     </ScrollView>

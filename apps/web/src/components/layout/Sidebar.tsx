@@ -27,12 +27,16 @@ export function Sidebar() {
       <div className={`${glassPanel} p-6 md:p-7 min-h-[520px] flex flex-col`}>
         {/* Brand */}
         <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="w-10 h-10 bg-[var(--fs-primary)] rounded-xl flex items-center justify-center shadow-lg border border-white/20">
-            <span className="text-white font-black text-xl">F</span>
+          <div className="w-12 h-12 relative overflow-hidden rounded-xl shadow-lg border border-white/20">
+            <img 
+              src="/logo.png" 
+              alt="FairShare Logo" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">FairShare</h2>
-            <p className="text-[10px] font-bold text-[var(--fs-text-muted)] uppercase tracking-wider">Royal Edition</p>
+            <p className="text-[10px] font-bold text-[var(--fs-text-muted)] uppercase tracking-wider">Premium Edition</p>
           </div>
         </div>
 

@@ -12,7 +12,12 @@ import { SectionHeader } from '../components/SectionHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { groupService } from '../services/group.service';
 import type { ActivityDto } from '@fairshare/shared-types';
+import { ActivityItem } from '../components/ActivityItem';
 import { useToastStore } from '../store/toastStore';
+import { Image } from 'react-native';
+
+const LOGO_SOURCE = require('../assets/images/logo.png');
+
 
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
@@ -45,8 +50,8 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
   const quickActions = [
     { label: 'Split it', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
-    { label: 'Squads', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
-    { label: 'Clear Air', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Groups', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
+    { label: 'Settle Up', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
   ];
 
   const totalBalance = Number(summary?.totalBalanceCents ?? 0) / 100;
@@ -62,9 +67,16 @@ export function HomeScreen({ navigation }: { navigation: any }) {
     >
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back ✌️</Text>
-          <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Bestie'}</Text>
+        <View style={styles.brandContainer}>
+          <Image 
+            source={LOGO_SOURCE} 
+            style={styles.logo} 
+            resizeMode="contain" 
+          />
+          <View>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back ✌️</Text>
+            <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Bestie'}</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
           <Avatar name={user?.name ?? 'U'} size={48} />
@@ -107,7 +119,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
       {/* Recent Activity */}
       <SectionHeader 
-        title="The Tea ☕" 
+        title="Recent Activity ☕" 
         action="See all" 
         onActionPress={() => navigation.navigate('Activity')} 
       />
@@ -148,6 +160,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xxl,
     marginTop: spacing.sm,
+  },
+  brandContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  logo: {
+    width: 54,
+    height: 54,
+    borderRadius: 14,
   },
   summarySection: {
     marginBottom: spacing.xxl,
