@@ -4,9 +4,9 @@ services:
     image: postgres:16-alpine
     container_name: fairshare-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: fairshare
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-fairshare}
     ports:
       - "5432:5432"
     volumes:

@@ -55,6 +55,13 @@ pnpm --filter web build
 - No secrets or credentials committed
 - Updated README/docs if behavior changed
 
+## Security Checklist
+- Never commit `.env` or real credentials
+- Use placeholders or local-only values for compose/dev configs
+- Avoid logging tokens or sensitive payloads
+- Rotate keys immediately if a secret is exposed
+- Keep dependencies updated and audited
+
 ## Reporting Issues
 When filing a bug, include:
 - Reproduction steps
