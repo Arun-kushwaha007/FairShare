@@ -14,35 +14,6 @@ export default function NotFound() {
       <motion.div 
         animate={{ 
           y: [0, -20, 0],
-          rotate: [0, 5, -5, 0] 
-        }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 right-[10%] hidden md:block"
-      >
-        <Ghost size={80} className="text-purple-500 opacity-50 blur-sm" />
-      </motion.div>
-
-      <div className="z-10 flex flex-col items-center px-6 text-center">
-        {/* Main Header with Glitch Effect */}
-        <div className="relative">
-          <h1 className="text-8xl font-black italic tracking-tighter md:text-[12rem]">
-            404
-          </h1>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }}
-            className="absolute inset-0 text-cyan-400 translate-x-1"
-          >
-            404
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3.1 }}
-            className="absolute inset-0 text-pink-500 -translate-x-1"
-          >
-            404
           </motion.div>
         </div>
 
