@@ -1,34 +1,27 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
 
 interface FeatureCardProps {
   title: string;
   description: string;
   icon: LucideIcon;
-  index: number;
   colorClass: string;
+  index: number;
 }
 
-export const FeatureCard = ({ title, description, icon: Icon, index, colorClass }: FeatureCardProps) => {
+export const FeatureCard = ({ title, description, icon: Icon, colorClass }: FeatureCardProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      className={`neo-border neo-pop-hover bg-zinc-900 p-8 flex flex-col items-start ${colorClass}`}
-    >
-      <div className={`mb-6 p-4 border-2 border-white bg-black`}>
-        <Icon size={40} className="text-white" />
+    <div className="glass-card p-10 group hover:bg-zinc-900/80">
+      <div className={`mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 p-3 shadow-lg ${colorClass} bg-black/40 group-hover:scale-110 transition-transform duration-500`}>
+        <Icon size={32} className="text-white" />
       </div>
-      <h3 className="mb-4 text-2xl font-black uppercase italic tracking-tighter">
+      <h3 className="mb-4 text-2xl font-black uppercase italic tracking-tighter text-white">
         {title}
       </h3>
-      <p className="font-bold text-zinc-400 uppercase tracking-wide leading-relaxed">
+      <p className="font-bold uppercase tracking-widest text-zinc-500 leading-relaxed text-sm">
         {description}
       </p>
-    </motion.div>
+    </div>
   );
 };

@@ -1,22 +1,23 @@
 'use client';
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Menu, X, MoveRight } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, Rocket, ChevronRight } from 'lucide-react';
 
 const navLinks = [
   { name: 'Features', href: '/features' },
-  { name: 'How It Works', href: '/how-it-works' },
   { name: 'Pricing', href: '/pricing' },
-  { name: 'Blog', href: '/blog' },
+  { name: 'How It Works', href: '/how-it-works' },
   { name: 'About', href: '/about' },
-  { name: 'FAQ', href: '/faq' },
 ];
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,96 +29,103 @@ export const Navbar = () => {
 
   return (
     <nav 
-      className={`fixed top-0 z-50 w-full border-b-4 border-white transition-all duration-300 ${
-        scrolled ? 'bg-black/90 backdrop-blur-md py-3' : 'bg-black py-5'
+      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
+        scrolled ? 'pt-4' : 'pt-8'
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
-        <Link href="/" className="group flex items-center gap-2">
-          <span className="text-2xl font-black italic tracking-tighter text-white md:text-3xl">
-            FAIRSHARE
-          </span>
-          <div className="h-2 w-2 rounded-full bg-yellow-400 group-hover:animate-ping" />
-        </Link>
-
-        {/* Desktop Links */}
-        <div className="hidden items-center gap-8 lg:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="text-sm font-black uppercase tracking-widest text-zinc-400 transition-colors hover:text-white"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="hidden items-center gap-4 lg:flex">
-          <Link
-            href="/login"
-            className="text-sm font-black uppercase tracking-widest text-white hover:text-yellow-400 transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            href="/waitlist"
-            className="neo-pop-hover neo-pop-hover-purple flex items-center gap-2 border-2 border-white bg-white px-6 py-2 text-sm font-black uppercase text-black hover:bg-transparent hover:text-white transition-all"
-          >
-            Join Waitlist <MoveRight size={16} />
-          </Link>
-        </div>
-
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="lg:hidden"
-          onClick={() => setIsOpen(!isOpen)}
+      <div className="mx-auto max-w-7xl px-6">
+        <div 
+          className={`flex h-20 items-center justify-between px-8 rounded-[2rem] transition-all duration-500 ${
+            scrolled 
+              ? 'bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)]' 
+              : 'bg-transparent border border-transparent'
+          }`}
         >
-          {isOpen ? <X size={32} /> : <Menu size={32} />}
-        </button>
-      </div>
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="relative w-10 h-10 overflow-hidden rounded-xl transition-transform duration-500 group-hover:scale-110">
+              <Image 
+                src="/logo.png" 
+                alt="FairShare Logo" 
+                fill
+                className="object-contain"
+              />
+            </div>
+            <span className="text-2xl font-black italic tracking-tighter text-white group-hover:text-purple-400 transition-colors">
+              FAIRSHARE
+            </span>
+          </Link>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="absolute top-full left-0 w-full border-b-4 border-white bg-black px-6 py-10 lg:hidden"
-        >
-          <div className="flex flex-col gap-6">
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex lg:items-center lg:gap-10">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="text-xl font-black uppercase tracking-tighter text-white"
+                className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:text-purple-400 ${
+                  pathname === link.href ? 'text-purple-500' : 'text-zinc-400'
+                }`}
               >
                 {link.name}
               </Link>
             ))}
-            <hr className="border-t-2 border-zinc-800" />
-            <div className="flex flex-col gap-4">
-              <Link
-                href="/login"
-                onClick={() => setIsOpen(false)}
-                className="text-xl font-black uppercase tracking-tighter text-white"
-              >
-                Login
-              </Link>
-              <Link
-                href="/waitlist"
-                onClick={() => setIsOpen(false)}
-                className="neo-pop-hover neo-pop-hover-purple flex items-center justify-center gap-2 border-2 border-white bg-white px-6 py-4 text-xl font-black uppercase text-black"
-              >
-                Join Waitlist <MoveRight size={24} />
-              </Link>
-            </div>
           </div>
-        </motion.div>
-      )}
+
+          {/* Right Section */}
+          <div className="hidden lg:flex lg:items-center lg:gap-6">
+            <Link
+              href="/waitlist"
+              className="group relative flex items-center gap-2 px-8 py-3 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all hover:scale-105"
+            >
+              <span>LOCK IN SPOT</span>
+              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Mobile Toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex lg:hidden text-white"
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-40 bg-black/95 backdrop-blur-3xl lg:hidden"
+          >
+            <div className="flex flex-col h-full pt-32 px-10">
+              <div className="flex flex-col gap-10">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="text-4xl font-black italic tracking-tighter text-white uppercase"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+                <Link
+                  href="/waitlist"
+                  onClick={() => setIsOpen(false)}
+                  className="mt-10 flex items-center justify-center gap-3 bg-purple-600 py-6 text-2xl font-black italic tracking-tighter text-white uppercase rounded-2xl"
+                >
+                  GET EARLY ACCESS <Rocket size={24} />
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

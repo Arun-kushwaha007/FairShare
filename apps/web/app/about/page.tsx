@@ -27,33 +27,41 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen">
-      <SectionContainer className="pt-20 text-center">
-        <h1 className="glitch-text mb-6 text-6xl font-black italic tracking-tighter md:text-8xl">
-          THE VISION.
+    <main className="min-h-screen bg-[#030303] overflow-hidden">
+      <div className="fixed inset-0 grid-bg opacity-10 pointer-events-none" />
+
+      <SectionContainer className="pt-44 text-center">
+        <div className="flex justify-center mb-8">
+          <div className="px-4 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-xs font-black tracking-widest text-purple-400 uppercase">
+            The Vision
+          </div>
+        </div>
+        <h1 className="hero-title mb-6 text-6xl font-black italic tracking-tighter md:text-8xl lg:text-[7rem] leading-none uppercase">
+          NEW <br className="md:hidden" /> <span className="text-purple-600">META.</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400">
-          WE ARE REDEFINING THE META OF GROUP FINANCES.
+        <p className="mx-auto max-w-2xl text-lg font-bold uppercase tracking-widest text-zinc-500">
+          WE ARE REDEFINING THE FABRIC OF GROUP FINANCES.
         </p>
       </SectionContainer>
 
       <SectionContainer className="pb-32">
-        <div className="mx-auto max-w-4xl space-y-20">
+        <div className="mx-auto max-w-5xl space-y-12">
           {values.map((v, index) => (
             <div
               key={v.title}
-              className={`flex flex-col gap-12 md:flex-row md:items-center ${
+              className={`flex flex-col gap-12 md:flex-row md:items-center glass-card p-12 relative overflow-hidden group ${
                 index % 2 === 1 ? 'md:flex-row-reverse' : ''
               }`}
             >
-              <div className="flex h-32 w-32 shrink-0 items-center justify-center border-4 border-white bg-zinc-900 shadow-[8px_8px_0px_0px_white]">
-                <v.icon size={64} className="text-yellow-400" />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/[0.03] to-transparent pointer-events-none" />
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl group-hover:scale-110 transition-transform duration-500">
+                <v.icon size={40} className="text-purple-500" />
               </div>
-              <div className="text-center md:text-left">
-                <h2 className="mb-4 text-4xl font-black uppercase italic tracking-tighter text-white">
+              <div className="text-center md:text-left flex-grow">
+                <h2 className="mb-4 text-3xl font-black uppercase italic tracking-tighter text-white">
                   {v.title}
                 </h2>
-                <p className="text-xl font-bold uppercase tracking-widest text-zinc-400 leading-relaxed">
+                <p className="text-lg font-bold uppercase tracking-widest text-zinc-500 leading-relaxed max-w-2xl">
                   {v.description}
                 </p>
               </div>
@@ -63,16 +71,19 @@ export default function AboutPage() {
       </SectionContainer>
 
       {/* Team CTA */}
-      <SectionContainer className="bg-white text-black border-y-4 border-black mb-32 text-center">
-        <h2 className="mb-8 text-5xl font-black uppercase italic tracking-tighter md:text-7xl">
-          JOIN THE REVOLUTION.
-        </h2>
-        <a
-          href="/waitlist"
-          className="neo-pop-hover bg-black px-12 py-6 text-2xl font-black text-white shadow-[8px_8px_0px_0px_#a855f7] transition-all"
-        >
-          LOCK IN YOUR SPOT
-        </a>
+      <SectionContainer className="mb-32">
+        <div className="glass-panel text-center p-16 md:p-32 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
+          <h2 className="relative mb-8 text-5xl font-black uppercase italic tracking-tighter md:text-8xl text-white">
+            JOIN THE <br className="md:hidden" /> REVOLUTION.
+          </h2>
+          <a
+            href="/waitlist"
+            className="relative inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-white/10"
+          >
+            LOCK IN YOUR SPOT
+          </a>
+        </div>
       </SectionContainer>
     </main>
   );

@@ -36,13 +36,20 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <main className="min-h-screen">
-      <SectionContainer className="pt-20 text-center">
-        <h1 className="glitch-text mb-6 text-6xl font-black italic tracking-tighter md:text-8xl">
-          LOGISTICS.
+    <main className="min-h-screen bg-[#030303] overflow-hidden">
+      <div className="fixed inset-0 grid-bg opacity-10 pointer-events-none" />
+
+      <SectionContainer className="pt-44 text-center">
+        <div className="flex justify-center mb-8">
+          <div className="px-4 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-xs font-black tracking-widest text-purple-400 uppercase">
+            Protocol Intelligence
+          </div>
+        </div>
+        <h1 className="hero-title mb-6 text-6xl font-black italic tracking-tighter md:text-8xl lg:text-[7rem] leading-none uppercase">
+          LOGI <br className="md:hidden" /> <span className="text-purple-600">STICS.</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400">
-          WE HAVE ANSWERS. NO GATEKEEPING.
+        <p className="mx-auto max-w-2xl text-lg font-bold uppercase tracking-widest text-zinc-500">
+          WE HAVE ANSWERS. NO GATEKEEPING. EVERYTHING YOU NEED TO KNOW.
         </p>
       </SectionContainer>
 
@@ -58,16 +65,20 @@ export default function FAQPage() {
         </div>
       </SectionContainer>
 
-      <SectionContainer className="bg-zinc-900 border-y-4 border-white mb-20 text-center">
-        <h2 className="mb-8 text-4xl font-black uppercase italic tracking-tighter md:text-6xl text-white">
-          STILL CONFUSED?
-        </h2>
-        <a
-          href="/contact"
-          className="neo-pop-hover border-4 border-white bg-white px-12 py-6 text-2xl font-black text-black hover:bg-transparent hover:text-white transition-all"
-        >
-          CONTACT SUPPORT
-        </a>
+      {/* Support CTA */}
+      <SectionContainer className="mb-32 text-center">
+        <div className="glass-panel p-16 md:p-32 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent pointer-events-none" />
+          <h2 className="relative mb-8 text-4xl font-black uppercase italic tracking-tighter md:text-8xl text-white">
+            STILL <br className="md:hidden" /> CONFUSED?
+          </h2>
+          <a
+            href="/contact"
+            className="relative inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-white/10"
+          >
+            CONTACT SUPPORT
+          </a>
+        </div>
       </SectionContainer>
     </main>
   );

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Minus } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface FAQItemProps {
   question: string;
@@ -18,18 +18,18 @@ export const FAQItem = ({ question, answer, index }: FAQItemProps) => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      className="neo-border neo-shadow-yellow overflow-hidden bg-zinc-900"
+      transition={{ delay: index * 0.1, duration: 0.8, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className="glass-card overflow-hidden"
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between p-6 text-left"
+        className="flex w-full items-center justify-between p-8 text-left transition-colors hover:bg-white/5"
       >
-        <span className="text-xl font-black uppercase italic tracking-tighter text-white md:text-2xl">
+        <span className="text-xl font-black uppercase italic tracking-tighter text-white">
           {question}
         </span>
-        <div className="shrink-0 border-2 border-white bg-black p-2 text-white">
-          {isOpen ? <Minus size={24} strokeWidth={4} /> : <Plus size={24} strokeWidth={4} />}
+        <div className={`shrink-0 transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronDown size={24} className="text-zinc-500" />
         </div>
       </button>
 
@@ -41,8 +41,9 @@ export const FAQItem = ({ question, answer, index }: FAQItemProps) => {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="border-t-4 border-zinc-800 p-6 pt-0">
-              <p className="mt-6 text-lg font-bold uppercase tracking-widest text-zinc-400">
+            <div className="px-8 pb-8">
+              <div className="w-full h-px bg-white/5 mb-6" />
+              <p className="text-lg font-bold uppercase tracking-widest text-zinc-500 leading-relaxed">
                 {answer}
               </p>
             </div>

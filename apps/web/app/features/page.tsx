@@ -13,49 +13,57 @@ const featureList = [
     title: 'Smart Expense Splitting',
     description: 'Split equally, by exact amounts, or percentages. Our engine handles the math so you don\'t have to.',
     icon: Zap,
-    colorClass: 'hover:border-yellow-400 hover:shadow-[8px_8px_0px_0px_rgba(234,179,8,1)]',
+    colorClass: 'shadow-yellow-500/20',
   },
   {
     title: 'Groups Everywhere',
     description: 'Manage trips, roommates, and teams in dedicated spaces. Perfect for any shared living or travel situation.',
     icon: Users,
-    colorClass: 'hover:border-cyan-400 hover:shadow-[8px_8px_0px_0px_rgba(6,182,212,1)]',
+    colorClass: 'shadow-cyan-500/20',
   },
   {
     title: 'Real-Time Sync',
     description: 'Balances update instantly across all devices. No more "I thought I paid that" conversations.',
     icon: RefreshCw,
-    colorClass: 'hover:border-purple-400 hover:shadow-[8px_8px_0px_0px_rgba(168,85,247,1)]',
+    colorClass: 'shadow-purple-500/20',
   },
   {
     title: 'Receipt Uploads',
     description: 'Attach receipts to expenses for proof. Cloud-based storage ensures you never lose a paper trail.',
     icon: Shield,
-    colorClass: 'hover:border-pink-500 hover:shadow-[8px_8px_0px_0px_rgba(236,72,153,1)]',
+    colorClass: 'shadow-pink-500/20',
   },
   {
     title: 'Debt Simplification',
     description: 'Reduce multiple payments into a single efficient settlement. We find the shortest path to zero.',
     icon: Layers,
-    colorClass: 'hover:border-green-400 hover:shadow-[8px_8px_0px_0px_rgba(74,222,128,1)]',
+    colorClass: 'shadow-green-500/20',
   },
   {
     title: 'Realtime Updates',
     description: 'Socket events update group activity instantly. Get notified the second an expense is added.',
     icon: Activity,
-    colorClass: 'hover:border-orange-400 hover:shadow-[8px_8px_0px_0px_rgba(251,146,60,1)]',
+    colorClass: 'shadow-orange-500/20',
   },
 ];
 
 export default function FeaturesPage() {
   return (
-    <main className="min-h-screen">
-      <SectionContainer className="pt-20 text-center">
-        <h1 className="glitch-text mb-6 text-6xl font-black italic tracking-tighter md:text-8xl">
-          CORE MECHANICS
+    <main className="min-h-screen bg-[#030303] overflow-hidden">
+      {/* Grid Background */}
+      <div className="fixed inset-0 grid-bg opacity-10 pointer-events-none" />
+
+      <SectionContainer className="pt-44 text-center">
+        <div className="flex justify-center mb-8">
+          <div className="px-4 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-xs font-black tracking-widest text-purple-400 uppercase">
+            Protocol Mechanics
+          </div>
+        </div>
+        <h1 className="hero-title mb-6 text-6xl font-black italic tracking-tighter md:text-8xl lg:text-[7rem] leading-none uppercase">
+          POWER <br className="md:hidden" /> <span className="text-purple-600">SYSTEM.</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400">
-          POWERFUL FEATURES DESIGNED FOR THE MODERN SQUAD.
+        <p className="mx-auto max-w-2xl text-lg font-bold uppercase tracking-widest text-zinc-500">
+          ENGINEERED FOR SUPREME FINANCIAL CLARITY WITHIN YOUR SQUAD.
         </p>
       </SectionContainer>
 
@@ -72,16 +80,17 @@ export default function FeaturesPage() {
       </SectionContainer>
 
       {/* Secondary CTA */}
-      <SectionContainer className="bg-zinc-900 border-y-4 border-white mb-32">
-        <div className="text-center">
-          <h2 className="mb-8 text-4xl font-black uppercase italic tracking-tighter md:text-6xl">
-            READY TO LEVEL UP?
+      <SectionContainer className="mb-32">
+        <div className="glass-panel text-center p-16 md:p-32 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
+          <h2 className="relative mb-8 text-5xl font-black uppercase italic tracking-tighter md:text-8xl text-white">
+            READY TO <br className="md:hidden" /> LEVEL UP?
           </h2>
           <a
             href="/waitlist"
-            className="neo-pop-hover neo-pop-hover-yellow inline-flex items-center gap-3 border-4 border-white bg-yellow-400 px-12 py-6 text-2xl font-black text-black transition-all hover:bg-transparent hover:text-white"
+            className="relative inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-white/10"
           >
-            JOIN THE WAITLIST
+            JOIN THE SQUAD
           </a>
         </div>
       </SectionContainer>
