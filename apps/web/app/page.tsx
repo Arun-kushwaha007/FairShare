@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { MoveRight, CheckCircle2, Zap, Shield, TrendingUp } from 'lucide-react';
+import { AppStoreButtons } from '../components/marketing/AppStoreButtons';
+import { SectionContainer } from '../components/layout/SectionContainer';
 
 const features = [
   { text: 'Smart expense splits', icon: Zap, color: 'text-yellow-400' },
@@ -29,7 +31,7 @@ export default function HomePage() {
   return (
     <main className="relative min-h-screen font-sans text-white">
       {/* Hero Section */}
-      <section className="mx-auto max-w-7xl px-6 py-32 text-center md:py-48">
+      <section className="mx-auto max-w-7xl px-6 py-20 text-center md:py-32">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -61,21 +63,32 @@ export default function HomePage() {
         >
           <a
             href="/login"
-            className="neo-pop-hover neo-pop-hover-purple group relative flex items-center gap-3 border-2 border-white bg-white px-8 py-4 font-black text-black transition-colors hover:bg-transparent hover:text-white"
+            className="neo-pop-hover neo-pop-hover-purple group relative flex items-center gap-3 border-4 border-white bg-white px-8 py-4 font-black text-black transition-colors hover:bg-transparent hover:text-white"
           >
             GET STARTED <MoveRight className="group-hover:translate-x-2 transition-transform" />
           </a>
           <a
             href="/features"
-            className="neo-pop-hover neo-pop-hover-cyan flex items-center gap-3 border-2 border-white bg-black px-8 py-4 font-black transition-all"
+            className="neo-pop-hover neo-pop-hover-cyan flex items-center gap-3 border-4 border-white bg-black px-8 py-4 font-black transition-all"
           >
             SYSTEM FEATURES
           </a>
         </motion.div>
       </section>
 
+      {/* Coming Soon Mobile Section */}
+      <SectionContainer className="text-center" id="coming-soon">
+        <h2 className="mb-6 text-4xl font-black uppercase italic tracking-tighter text-purple-400 md:text-6xl">
+          THE APP IS COMING.
+        </h2>
+        <p className="mx-auto mb-12 max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400">
+          FairShare is hitting your pocket soon. Get ready for the smoothest expense sharing experience on Android and iOS.
+        </p>
+        <AppStoreButtons />
+      </SectionContainer>
+
       {/* Social Proof / Features Grid */}
-      <section className="mx-auto max-w-7xl px-6 pb-32">
+      <SectionContainer>
         <h2 className="mb-12 text-center text-4xl font-black uppercase italic tracking-tighter text-yellow-400 md:text-6xl">
           Core Mechanics
         </h2>
@@ -96,10 +109,10 @@ export default function HomePage() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </SectionContainer>
 
       {/* Pricing / Table (Feature Comparison) */}
-      <section className="mx-auto max-w-7xl px-6 pb-32">
+      <SectionContainer>
         <div className="neo-border neo-shadow-cyan bg-black p-8 md:p-12">
           <h2 className="mb-12 text-4xl font-black uppercase italic tracking-tighter text-cyan-400 md:text-6xl text-center md:text-left">
             Meta vs Reality
@@ -133,10 +146,10 @@ export default function HomePage() {
             </table>
           </div>
         </div>
-      </section>
+      </SectionContainer>
 
       {/* FAQ */}
-      <section className="mx-auto max-w-4xl px-6 pb-32">
+      <SectionContainer className="max-w-4xl" id="faq">
         <h2 className="mb-12 text-center text-4xl font-black uppercase italic tracking-tighter text-pink-500 md:text-6xl">
           Dev Log
         </h2>
@@ -152,10 +165,10 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-      </section>
+      </SectionContainer>
 
       {/* Newsletter / CTA */}
-      <section className="mx-auto max-w-7xl px-6 pb-48">
+      <SectionContainer id="waitlist">
         <div className="neo-border bg-white px-8 py-12 text-black md:px-20 md:py-24 text-center">
           <h2 className="text-5xl font-black uppercase italic tracking-tighter md:text-8xl">
             LOCK IN.
@@ -177,18 +190,7 @@ export default function HomePage() {
             </button>
           </form>
         </div>
-      </section>
-
-      <footer className="border-t-4 border-white bg-black py-12 px-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 md:flex-row">
-          <p className="text-3xl font-black uppercase tracking-tighter italic">FAIRSHARE</p>
-          <div className="flex gap-12 font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
-            <a href="/about" className="hover:text-yellow-400">About</a>
-            <a href="/pricing" className="hover:text-cyan-400">Pricing</a>
-            <a href="/login" className="hover:text-purple-400">Login</a>
-          </div>
-        </div>
-      </footer>
+      </SectionContainer>
     </main>
   );
 }

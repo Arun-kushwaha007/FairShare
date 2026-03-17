@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import { Manrope, Space_Grotesk } from 'next/font/google';
 import { Providers } from '../src/components/Providers';
 import { themeStylesheet } from '../src/design/theme';
+import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
 
 const themeInitScript = `
 (function() {
@@ -23,12 +25,14 @@ const themeInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: 'FairShare | Smart Group Expense Sharing',
-  description: 'Track shared expenses, simplify debts, and settle quickly with FairShare.',
-  keywords: ['expense sharing', 'group expenses', 'split bills', 'settle up'],
+  title: 'FairShare – Smart Expense Sharing',
+  description: 'Split bills with friends easily. Coming soon on Android and iOS.',
+  keywords: ['expense sharing', 'group expenses', 'split bills', 'settle up', 'fairshare'],
   openGraph: {
-    title: 'FairShare',
-    description: 'Smart group expense sharing app.',
+    title: 'FairShare – Smart Expense Sharing',
+    description: 'Split bills with friends easily. Coming soon on Android and iOS.',
+    url: 'https://fairsharee.com',
+    siteName: 'FairShare',
     type: 'website',
   },
   icons: {
@@ -46,9 +50,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style id="fs-theme-vars">{themeStylesheet}</style>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen">
+      <body className="min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black">
         <Providers>
-          {children}
+          <Navbar />
+          <div className="pt-20">
+            {children}
+          </div>
+          <Footer />
         </Providers>
       </body>
     </html>
