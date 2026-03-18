@@ -1,65 +1,60 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { MoveLeft, Ghost, AlertCircle } from "lucide-react";
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { SectionContainer } from '../components/layout/SectionContainer';
+import { Rocket, MoveLeft, AlertCircle } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#0a0a0a] font-sans text-white">
-      {/* Background "Noise" Grid - Very Gen-Z/Brutalist */}
-      <div className="absolute inset-0 z-0 opacity-20 [background-image:linear-gradient(#333_1px,transparent_1px),linear-gradient(90deg,#333_1px,transparent_1px)] [background-size:40px_40px]"></div>
-
-      {/* Floating Aesthetic Elements */}
-      <motion.div 
-        animate={{ 
-          y: [0, -20, 0],
+    <main className="min-h-screen bg-[#030303] flex items-center justify-center overflow-hidden relative">
+      <div className="fixed inset-0 grid-bg opacity-10 pointer-events-none" />
+      
+      <SectionContainer className="text-center relative z-10">
+        <div className="flex justify-center mb-12">
+          <motion.div 
+            animate={{ 
+              y: [0, -20, 0],
+              rotate: [0, 5, -5, 0] 
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-24 h-24 flex items-center justify-center rounded-3xl bg-purple-500/10 border border-purple-500/20 shadow-2xl"
+          >
+            <Rocket className="text-purple-500 fill-purple-500/20" size={48} />
           </motion.div>
         </div>
 
-        {/* Slang-heavy Copy */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mt-4 space-y-2"
-        >
-          <h2 className="text-2xl font-bold uppercase tracking-widest text-yellow-400 md:text-4xl">
-            Vibe Check: Failed.
-          </h2>
-          <p className="max-w-md text-sm font-medium text-zinc-400 md:text-lg">
-            This page is <span className="text-zinc-100 italic">cooked</span>. Either it never existed, or it&apos;s currently touching grass.
-          </p>
-        </motion.div>
-
-        {/* Interactive "Back" Button - Neo-Brutalist Style */}
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="mt-12"
-        >
-          <Link
-            href="/"
-            className="group relative flex items-center gap-3 border-2 border-white bg-white px-8 py-4 font-black text-black transition-colors hover:bg-transparent hover:text-white"
-          >
-            <MoveLeft className="transition-transform group-hover:-translate-x-2" />
-            GO HOME OR WHATEVER
-            {/* Box Shadow "Pop" - Signature Neo-Brutalist look */}
-            <div className="absolute -right-2 -bottom-2 -z-10 h-full w-full border-2 border-purple-500 bg-purple-500 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"></div>
-          </Link>
-        </motion.div>
-
-        {/* Bottom "Status" Bar */}
-        <div className="mt-24 flex items-center gap-4 text-xs font-mono uppercase tracking-tighter text-zinc-500">
-          <span className="flex items-center gap-1">
-            <AlertCircle size={14} /> status: delulu
-          </span>
-          <span className="h-1 w-1 rounded-full bg-zinc-700"></span>
-          <span>loc: unknown_void</span>
-          <span className="h-1 w-1 rounded-full bg-zinc-700"></span>
-          <span>rizz: 0</span>
+        <div className="relative">
+          <h1 className="hero-title mb-6 text-8xl font-black italic tracking-tighter md:text-[12rem] leading-none uppercase text-white opacity-10 select-none">
+            404
+          </h1>
+          
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full">
+            <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter text-white mb-8">
+              LOST IN THE <br /> <span className="text-purple-600">SIMULATION.</span>
+            </h2>
+            <p className="mx-auto max-w-md text-sm md:text-lg font-bold uppercase tracking-widest text-zinc-500 mb-12">
+              THE PAGE YOU&apos;RE LOOKING FOR HAS BEEN DE-RESSED. RETURN TO BASE.
+            </p>
+            
+            <Link
+              href="/"
+              className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-white/10"
+            >
+              <MoveLeft size={20} /> RETURN HOME
+            </Link>
+          </div>
         </div>
-      </div>
+
+        {/* Status bar */}
+        <div className="mt-32 flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700">
+          <span className="flex items-center gap-2">
+            <AlertCircle size={14} /> STATUS: UNKNOWN_VOID
+          </span>
+          <div className="w-1 h-1 rounded-full bg-zinc-800" />
+          <span>FREQ: 404.0 MHZ</span>
+        </div>
+      </SectionContainer>
     </main>
   );
 }
