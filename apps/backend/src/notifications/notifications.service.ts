@@ -5,6 +5,10 @@ import { AppConfigService } from '../config/app-config.service';
 import { PrismaService } from '../common/prisma.service';
 import { JobsQueueService } from '../jobs/jobs-queue.service';
 
+const MAX_REDIS_RETRIES = 3;
+const RETRY_DELAY_MS = 250;
+const MAX_RETRY_DELAY_MS = 1000;
+
 export type NotificationType = 'expense_created' | 'expense_deleted' | 'settlement_created' | 'group_invite';
 
 type NotificationEventPayload = {
@@ -30,13 +34,49 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     @Inject(forwardRef(() => JobsQueueService))
     private readonly jobsQueueService: JobsQueueService,
   ) {
-    this.publisher = new Redis(config.redisUrl);
-    this.subscriber = new Redis(config.redisUrl);
+    const redisOptions = (connectionName: string) => ({
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectionName,
+      retryStrategy: (times: number) => {
+        if (times > MAX_REDIS_RETRIES) {
+          this.logger.warn(`${connectionName} Redis reconnect attempts exhausted`);
+          return null;
+        }
+
+        return Math.min(times * RETRY_DELAY_MS, MAX_RETRY_DELAY_MS);
+      },
+    });
+
+    this.publisher = new Redis(config.redisUrl, redisOptions('fairshare:notifications-publisher'));
+    this.subscriber = new Redis(config.redisUrl, redisOptions('fairshare:notifications-subscriber'));
+
+    for (const [client, name] of [
+      [this.publisher, 'notifications-publisher'],
+      [this.subscriber, 'notifications-subscriber'],
+    ] as const) {
+      client.on('error', (error) => {
+        this.logger.warn(`${name} Redis error: ${error.message}`);
+      });
+      client.on('end', () => {
+        this.logger.warn(`${name} Redis connection closed`);
+      });
+    }
+
     this.expo = new Expo();
   }
 
   async onModuleInit(): Promise<void> {
-    await this.subscriber.subscribe(this.channel);
+    try {
+      await this.subscriber.subscribe(this.channel);
+    } catch (error) {
+      this.logger.warn(
+        `Redis pub/sub unavailable during startup: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
+      return;
+    }
+
     this.subscriber.on('message', (channel, message) => {
       if (channel !== this.channel) {
         return;
@@ -53,8 +93,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.subscriber.quit();
-    await this.publisher.quit();
+    await Promise.allSettled([this.subscriber.quit(), this.publisher.quit()]);
   }
 
   async sendPushNotification(userIds: string[], payload: NotificationEventPayload): Promise<void> {

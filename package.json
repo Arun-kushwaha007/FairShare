@@ -6,6 +6,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "dev:backend": "pnpm --filter backend dev",
+    "run:backend": "pnpm --filter backend dev",
     "dev:mobile": "pnpm --filter mobile dev",
     "dev:web": "pnpm --filter web dev",
     "mobile:build": "pnpm --filter mobile eas:build",

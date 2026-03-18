@@ -5,6 +5,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
 import { NOTIFICATION_QUEUE, PAYMENT_WEBHOOKS_QUEUE, RECEIPT_PROCESSING_QUEUE } from './jobs.constants';
 
+const MAX_REDIS_RETRIES = 3;
+const RETRY_DELAY_MS = 250;
+const MAX_RETRY_DELAY_MS = 1000;
+
 @Injectable()
 export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(JobsWorkerService.name);
@@ -18,7 +22,21 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const connection = { url: this.config.redisUrl };
+    const connection = {
+      url: this.config.redisUrl,
+      lazyConnect: true,
+      maxRetriesPerRequest: null,
+      enableOfflineQueue: false,
+      connectionName: 'fairshare:jobs-worker',
+      retryStrategy: (times: number) => {
+        if (times > MAX_REDIS_RETRIES) {
+          this.logger.warn('jobs-worker Redis reconnect attempts exhausted');
+          return null;
+        }
+
+        return Math.min(times * RETRY_DELAY_MS, MAX_RETRY_DELAY_MS);
+      },
+    };
 
     const notificationWorker = new Worker(
       NOTIFICATION_QUEUE,
@@ -48,6 +66,11 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.workers = [notificationWorker, receiptWorker, paymentWorker];
+    for (const worker of this.workers) {
+      worker.on('error', (error) => {
+        this.logger.warn(`BullMQ worker error: ${error.message}`);
+      });
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
