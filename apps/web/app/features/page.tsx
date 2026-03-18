@@ -12,37 +12,37 @@ const featureList = [
   {
     title: 'Smart Expense Splitting',
     description: 'Split equally, by exact amounts, or percentages. Our engine handles the math so you don\'t have to.',
-    icon: Zap,
+    iconName: 'Zap' as const,
     colorClass: 'shadow-yellow-500/20',
   },
   {
     title: 'Groups Everywhere',
     description: 'Manage trips, roommates, and teams in dedicated spaces. Perfect for any shared living or travel situation.',
-    icon: Users,
+    iconName: 'Users' as const,
     colorClass: 'shadow-cyan-500/20',
   },
   {
     title: 'Real-Time Sync',
     description: 'Balances update instantly across all devices. No more "I thought I paid that" conversations.',
-    icon: RefreshCw,
+    iconName: 'RefreshCw' as const,
     colorClass: 'shadow-purple-500/20',
   },
   {
     title: 'Receipt Uploads',
     description: 'Attach receipts to expenses for proof. Cloud-based storage ensures you never lose a paper trail.',
-    icon: Shield,
+    iconName: 'Shield' as const,
     colorClass: 'shadow-pink-500/20',
   },
   {
     title: 'Debt Simplification',
     description: 'Reduce multiple payments into a single efficient settlement. We find the shortest path to zero.',
-    icon: Layers,
+    iconName: 'Layers' as const,
     colorClass: 'shadow-green-500/20',
   },
   {
     title: 'Realtime Updates',
     description: 'Socket events update group activity instantly. Get notified the second an expense is added.',
-    icon: Activity,
+    iconName: 'Activity' as const,
     colorClass: 'shadow-orange-500/20',
   },
 ];

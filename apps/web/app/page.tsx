@@ -116,7 +116,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <SectionContainer className="stats-section border-y border-white/5 bg-white/[0.02]">
+      {/* <SectionContainer className="stats-section border-y border-white/5 bg-white/[0.02]">
         <div className="grid gap-12 md:grid-cols-3">
           {stats.map((stat) => (
             <div key={stat.label} className="stat-card text-center group">
@@ -132,7 +132,7 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-      </SectionContainer>
+      </SectionContainer> */}
 
       {/* Features Grid */}
       <SectionContainer id="features">

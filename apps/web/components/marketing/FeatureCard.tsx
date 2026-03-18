@@ -1,16 +1,18 @@
 'use client';
 
-import { LucideIcon } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
 interface FeatureCardProps {
   title: string;
   description: string;
-  icon: LucideIcon;
+  iconName: keyof typeof Icons;
   colorClass: string;
   index: number;
 }
 
-export const FeatureCard = ({ title, description, icon: Icon, colorClass }: FeatureCardProps) => {
+export const FeatureCard = ({ title, description, iconName, colorClass }: FeatureCardProps) => {
+  const Icon = (Icons[iconName] as Icons.LucideIcon) || Icons.HelpCircle;
+
   return (
     <div className="glass-card p-10 group hover:bg-zinc-900/80">
       <div className={`mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 p-3 shadow-lg ${colorClass} bg-black/40 group-hover:scale-110 transition-transform duration-500`}>
