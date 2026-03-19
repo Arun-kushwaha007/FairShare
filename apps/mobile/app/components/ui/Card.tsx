@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { spacing } from '../../theme/spacing';
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   variant?: 'default' | 'elevated' | 'glass';
 }
 
@@ -74,3 +74,4 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   }
 });
+

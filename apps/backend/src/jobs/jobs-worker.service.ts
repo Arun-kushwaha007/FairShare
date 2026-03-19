@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Worker } from 'bullmq';
+import Redis from 'ioredis';
 import { AppConfigService } from '../config/app-config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentsService } from '../payments/payments.service';
@@ -22,6 +23,12 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    const redisAvailable = await this.canReachRedis();
+    if (!redisAvailable) {
+      this.logger.warn('Redis unavailable, BullMQ workers disabled for local startup');
+      return;
+    }
+
     const connection = {
       url: this.config.redisUrl,
       lazyConnect: true,
@@ -75,5 +82,26 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     await Promise.all(this.workers.map((worker) => worker.close()));
+  }
+
+  private async canReachRedis(): Promise<boolean> {
+    const probe = new Redis(this.config.redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectTimeout: 750,
+      retryStrategy: () => null,
+    });
+
+    try {
+      await probe.connect();
+      await probe.ping();
+      await probe.quit();
+      return true;
+    } catch (error) {
+      this.logger.warn(`Redis probe failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+      probe.disconnect();
+      return false;
+    }
   }
 }

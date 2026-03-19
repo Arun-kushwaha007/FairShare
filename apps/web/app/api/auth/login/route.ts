@@ -5,12 +5,17 @@ import { getBackendBaseUrl } from '../../../../src/lib/env';
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
 
-  const response = await fetch(`${getBackendBaseUrl()}/auth/login`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
-    cache: 'no-store',
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getBackendBaseUrl()}/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+      cache: 'no-store',
+    });
+  } catch {
+    return NextResponse.json({ message: 'Backend unavailable. Start the API server and try again.' }, { status: 503 });
+  }
 
   const payload = (await response.json().catch(() => null)) as
     | { accessToken?: string; refreshToken?: string; user?: unknown; message?: string }
