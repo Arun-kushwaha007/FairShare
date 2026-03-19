@@ -122,6 +122,7 @@ export interface ExpenseDto {
   totalAmountCents: string;
   currency: CurrencyCode;
   category?: ExpenseCategory | null;
+  receiptFileKey?: string | null;
   createdAt: string;
   splits?: SplitDto[];
 }

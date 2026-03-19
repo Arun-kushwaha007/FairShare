@@ -107,13 +107,14 @@ export class ExpensesService {
             payerId: dto.payerId,
             totalAmountCents: totalAmount.toString(),
             category: dto.category ?? null,
+            currency: dto.currency,
           },
         },
       });
 
       return tx.expense.findUniqueOrThrow({
         where: { id: createdExpense.id },
-        include: { splits: true },
+        include: { splits: true, receipt: true },
       });
     });
 
@@ -133,7 +134,8 @@ export class ExpensesService {
       expenseId: expense.id,
       payerId: expense.payerId,
       totalAmountCents: expense.totalAmountCents.toString(),
-      category: expense.category as ExpenseDto['category'],
+      category: expense.category,
+      currency: expense.currency,
     });
     incrementExpenseCreated(groupId);
 
@@ -152,7 +154,7 @@ export class ExpensesService {
     } else {
       const rows = await this.prisma.expense.findMany({
         where: { groupId },
-        include: { splits: true },
+        include: { splits: true, receipt: true },
         orderBy: { createdAt: 'desc' },
       });
       expenses = rows.map((row) => this.toExpenseDto(row));
@@ -170,7 +172,7 @@ export class ExpensesService {
   }
 
   async getById(id: string): Promise<ExpenseDto> {
-    const expense = await this.prisma.expense.findUnique({ where: { id }, include: { splits: true } });
+    const expense = await this.prisma.expense.findUnique({ where: { id }, include: { splits: true, receipt: true } });
     if (!expense) {
       throw new NotFoundException('Expense not found');
     }
@@ -185,7 +187,7 @@ export class ExpensesService {
         description: dto.description,
         category: dto.category,
       },
-      include: { splits: true },
+      include: { splits: true, receipt: true },
     });
 
     await this.activityService.log({
@@ -193,7 +195,7 @@ export class ExpensesService {
       actorUserId,
       type: 'expense_updated',
       entityId: expense.id,
-      metadata: { description: dto.description ?? null, category: dto.category ?? null },
+      metadata: { description: dto.description ?? null, category: dto.category ?? null, currency: expense.currency },
     });
 
     await this.redis.invalidateGroupCache(expense.groupId);
@@ -218,6 +220,7 @@ export class ExpensesService {
           entityId: expense.id,
           metadata: {
             totalAmountCents: expense.totalAmountCents.toString(),
+            currency: expense.currency,
           },
         },
       });
@@ -257,6 +260,9 @@ export class ExpensesService {
       owedAmountCents: bigint;
       paidAmountCents: bigint;
     }>;
+    receipt: {
+      fileKey: string;
+    } | null;
   }): ExpenseDto {
     return {
       id: expense.id,
@@ -266,6 +272,7 @@ export class ExpensesService {
       totalAmountCents: expense.totalAmountCents.toString(),
       currency: expense.currency as 'USD' | 'EUR' | 'INR',
       category: expense.category as ExpenseDto['category'],
+      receiptFileKey: expense.receipt?.fileKey ?? null,
       createdAt: expense.createdAt.toISOString(),
       splits: expense.splits.map((split) => ({
         id: split.id,
@@ -276,4 +283,3 @@ export class ExpensesService {
     };
   }
 }
-
