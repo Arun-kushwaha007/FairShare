@@ -49,7 +49,7 @@ export const colors = {
     insetHighlight: 'rgba(255,255,255,0.6)',
     
     // Gradients
-    gradient: ['#6D28D9', '#8B5CF6'],
+    gradient: ['#6D28D9', '#8B5CF6'] as const,
   },
   dark: {
     // Brand Colors
@@ -91,6 +91,7 @@ export const colors = {
     insetHighlight: 'rgba(255,255,255,0.05)',
 
     // Gradients
-    gradient: ['#7C3AED', '#A78BFA'],
+    gradient: ['#7C3AED', '#A78BFA'] as const,
   },
 };
+

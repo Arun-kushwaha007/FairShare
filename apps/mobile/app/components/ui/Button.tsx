@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -10,13 +10,13 @@ interface ButtonProps {
   children: React.ReactNode;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   loading?: boolean;
 }
 
 export function Button({ children, onPress, variant = 'primary', style, loading }: ButtonProps) {
   const theme = useAppTheme();
-  const { colors, shadows, isDark } = theme;
+  const { colors, shadows } = theme;
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -71,10 +71,7 @@ export function Button({ children, onPress, variant = 'primary', style, loading 
         animatedStyle,
       ]}
     >
-      <Text style={[styles.text, { color: v.text }]}>
-        {children}
-      </Text>
-      {/* Inset highlight for skeuomorphism */}
+      <Text style={[styles.text, { color: v.text }]}>{loading ? 'Loading...' : children}</Text>
       <View style={[styles.highlight, { backgroundColor: colors.insetHighlight }]} />
     </Animated.View>
   );
@@ -90,6 +87,7 @@ export function Button({ children, onPress, variant = 'primary', style, loading 
         scale.value = withSpring(1);
       }}
       style={[styles.wrapper, style]}
+      disabled={loading}
     >
       {v.gradient ? (
         <LinearGradient
@@ -106,8 +104,6 @@ export function Button({ children, onPress, variant = 'primary', style, loading 
     </TouchableOpacity>
   );
 }
-
-import { View } from 'react-native';
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -137,5 +133,5 @@ const styles = StyleSheet.create({
     right: 2,
     height: 1,
     borderRadius: 8,
-  }
+  },
 });
