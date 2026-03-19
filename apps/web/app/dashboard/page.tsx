@@ -7,9 +7,13 @@ import { backendFetch } from '../../src/lib/backend';
 type Group = { id: string; name: string; currency: string };
 type Balance = { id: string; userId: string; counterpartyUserId: string; amountCents: string };
 
-function formatUsd(cents: bigint): string {
-  const dollars = Number(cents) / 100;
-  return dollars.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+function formatMoney(cents: bigint, currency: string | null): string {
+  if (!currency) {
+    return '—';
+  }
+
+  const amount = Number(cents) / 100;
+  return amount.toLocaleString(undefined, { style: 'currency', currency });
 }
 
 export default async function DashboardPage() {
@@ -18,7 +22,9 @@ export default async function DashboardPage() {
     backendFetch<Group[]>('/groups').catch(() => [] as Group[]),
   ]);
 
-  const activeGroupId = groups[0]?.id;
+  const activeGroup = groups[0] ?? null;
+  const activeGroupId = activeGroup?.id;
+  const activeCurrency = activeGroup?.currency ?? null;
 
   const [balances, activity] = await Promise.all([
     activeGroupId
@@ -47,21 +53,21 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-[var(--fs-text-primary)]">Balance summary</h2>
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
-              Updated realtime
+              Updated on refresh
             </span>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-          <SummaryCard title="Active groups" value={groups.length} hint="Registered ensembles" />
-          <SummaryCard
-            title="Liabilities"
-            value={formatUsd(oweCents)}
-            hint={activeGroupId ? `Group ref: ${activeGroupId.slice(0, 8)}...` : 'No active group'}
-          />
-          <SummaryCard
-            title="Assets"
-            value={formatUsd(owedToMeCents)}
-            hint={me ? `Linked to: ${me.email}` : 'Sign in to track personal totals'}
-          />
+            <SummaryCard title="Active groups" value={groups.length} hint="Registered ensembles" />
+            <SummaryCard
+              title="Liabilities"
+              value={formatMoney(oweCents, activeCurrency)}
+              hint={activeGroupId ? `${activeGroup?.name} · ${activeCurrency}` : 'No active group selected'}
+            />
+            <SummaryCard
+              title="Assets"
+              value={formatMoney(owedToMeCents, activeCurrency)}
+              hint={activeGroupId ? `Shown in ${activeCurrency}` : 'Select a group to see currency-specific totals'}
+            />
           </div>
         </section>
 
