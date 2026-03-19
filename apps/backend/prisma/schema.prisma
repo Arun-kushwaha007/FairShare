@@ -57,6 +57,8 @@ model Group {
   name        String
   createdBy   String
   currency    String
+  defaultSplitType String?
+  defaultSplitConfig String?
   createdAt   DateTime      @default(now())
   creator     User          @relation("group_creator", fields: [createdBy], references: [id])
   members     GroupMember[]
@@ -93,6 +95,7 @@ model Expense {
   description      String
   totalAmountCents BigInt
   currency         String
+  category         String?
   createdAt        DateTime @default(now())
   group            Group    @relation(fields: [groupId], references: [id])
   payer            User     @relation("expense_payer", fields: [payerId], references: [id])
@@ -235,3 +238,5 @@ model Payment {
   @@index([receiverId])
   @@map("payments")
 }
+
+

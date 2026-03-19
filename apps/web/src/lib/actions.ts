@@ -2,12 +2,13 @@
 
 import {
   CreateExpenseRequestDto,
-  ExpenseDto,
-  CreateSettlementRequestDto,
-  SettlementDto,
-  PresignedReceiptUrlResponseDto,
   CreateGroupRequestDto,
+  CreateSettlementRequestDto,
+  ExpenseDto,
   GroupDto,
+  PresignedReceiptUrlResponseDto,
+  SettlementDto,
+  UpdateGroupDefaultSplitRequestDto,
 } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
@@ -15,7 +16,7 @@ import { authCookies } from './authCookies';
 
 export async function inviteMemberAction(groupId: string, email: string) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
-  
+
   const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/invite`, {
     method: 'POST',
     headers: {
@@ -31,7 +32,7 @@ export async function inviteMemberAction(groupId: string, email: string) {
   if (!response.ok) {
     return {
       success: false,
-      message: Array.isArray(data.message) ? data.message[0] : (data.message || 'Failed to invite member'),
+      message: Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to invite member',
     };
   }
 
@@ -61,6 +62,31 @@ export async function createExpenseAction(groupId: string, payload: CreateExpens
   }
 
   return { success: true, expense: data as ExpenseDto };
+}
+
+export async function updateGroupDefaultSplitAction(groupId: string, payload: UpdateGroupDefaultSplitRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/default-split`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to update default split',
+    };
+  }
+
+  return { success: true, group: data as GroupDto };
 }
 
 export async function createSettlementAction(groupId: string, payload: CreateSettlementRequestDto) {

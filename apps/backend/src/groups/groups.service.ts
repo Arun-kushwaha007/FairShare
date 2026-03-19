@@ -1,11 +1,12 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { GroupDto, GroupMemberSummaryDto, GroupSummaryDto } from '@fairshare/shared-types';
+import { GroupDefaultSplitDto, GroupDto, GroupMemberSummaryDto, GroupSummaryDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RealtimeService } from '../realtime/realtime.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateGroupDefaultSplitDto } from './dto/update-group-default-split.dto';
 
 @Injectable()
 export class GroupsService {
@@ -53,6 +54,7 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      defaultSplitPreference: null,
     };
   }
 
@@ -74,6 +76,7 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
     }));
   }
 
@@ -100,6 +103,7 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
       members: group.members.map((member) => ({
         id: member.id,
         userId: member.userId,
@@ -209,13 +213,79 @@ export class GroupsService {
     };
   }
 
+  async updateDefaultSplit(groupId: string, actorUserId: string, dto: UpdateGroupDefaultSplitDto): Promise<GroupDto> {
+    await this.assertMembership(groupId, actorUserId);
+
+    let normalizedPreference: GroupDefaultSplitDto | null = null;
+    if (dto.defaultSplitPreference) {
+      const members = await this.prisma.groupMember.findMany({
+        where: { groupId },
+        select: { userId: true },
+      });
+      const memberIds = new Set(members.map((member) => member.userId));
+      const participantUserIds = Array.from(new Set(dto.defaultSplitPreference.participantUserIds));
+
+      if (participantUserIds.length === 0) {
+        throw new ForbiddenException('Default split must include at least one participant');
+      }
+
+      const invalidParticipant = participantUserIds.find((userId) => !memberIds.has(userId));
+      if (invalidParticipant) {
+        throw new ForbiddenException('Default split participants must belong to the group');
+      }
+
+      normalizedPreference = {
+        splitType: dto.defaultSplitPreference.splitType,
+        participantUserIds,
+        exactAmountsCentsByUser: dto.defaultSplitPreference.exactAmountsCentsByUser,
+        percentagesByUser: dto.defaultSplitPreference.percentagesByUser,
+      };
+    }
+
+    await this.prisma.group.update({
+      where: { id: groupId },
+      data: {
+        defaultSplitType: normalizedPreference?.splitType ?? null,
+        defaultSplitConfig: normalizedPreference
+          ? JSON.stringify({
+              participantUserIds: normalizedPreference.participantUserIds,
+              exactAmountsCentsByUser: normalizedPreference.exactAmountsCentsByUser ?? {},
+              percentagesByUser: normalizedPreference.percentagesByUser ?? {},
+            })
+          : null,
+      },
+    });
+
+    const group = await this.prisma.group.findUniqueOrThrow({
+      where: { id: groupId },
+      include: { members: true },
+    });
+
+    await this.redis.invalidateGroupCache(groupId);
+
+    return {
+      id: group.id,
+      name: group.name,
+      currency: group.currency as 'USD' | 'EUR' | 'INR',
+      createdBy: group.createdBy,
+      createdAt: group.createdAt.toISOString(),
+      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
+      members: group.members.map((member) => ({
+        id: member.id,
+        userId: member.userId,
+        groupId: member.groupId,
+        role: member.role,
+        joinedAt: member.joinedAt.toISOString(),
+      })),
+    };
+  }
+
   async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
     await this.assertMembership(groupId, actorUserId);
     const email = dto.email.toLowerCase();
 
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Create or update pending invitation
       await this.prisma.groupInvite.upsert({
         where: {
           groupId_email: {
@@ -229,7 +299,7 @@ export class GroupsService {
           invitedBy: actorUserId,
           role: 'MEMBER',
         },
-        update: {}, // Already invited, no-op
+        update: {},
       });
       return { success: true };
     }
@@ -298,7 +368,6 @@ export class GroupsService {
 
     await this.prisma.$transaction(async (tx) => {
       for (const invite of invites) {
-        // Create membership
         await tx.groupMember.create({
           data: {
             groupId: invite.groupId,
@@ -307,7 +376,6 @@ export class GroupsService {
           },
         });
 
-        // Add activity
         await tx.activity.create({
           data: {
             groupId: invite.groupId,
@@ -318,15 +386,44 @@ export class GroupsService {
           },
         });
 
-        // Delete invite
         await tx.groupInvite.delete({
           where: { id: invite.id },
         });
 
-        // Invalidate cache for each group
         await this.redis.invalidateGroupCache(invite.groupId);
       }
     });
+  }
+
+  private parseDefaultSplitPreference(splitType: string | null, splitConfig: string | null): GroupDefaultSplitDto | null {
+    if (!splitType || !splitConfig) {
+      return null;
+    }
+
+    try {
+      const config = JSON.parse(splitConfig) as {
+        participantUserIds?: unknown;
+        exactAmountsCentsByUser?: unknown;
+        percentagesByUser?: unknown;
+      };
+
+      return {
+        splitType: splitType as GroupDefaultSplitDto['splitType'],
+        participantUserIds: Array.isArray(config.participantUserIds)
+          ? config.participantUserIds.filter((value): value is string => typeof value === 'string')
+          : [],
+        exactAmountsCentsByUser:
+          config.exactAmountsCentsByUser && typeof config.exactAmountsCentsByUser === 'object' && !Array.isArray(config.exactAmountsCentsByUser)
+            ? (config.exactAmountsCentsByUser as Record<string, string>)
+            : undefined,
+        percentagesByUser:
+          config.percentagesByUser && typeof config.percentagesByUser === 'object' && !Array.isArray(config.percentagesByUser)
+            ? (config.percentagesByUser as Record<string, string>)
+            : undefined,
+      };
+    } catch {
+      return null;
+    }
   }
 
   private async assertMembership(groupId: string, userId: string): Promise<void> {
