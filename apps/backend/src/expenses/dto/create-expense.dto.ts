@@ -1,6 +1,6 @@
-﻿import { IsArray, IsIn, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { CreateExpenseRequestDto, CreateExpenseSplitDto } from '@fairshare/shared-types';
+import { CreateExpenseRequestDto, CreateExpenseSplitDto, EXPENSE_CATEGORIES } from '@fairshare/shared-types';
 import { sanitizeText } from '../../common/utils/sanitize.util';
 
 export class CreateExpenseSplitInputDto implements CreateExpenseSplitDto {
@@ -29,6 +29,11 @@ export class CreateExpenseDto implements CreateExpenseRequestDto {
   @IsString()
   @IsIn(['USD', 'EUR', 'INR'])
   currency!: 'USD' | 'EUR' | 'INR';
+
+  @IsOptional()
+  @IsString()
+  @IsIn([...EXPENSE_CATEGORIES])
+  category?: (typeof EXPENSE_CATEGORIES)[number];
 
   @IsArray()
   @ValidateNested({ each: true })

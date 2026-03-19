@@ -73,6 +73,7 @@ export class ExpensesService {
           description: dto.description,
           totalAmountCents: totalAmount,
           currency: dto.currency,
+          category: dto.category ?? null,
         },
       });
 
@@ -105,6 +106,7 @@ export class ExpensesService {
           metadata: {
             payerId: dto.payerId,
             totalAmountCents: totalAmount.toString(),
+            category: dto.category ?? null,
           },
         },
       });
@@ -131,6 +133,7 @@ export class ExpensesService {
       expenseId: expense.id,
       payerId: expense.payerId,
       totalAmountCents: expense.totalAmountCents.toString(),
+      category: expense.category as ExpenseDto['category'],
     });
     incrementExpenseCreated(groupId);
 
@@ -180,6 +183,7 @@ export class ExpensesService {
       where: { id },
       data: {
         description: dto.description,
+        category: dto.category,
       },
       include: { splits: true },
     });
@@ -189,7 +193,7 @@ export class ExpensesService {
       actorUserId,
       type: 'expense_updated',
       entityId: expense.id,
-      metadata: { description: dto.description ?? null },
+      metadata: { description: dto.description ?? null, category: dto.category ?? null },
     });
 
     await this.redis.invalidateGroupCache(expense.groupId);
@@ -245,6 +249,7 @@ export class ExpensesService {
     description: string;
     totalAmountCents: bigint;
     currency: string;
+    category: string | null;
     createdAt: Date;
     splits: Array<{
       id: string;
@@ -260,6 +265,7 @@ export class ExpensesService {
       description: expense.description,
       totalAmountCents: expense.totalAmountCents.toString(),
       currency: expense.currency as 'USD' | 'EUR' | 'INR',
+      category: expense.category as ExpenseDto['category'],
       createdAt: expense.createdAt.toISOString(),
       splits: expense.splits.map((split) => ({
         id: split.id,
@@ -270,3 +276,4 @@ export class ExpensesService {
     };
   }
 }
+

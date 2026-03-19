@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -6,6 +6,7 @@ import { JwtPayload } from '../auth/types/auth.types';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateGroupDefaultSplitDto } from './dto/update-group-default-split.dto';
 
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
@@ -40,6 +41,11 @@ export class GroupsController {
   @Get(':id/summary')
   summary(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.groupsService.summary(id, user.sub);
+  }
+
+  @Patch(':id/default-split')
+  updateDefaultSplit(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: UpdateGroupDefaultSplitDto) {
+    return this.groupsService.updateDefaultSplit(id, user.sub, dto);
   }
 
   @Post(':id/invite')

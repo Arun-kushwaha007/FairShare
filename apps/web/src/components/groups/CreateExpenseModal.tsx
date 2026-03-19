@@ -2,42 +2,100 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CurrencyCode, GroupMemberSummaryDto } from '@fairshare/shared-types';
-import { X, Sparkles } from 'lucide-react';
-import { createExpenseAction } from '../../lib/actions';
-import { SplitType, equalShares, exactShares, percentageShares, sumShares } from '../../lib/split';
+import {
+  CurrencyCode,
+  EXPENSE_CATEGORIES,
+  EXPENSE_SPLIT_TYPES,
+  ExpenseCategory,
+  ExpenseSplitType,
+  GroupDefaultSplitDto,
+  GroupMemberSummaryDto,
+} from '@fairshare/shared-types';
+import { Sparkles, X } from 'lucide-react';
+import { createExpenseAction, updateGroupDefaultSplitAction } from '../../lib/actions';
+import { equalShares, exactShares, percentageShares, sumShares } from '../../lib/split';
 import { useToast } from '../ui/Toaster';
 
 type CreateExpenseModalProps = {
   groupId: string;
   currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
+  defaultSplitPreference?: GroupDefaultSplitDto | null;
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
 };
 
-export function CreateExpenseModal({ groupId, currency, members, open, onClose, onCreated }: CreateExpenseModalProps) {
+const categoryLabels: Record<ExpenseCategory, string> = {
+  FOOD: 'Food',
+  TRAVEL: 'Travel',
+  UTILITIES: 'Utilities',
+  GROCERIES: 'Groceries',
+  ENTERTAINMENT: 'Entertainment',
+  OTHER: 'Other',
+};
+
+export function CreateExpenseModal({
+  groupId,
+  currency,
+  members,
+  defaultSplitPreference,
+  open,
+  onClose,
+  onCreated,
+}: CreateExpenseModalProps) {
+  const allMemberIds = useMemo(() => members.map((member) => member.userId), [members]);
   const defaultPayer = members[0]?.userId ?? '';
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState<ExpenseCategory | ''>('');
   const [payerId, setPayerId] = useState(defaultPayer);
-  const [splitType, setSplitType] = useState<SplitType>('equal');
-  const [participants, setParticipants] = useState<string[]>(members.map((m) => m.userId));
+  const [splitType, setSplitType] = useState<ExpenseSplitType>('equal');
+  const [participants, setParticipants] = useState<string[]>(allMemberIds);
   const [exactByUser, setExactByUser] = useState<Record<string, string>>({});
   const [percentagesByUser, setPercentagesByUser] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [savingDefault, setSavingDefault] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    if (defaultPayer) {
-      setPayerId(defaultPayer);
+    if (!open) {
+      return;
     }
-  }, [defaultPayer]);
+
+    setPayerId(defaultPayer);
+
+    const fallbackParticipants = allMemberIds;
+    if (!defaultSplitPreference) {
+      setSplitType('equal');
+      setParticipants(fallbackParticipants);
+      setExactByUser({});
+      setPercentagesByUser({});
+      return;
+    }
+
+    const preferredParticipants = defaultSplitPreference.participantUserIds.filter((userId) => allMemberIds.includes(userId));
+    const nextParticipants = preferredParticipants.length > 0 ? preferredParticipants : fallbackParticipants;
+    const nextExact: Record<string, string> = {};
+    const nextPercentages: Record<string, string> = {};
+
+    nextParticipants.forEach((userId) => {
+      if (defaultSplitPreference.exactAmountsCentsByUser?.[userId]) {
+        nextExact[userId] = defaultSplitPreference.exactAmountsCentsByUser[userId];
+      }
+      if (defaultSplitPreference.percentagesByUser?.[userId]) {
+        nextPercentages[userId] = defaultSplitPreference.percentagesByUser[userId];
+      }
+    });
+
+    setSplitType(defaultSplitPreference.splitType);
+    setParticipants(nextParticipants);
+    setExactByUser(nextExact);
+    setPercentagesByUser(nextPercentages);
+  }, [allMemberIds, defaultPayer, defaultSplitPreference, open]);
 
   useEffect(() => {
-    // Ensure payer is always a participant.
     if (payerId && !participants.includes(payerId)) {
       setParticipants((prev) => [...prev, payerId]);
     }
@@ -49,12 +107,46 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
   );
 
   const toggleParticipant = (userId: string) => {
-    if (userId === payerId) return; // keep payer in the split
-    if (participants.includes(userId)) {
-      setParticipants(participants.filter((id) => id !== userId));
-    } else {
-      setParticipants([...participants, userId]);
+    if (userId === payerId) {
+      return;
     }
+
+    setParticipants((current) => (current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId]));
+  };
+
+  const buildDefaultSplitPreference = (nextSplitType: ExpenseSplitType, nextParticipants: string[]): GroupDefaultSplitDto => ({
+    splitType: nextSplitType,
+    participantUserIds: Array.from(new Set(nextParticipants)),
+    exactAmountsCentsByUser: nextSplitType === 'exact' ? exactByUser : undefined,
+    percentagesByUser: nextSplitType === 'percentage' ? percentagesByUser : undefined,
+  });
+
+  const saveDefaultSplit = async (nextPreference: GroupDefaultSplitDto) => {
+    try {
+      setSavingDefault(true);
+      const result = await updateGroupDefaultSplitAction(groupId, { defaultSplitPreference: nextPreference });
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      toast('Default split saved');
+      onCreated?.();
+    } catch (err) {
+      setError((err as Error).message || 'Unable to save default split');
+    } finally {
+      setSavingDefault(false);
+    }
+  };
+
+  const resetDefaultSplit = async () => {
+    const nextParticipants = allMemberIds.length > 0 ? allMemberIds : participants;
+    setSplitType('equal');
+    setParticipants(nextParticipants);
+    setExactByUser({});
+    setPercentagesByUser({});
+    await saveDefaultSplit({
+      splitType: 'equal',
+      participantUserIds: nextParticipants,
+    });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -94,6 +186,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
         description: description.trim(),
         totalAmountCents: String(totalCents),
         currency,
+        category: category || undefined,
         splits,
       });
 
@@ -106,6 +199,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
       onClose();
       setDescription('');
       setAmount('');
+      setCategory('');
     } catch (err) {
       setError((err as Error).message || 'Unable to create expense');
     } finally {
@@ -149,12 +243,12 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                       className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                       placeholder="Team dinner, rideshare..."
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={(event) => setDescription(event.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Amount ({currency})</label>
                       <input
@@ -163,7 +257,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                         min="0"
                         step="0.01"
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(event) => setAmount(event.target.value)}
                         required
                       />
                     </div>
@@ -172,11 +266,26 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                       <select
                         className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         value={payerId}
-                        onChange={(e) => setPayerId(e.target.value)}
+                        onChange={(event) => setPayerId(event.target.value)}
                       >
                         {participantOptions.map((member) => (
                           <option key={member.id} value={member.id}>
                             {member.name} ({member.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Category</label>
+                      <select
+                        className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                        value={category}
+                        onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
+                      >
+                        <option value="">No category</option>
+                        {EXPENSE_CATEGORIES.map((value) => (
+                          <option key={value} value={value}>
+                            {categoryLabels[value]}
                           </option>
                         ))}
                       </select>
@@ -212,9 +321,19 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Split type</label>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Split type</label>
+                      <button
+                        type="button"
+                        onClick={() => saveDefaultSplit(buildDefaultSplitPreference(splitType, participants))}
+                        disabled={savingDefault || participants.length === 0}
+                        className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] disabled:opacity-60"
+                      >
+                        {savingDefault ? 'Saving...' : 'Save as default'}
+                      </button>
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
-                      {(['equal', 'exact', 'percentage'] as SplitType[]).map((type) => (
+                      {EXPENSE_SPLIT_TYPES.map((type) => (
                         <button
                           key={type}
                           type="button"
@@ -230,6 +349,14 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                         </button>
                       ))}
                     </div>
+                    <button
+                      type="button"
+                      onClick={resetDefaultSplit}
+                      disabled={savingDefault}
+                      className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--fs-text-muted)] hover:text-[var(--fs-primary)] disabled:opacity-60"
+                    >
+                      Reset default to equal split
+                    </button>
                   </div>
 
                   {splitType === 'exact' ? (
@@ -237,7 +364,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                       <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Exact amounts (cents)</p>
                       <div className="grid gap-2 max-h-40 overflow-y-auto pr-1">
                         {participants.map((id) => {
-                          const member = participantOptions.find((m) => m.id === id);
+                          const member = participantOptions.find((participant) => participant.id === id);
                           return (
                             <input
                               key={id}
@@ -246,7 +373,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                               className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                               placeholder={`Amount for ${member?.name ?? id}`}
                               value={exactByUser[id] ?? ''}
-                              onChange={(e) => setExactByUser({ ...exactByUser, [id]: e.target.value })}
+                              onChange={(event) => setExactByUser({ ...exactByUser, [id]: event.target.value })}
                             />
                           );
                         })}
@@ -259,7 +386,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                       <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Percentages</p>
                       <div className="grid gap-2 max-h-40 overflow-y-auto pr-1">
                         {participants.map((id) => {
-                          const member = participantOptions.find((m) => m.id === id);
+                          const member = participantOptions.find((participant) => participant.id === id);
                           return (
                             <div key={id} className="flex items-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2">
                               <input
@@ -268,7 +395,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                                 max="100"
                                 className="w-20 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-background)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                                 value={percentagesByUser[id] ?? ''}
-                                onChange={(e) => setPercentagesByUser({ ...percentagesByUser, [id]: e.target.value })}
+                                onChange={(event) => setPercentagesByUser({ ...percentagesByUser, [id]: event.target.value })}
                               />
                               <span className="text-sm font-semibold text-[var(--fs-text-muted)]">{member?.name ?? id}</span>
                             </div>
@@ -279,9 +406,7 @@ export function CreateExpenseModal({ groupId, currency, members, open, onClose, 
                   ) : null}
 
                   {error ? (
-                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600">
-                      {error}
-                    </div>
+                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600">{error}</div>
                   ) : null}
 
                   <div className="flex items-center justify-between pt-2">
