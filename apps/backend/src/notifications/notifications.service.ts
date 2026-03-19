@@ -24,9 +24,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   private static readonly baseRetryDelayMs = 500;
   private readonly logger = new Logger(NotificationsService.name);
   private readonly channel = 'fairshare:notifications';
-  private readonly publisher: Redis;
-  private readonly subscriber: Redis;
+  private readonly config: AppConfigService;
+  private publisher: Redis | null = null;
+  private subscriber: Redis | null = null;
   private readonly expo: Expo;
+  private pubSubEnabled = true;
 
   constructor(
     config: AppConfigService,
@@ -34,46 +36,32 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     @Inject(forwardRef(() => JobsQueueService))
     private readonly jobsQueueService: JobsQueueService,
   ) {
-    const redisOptions = (connectionName: string) => ({
-      lazyConnect: true,
-      maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
-      connectionName,
-      retryStrategy: (times: number) => {
-        if (times > MAX_REDIS_RETRIES) {
-          this.logger.warn(`${connectionName} Redis reconnect attempts exhausted`);
-          return null;
-        }
-
-        return Math.min(times * RETRY_DELAY_MS, MAX_RETRY_DELAY_MS);
-      },
-    });
-
-    this.publisher = new Redis(config.redisUrl, redisOptions('fairshare:notifications-publisher'));
-    this.subscriber = new Redis(config.redisUrl, redisOptions('fairshare:notifications-subscriber'));
-
-    for (const [client, name] of [
-      [this.publisher, 'notifications-publisher'],
-      [this.subscriber, 'notifications-subscriber'],
-    ] as const) {
-      client.on('error', (error) => {
-        this.logger.warn(`${name} Redis error: ${error.message}`);
-      });
-      client.on('end', () => {
-        this.logger.warn(`${name} Redis connection closed`);
-      });
-    }
-
+    this.config = config;
     this.expo = new Expo();
   }
 
   async onModuleInit(): Promise<void> {
+    const redisAvailable = await this.canReachRedis();
+    if (!redisAvailable) {
+      this.pubSubEnabled = false;
+      this.logger.warn('Redis unavailable, notifications pub/sub disabled for local startup');
+      return;
+    }
+
+    this.publisher = this.createRedisClient('fairshare:notifications-publisher');
+    this.subscriber = this.createRedisClient('fairshare:notifications-subscriber');
+
     try {
       await this.subscriber.subscribe(this.channel);
     } catch (error) {
+      this.pubSubEnabled = false;
       this.logger.warn(
         `Redis pub/sub unavailable during startup: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
+      this.publisher?.disconnect();
+      this.subscriber?.disconnect();
+      this.publisher = null;
+      this.subscriber = null;
       return;
     }
 
@@ -93,7 +81,9 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await Promise.allSettled([this.subscriber.quit(), this.publisher.quit()]);
+    await Promise.allSettled(
+      [this.subscriber, this.publisher].filter((client): client is Redis => Boolean(client)).map((client) => client.quit()),
+    );
   }
 
   async sendPushNotification(userIds: string[], payload: NotificationEventPayload): Promise<void> {
@@ -107,7 +97,13 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       queuedAt: new Date().toISOString(),
     };
 
-    await this.publisher.publish(this.channel, JSON.stringify(event));
+    if (this.pubSubEnabled && this.publisher) {
+      try {
+        await this.publisher.publish(this.channel, JSON.stringify(event));
+      } catch (error) {
+        this.logger.warn(`Redis publish skipped: ${error instanceof Error ? error.message : 'unknown error'}`);
+      }
+    }
 
     this.logger.log(
       JSON.stringify({
@@ -169,7 +165,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Expo push send failed', error instanceof Error ? error.stack : undefined);
       if (retries > 0) {
         const attempt = NotificationsService.maxChunkRetries - retries + 1;
-        const delayMs = NotificationsService.baseRetryDelayMs * (2 ** (attempt - 1));
+        const delayMs = NotificationsService.baseRetryDelayMs * 2 ** (attempt - 1);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         await this.sendChunkWithRetry(chunk, retries - 1);
       }
@@ -211,5 +207,52 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         count: invalidTokens.length,
       }),
     );
+  }
+
+  private createRedisClient(connectionName: string): Redis {
+    const client = new Redis(this.config.redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectionName,
+      retryStrategy: (times: number) => {
+        if (times > MAX_REDIS_RETRIES) {
+          this.logger.warn(`${connectionName} Redis reconnect attempts exhausted`);
+          return null;
+        }
+
+        return Math.min(times * RETRY_DELAY_MS, MAX_RETRY_DELAY_MS);
+      },
+    });
+
+    client.on('error', (error) => {
+      this.logger.warn(`${connectionName} Redis error: ${error.message}`);
+    });
+    client.on('end', () => {
+      this.logger.warn(`${connectionName} Redis connection closed`);
+    });
+
+    return client;
+  }
+
+  private async canReachRedis(): Promise<boolean> {
+    const probe = new Redis(this.config.redisUrl, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectTimeout: 750,
+      retryStrategy: () => null,
+    });
+
+    try {
+      await probe.connect();
+      await probe.ping();
+      await probe.quit();
+      return true;
+    } catch (error) {
+      this.logger.warn(`Redis notifications probe failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+      probe.disconnect();
+      return false;
+    }
   }
 }
