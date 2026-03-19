@@ -58,7 +58,7 @@ export function ActivityList({ items, groupId }: { items: ActivityDto[]; groupId
           <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/50 px-6 py-8 text-center">
             <p className="text-sm font-semibold text-[var(--fs-text-primary)] mb-1">No activity yet</p>
             <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
-              New expenses and settlements will surface here in real time.
+              Refresh after new expenses or settlements to see the latest activity.
             </p>
           </div>
         ) : null}
@@ -66,4 +66,3 @@ export function ActivityList({ items, groupId }: { items: ActivityDto[]; groupId
     </div>
   );
 }
-
