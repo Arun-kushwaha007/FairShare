@@ -1,4 +1,6 @@
-export type SplitType = 'equal' | 'exact' | 'percentage';
+import { ExpenseSplitType } from '@fairshare/shared-types';
+
+export type SplitType = ExpenseSplitType;
 
 export function toCents(input: string): number {
   const parsed = Number(input);

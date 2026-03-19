@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CurrencyCode, GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { CurrencyCode, GroupDefaultSplitDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import Link from 'next/link';
 import { PlusCircle, Wallet } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -16,9 +16,10 @@ type GroupActionsProps = {
   groupId: string;
   currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
+  defaultSplitPreference?: GroupDefaultSplitDto | null;
 };
 
-export function GroupActions({ groupId, currency, members }: GroupActionsProps) {
+export function GroupActions({ groupId, currency, members, defaultSplitPreference }: GroupActionsProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
@@ -27,10 +28,7 @@ export function GroupActions({ groupId, currency, members }: GroupActionsProps) 
       <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-6 shadow-[var(--fs-shadow-soft)]">
         <h3 className="text-lg font-bold text-[var(--fs-text-primary)] mb-4">Actions</h3>
         <div className="grid gap-3">
-          <button
-            className="btn-royal w-full inline-flex items-center justify-center gap-2"
-            onClick={() => setOpen(true)}
-          >
+          <button className="btn-royal w-full inline-flex items-center justify-center gap-2" onClick={() => setOpen(true)}>
             <PlusCircle className="w-4 h-4" />
             Record expense
           </button>
@@ -51,6 +49,7 @@ export function GroupActions({ groupId, currency, members }: GroupActionsProps) 
         groupId={groupId}
         currency={currency}
         members={members}
+        defaultSplitPreference={defaultSplitPreference}
         open={open}
         onClose={() => setOpen(false)}
         onCreated={() => {

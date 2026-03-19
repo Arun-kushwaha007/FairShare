@@ -1,14 +1,9 @@
-import { 
-  ExpenseDto, 
-  GroupDto, 
-  GroupMemberSummaryDto,
-  PaginatedExpensesResponseDto
-} from '@fairshare/shared-types';
+import { ExpenseDto, GroupDto, GroupMemberSummaryDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { DashboardLayout } from '../../../../src/components/layout';
-import { MemberList, ExpenseTable, GroupActions } from '../../../../src/components/groups';
+import { ExpenseTable, GroupActions, MemberList } from '../../../../src/components/groups';
 import { backendFetch } from '../../../../src/lib/backend';
 
 interface GroupDetailPageProps {
@@ -27,7 +22,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
       backendFetch<PaginatedExpensesResponseDto>(`/groups/${groupId}/expenses?limit=50`),
     ]);
 
-    const totalExpenses = expenses.items.reduce((sum, e) => sum + Number(e.totalAmountCents), 0) / 100;
+    const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
 
     return (
       <DashboardLayout>
@@ -38,7 +33,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Group</p>
                 <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">{group.name}</h1>
                 <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
-                  Created {new Date(group.createdAt).toLocaleDateString()} â€¢ ID {groupId.slice(0, 8)}
+                  Created {new Date(group.createdAt).toLocaleDateString()} • ID {groupId.slice(0, 8)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -62,22 +57,26 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
 
           <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
             <div className="space-y-10">
-              <ExpenseTable expenses={expenses.items} />
+              <ExpenseTable expenses={expenses.items as ExpenseDto[]} members={members} />
             </div>
-            
+
             <aside className="space-y-10">
               <Suspense fallback={<div className="h-52 rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] animate-pulse" />}>
                 <MemberList groupId={groupId} members={members} />
               </Suspense>
               <Suspense fallback={<div className="h-40 rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] animate-pulse" />}>
-                <GroupActions groupId={groupId} currency={group.currency} members={members} />
+                <GroupActions
+                  groupId={groupId}
+                  currency={group.currency}
+                  members={members}
+                  defaultSplitPreference={group.defaultSplitPreference}
+                />
               </Suspense>
             </aside>
           </div>
         </div>
       </DashboardLayout>
     );
-
   } catch (error) {
     console.error('Failed to fetch group details:', error);
     return notFound();

@@ -1,4 +1,8 @@
 export type CurrencyCode = 'USD' | 'EUR' | 'INR';
+export const EXPENSE_CATEGORIES = ['FOOD', 'TRAVEL', 'UTILITIES', 'GROCERIES', 'ENTERTAINMENT', 'OTHER'] as const;
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+export const EXPENSE_SPLIT_TYPES = ['equal', 'exact', 'percentage'] as const;
+export type ExpenseSplitType = (typeof EXPENSE_SPLIT_TYPES)[number];
 
 export interface AuthUserDto {
   id: string;
@@ -66,12 +70,20 @@ export interface GroupSummaryDto {
   topSpenderUserId: string | null;
 }
 
+export interface GroupDefaultSplitDto {
+  splitType: ExpenseSplitType;
+  participantUserIds: string[];
+  exactAmountsCentsByUser?: Record<string, string>;
+  percentagesByUser?: Record<string, string>;
+}
+
 export interface GroupDto {
   id: string;
   name: string;
   currency: CurrencyCode;
   createdBy: string;
   createdAt: string;
+  defaultSplitPreference?: GroupDefaultSplitDto | null;
   members?: GroupMemberDto[];
 }
 
@@ -86,11 +98,13 @@ export interface CreateExpenseRequestDto {
   description: string;
   totalAmountCents: string;
   currency: CurrencyCode;
+  category?: ExpenseCategory;
   splits: CreateExpenseSplitDto[];
 }
 
 export interface UpdateExpenseRequestDto {
   description?: string;
+  category?: ExpenseCategory | null;
 }
 
 export interface SplitDto {
@@ -107,6 +121,7 @@ export interface ExpenseDto {
   description: string;
   totalAmountCents: string;
   currency: CurrencyCode;
+  category?: ExpenseCategory | null;
   createdAt: string;
   splits?: SplitDto[];
 }
@@ -148,6 +163,10 @@ export interface SimplifySuggestionDto {
   fromUserId: string;
   toUserId: string;
   amountCents: string;
+}
+
+export interface UpdateGroupDefaultSplitRequestDto {
+  defaultSplitPreference: GroupDefaultSplitDto | null;
 }
 
 export type ActivityType =
