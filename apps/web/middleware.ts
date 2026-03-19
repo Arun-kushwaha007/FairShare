@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authCookies, accessCookieOptions, refreshCookieOptions } from './src/lib/authCookies';
 import { getBackendBaseUrl } from './src/lib/env';
 import { isJwtExpiringSoon } from './src/lib/jwt';
@@ -13,8 +13,6 @@ function isAuthPage(pathname: string): boolean {
 
 function parseCookieValue(setCookieHeader: string | null, cookieName: string): string | null {
   if (!setCookieHeader) return null;
-  // Next/undici may coalesce multiple Set-Cookie headers into a single comma-separated string.
-  // This parser is intentionally minimal: it searches for "<name>=" and extracts until the next ";".
   const idx = setCookieHeader.indexOf(`${cookieName}=`);
   if (idx < 0) return null;
   const start = idx + cookieName.length + 1;
@@ -28,11 +26,16 @@ async function tryRefreshTokens(req: NextRequest): Promise<{ accessToken: string
     return null;
   }
 
-  const csrfResp = await fetch(`${getBackendBaseUrl()}/auth/csrf-token`, {
-    method: 'GET',
-    headers: { cookie: `${authCookies.refreshToken}=${refreshToken}` },
-    cache: 'no-store',
-  });
+  let csrfResp: Response;
+  try {
+    csrfResp = await fetch(`${getBackendBaseUrl()}/auth/csrf-token`, {
+      method: 'GET',
+      headers: { cookie: `${authCookies.refreshToken}=${refreshToken}` },
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
 
   if (!csrfResp.ok) {
     return null;
@@ -49,14 +52,19 @@ async function tryRefreshTokens(req: NextRequest): Promise<{ accessToken: string
     return null;
   }
 
-  const refreshResp = await fetch(`${getBackendBaseUrl()}/auth/refresh`, {
-    method: 'POST',
-    headers: {
-      'x-csrf-token': csrfToken,
-      cookie: `_csrf=${csrfCookie}; ${authCookies.refreshToken}=${refreshToken}`,
-    },
-    cache: 'no-store',
-  });
+  let refreshResp: Response;
+  try {
+    refreshResp = await fetch(`${getBackendBaseUrl()}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'x-csrf-token': csrfToken,
+        cookie: `_csrf=${csrfCookie}; ${authCookies.refreshToken}=${refreshToken}`,
+      },
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
 
   if (!refreshResp.ok) {
     return null;
