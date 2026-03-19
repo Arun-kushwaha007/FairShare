@@ -6,5 +6,6 @@ export * from './GroupActions';
 export * from './SettlementList';
 export * from './ReceiptUploadModal';
 export * from './ExpenseRow';
+export * from './ExpenseDetailCard';
 export * from './CreateGroupModal';
 export * from './CreateGroupButton';
