@@ -48,25 +48,25 @@
   .brutal-accent-line { border-left: 4px solid var(--fs-primary); }
 
   .btn-royal {
-    @apply rounded-xl px-6 py-3 font-bold transition-all duration-200 active:scale-95;
+    @apply rounded-xl px-7 py-3.5 font-bold transition-all duration-200 active:scale-95;
     background: linear-gradient(135deg, var(--fs-primary), var(--fs-primary-hover));
     color: white;
-    box-shadow: var(--fs-shadow-soft);
+    box-shadow: 0 4px 15px -5px var(--fs-primary);
     position: relative;
     overflow: hidden;
   }
 
   .btn-royal::after {
     content: '';
-    @apply absolute left-1 right-1 top-0 h-px rounded-full bg-white opacity-30;
+    @apply absolute left-1 right-1 top-px h-px rounded-full bg-white opacity-40;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3 font-semibold text-white transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08];
+    @apply inline-flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] px-7 py-3.5 font-bold text-white transition-all duration-200 hover:border-white/15 hover:bg-white/[0.08] backdrop-blur-xl;
   }
 
   .eyebrow-label {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-zinc-300;
+    @apply inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/5 px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.25em] text-purple-400;
   }
 
   .neo-border {

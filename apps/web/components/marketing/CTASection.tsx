@@ -1,48 +1,67 @@
-import Link from 'next/link';
+import { SectionContainer } from '../layout/SectionContainer';
+import { AccentButton } from '../ui/AccentButton';
 import { ArrowRight } from 'lucide-react';
 
 interface CTASectionProps {
   eyebrow?: string;
   title: string;
   description: string;
-  primaryHref: string;
   primaryLabel: string;
-  secondaryHref?: string;
+  primaryHref: string;
   secondaryLabel?: string;
+  secondaryHref?: string;
 }
 
-export const CTASection = ({
+export function CTASection({
   eyebrow,
   title,
   description,
-  primaryHref,
   primaryLabel,
-  secondaryHref,
+  primaryHref,
   secondaryLabel,
-}: CTASectionProps) => {
+  secondaryHref,
+}: CTASectionProps) {
   return (
-    <div className="marketing-card relative overflow-hidden px-6 py-10 sm:px-8 sm:py-12 lg:px-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.12),transparent_30%)]" />
-      <div className="relative mx-auto max-w-3xl text-center">
-        {eyebrow ? <div className="mb-4 flex justify-center"><span className="eyebrow-label">{eyebrow}</span></div> : null}
-        <h2 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          {title}
-        </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
-          {description}
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href={primaryHref} className="btn-royal inline-flex items-center gap-2">
-            {primaryLabel}
-            <ArrowRight size={16} />
-          </Link>
-          {secondaryHref && secondaryLabel ? (
-            <Link href={secondaryHref} className="btn-secondary">
-              {secondaryLabel}
-            </Link>
-          ) : null}
+    <SectionContainer size="compact">
+      <div className="relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-gradient-to-br from-purple-900/40 via-black to-zinc-900/40 p-10 sm:p-16 lg:p-24">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 h-96 w-96 rounded-full bg-purple-600/10 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-96 w-96 rounded-full bg-purple-900/20 blur-[100px]" />
+        
+        <div className="relative z-10 mx-auto max-w-3xl text-center">
+          {eyebrow && (
+            <span className="eyebrow-label mb-8">
+              {eyebrow}
+            </span>
+          )}
+          
+          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            {title}
+          </h2>
+          
+          <p className="mt-8 text-lg leading-8 text-zinc-400">
+            {description}
+          </p>
+          
+          <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <AccentButton href={primaryHref} variant="primary" icon={<ArrowRight size={18} />}>
+              {primaryLabel}
+            </AccentButton>
+            {secondaryLabel && secondaryHref && (
+              <AccentButton href={secondaryHref} variant="secondary">
+                {secondaryLabel}
+              </AccentButton>
+            )}
+          </div>
+          
+          <p className="mt-8 text-sm text-zinc-500">
+            Join thousands of groups already using FairShare.
+          </p>
         </div>
+        
+        {/* Bottom Skeuomorphic Edge */}
+        <div className="absolute bottom-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
       </div>
-    </div>
+    </SectionContainer>
   );
-};
+}

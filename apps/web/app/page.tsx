@@ -1,264 +1,204 @@
-import { ArrowRight, CheckCircle2, Clock3, CreditCard, ShieldCheck, Smartphone, Sparkles, Users } from 'lucide-react';
+'use client';
+
+import { ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { SectionContainer } from '../components/layout/SectionContainer';
-import { AppStoreButtons } from '../components/marketing/AppStoreButtons';
 import { CTASection } from '../components/marketing/CTASection';
 import { FeatureCard } from '../components/marketing/FeatureCard';
+import { ComingSoonAppSection } from '../components/marketing/ComingSoonAppSection';
+import { TrustStatsSection } from '../components/marketing/TrustStatsSection';
+import { GlassCard } from '../components/ui/GlassCard';
+import { AccentButton } from '../components/ui/AccentButton';
 
 const previewFeatures = [
   {
-    title: 'Track every shared expense in one place',
+    title: 'Track every shared expense',
     description: 'Add bills, assign who owes what, and keep the group ledger current without bouncing between messages.',
     iconName: 'ReceiptText' as const,
-    colorClass: 'shadow-yellow-500/20',
+    eyebrow: 'Unified Ledger',
   },
   {
-    title: 'See balances change instantly across members',
+    title: 'Instant balance updates',
     description: 'Everyone stays aligned as new expenses land, so there is less backtracking when it is time to settle.',
     iconName: 'RefreshCw' as const,
-    colorClass: 'shadow-cyan-500/20',
+    eyebrow: 'Live Sync',
   },
   {
-    title: 'Upload receipts when context matters',
+    title: 'Contextual receipts',
     description: 'Keep proof attached to the expense so the group can verify details without digging through gallery screenshots.',
     iconName: 'ShieldCheck' as const,
-    colorClass: 'shadow-purple-500/20',
+    eyebrow: 'Verification',
   },
   {
-    title: 'Simplify payments down to the fewest moves',
+    title: 'Simplify payments',
     description: 'FairShare reduces a messy web of debts into clear settle-up actions the group can complete quickly.',
     iconName: 'GitMerge' as const,
-    colorClass: 'shadow-emerald-500/20',
+    eyebrow: 'Optimization',
   },
-];
-
-const productSignals = [
-  {
-    title: 'Group summary',
-    description: 'See total spend, who is owed, and who needs to settle without opening multiple tabs.',
-    icon: Users,
-  },
-  {
-    title: 'Expense timeline',
-    description: 'Every charge, receipt, and note sits in a single running record the whole group can inspect.',
-    icon: CreditCard,
-  },
-  {
-    title: 'Settlement prompts',
-    description: 'Get a clear next action instead of manually figuring out who should pay whom.',
-    icon: CheckCircle2,
-  },
-];
-
-const proofItems = [
-  'Built for trips, roommates, clubs, and small teams',
-  'Clearer than spreadsheets and easier than manual reminders',
-  'Real-time updates reduce �who already paid?� confusion',
 ];
 
 export default function HomePage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#030303] text-white">
+      {/* Background Ambience */}
       <div className="pointer-events-none absolute inset-0 grid-bg opacity-10" />
-
-      <SectionContainer size="spacious" className="relative pt-12 sm:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          <div className="max-w-3xl">
-            <span className="eyebrow-label">Shared expense tracking for groups</span>
-            <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Split group expenses without confusion.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
-              FairShare helps roommates, trips, and teams log shared spending, track balances live, and settle up faster without spreadsheet cleanup.
-            </p>
-            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <Link href="/login" className="btn-royal inline-flex items-center gap-2">
-                Start Splitting
-                <ArrowRight size={16} />
-              </Link>
-              <Link href="/how-it-works" className="btn-secondary">
-                See How It Works
-              </Link>
-            </div>
-            <p className="mt-4 text-sm text-zinc-400">
-              Built for everyday group spending, from rent and groceries to travel plans and event costs.
-            </p>
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-full max-w-4xl bg-purple-600/10 blur-[120px]" />
+      
+      {/* Hero Section */}
+      <SectionContainer size="spacious" className="relative pt-20 sm:pt-32">
+        <div className="flex flex-col items-center text-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="eyebrow-label mb-8"
+          >
+            <Sparkles size={14} className="text-purple-400" />
+            <span>The Premium Way to Split Expenses</span>
+          </motion.div>
+          
+          <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-white sm:text-7xl lg:text-8xl">
+            Split group expenses <span className="text-purple-500">without the chaos.</span>
+          </h1>
+          
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-zinc-400 sm:text-xl">
+            FairShare helps roommates, travelers, and teams log shared spending, track balances live, and settle up faster. No spreadsheets required.
+          </p>
+          
+          <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
+            <AccentButton href="/login" variant="primary" icon={<ArrowRight size={18} />}>
+              Start Splitting Free
+            </AccentButton>
+            <AccentButton href="/features" variant="secondary">
+              Explore Features
+            </AccentButton>
           </div>
-
-          <div className="marketing-card relative overflow-hidden p-6 sm:p-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.1),transparent_28%)]" />
-            <div className="relative space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Weekend trip</p>
-                  <p className="mt-1 text-lg font-semibold text-white">5 people, 12 expenses</p>
-                </div>
-                <Sparkles className="text-purple-300" size={20} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-sm text-zinc-400">You are owed</p>
-                  <p className="mt-2 text-3xl font-bold text-white">$84</p>
-                  <p className="mt-2 text-sm text-emerald-300">2 members need to settle</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-sm text-zinc-400">Latest update</p>
-                  <p className="mt-2 text-lg font-semibold text-white">Dinner added by Maya</p>
-                  <p className="mt-2 text-sm text-zinc-400">Balances refreshed instantly</p>
-                </div>
-              </div>
-              <div className="rounded-[1.75rem] border border-white/10 bg-black/35 p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-white">Suggested settlement</p>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400">
-                      Chris pays Maya $32 and Jo pays Alex $18 to bring the group back to even.
-                    </p>
-                  </div>
-                  <CheckCircle2 className="mt-1 text-emerald-300" size={20} />
-                </div>
-              </div>
+          
+          <p className="mt-10 text-xs font-bold uppercase tracking-[0.25em] text-zinc-600">
+            Android & iOS App Coming Soon
+          </p>
+        </div>
+        
+        {/* Product Teaser Dashboard Image */}
+        <div className="mt-20 relative px-4 sm:px-10">
+          <GlassCard className="!p-0 border-white/10 bg-black/40 shadow-[0_0_100px_rgba(168,85,247,0.1)]" hoverable={false}>
+            <div className="aspect-[16/9] relative bg-gradient-to-br from-purple-900/10 via-transparent to-transparent">
+               {/* Dashboard Mockup Representation */}
+               <div className="absolute inset-0 p-8 sm:p-12 overflow-hidden">
+                 <div className="flex justify-between items-start mb-12">
+                   <div className="space-y-4">
+                     <div className="h-4 w-32 rounded-full bg-white/10" />
+                     <div className="h-10 w-64 rounded-xl bg-white/5" />
+                   </div>
+                   <div className="h-12 w-12 rounded-full bg-purple-500/20 border border-purple-500/30" />
+                 </div>
+                 <div className="grid grid-cols-3 gap-6">
+                    <div className="h-40 rounded-3xl bg-white/5 border border-white/10 p-6">
+                      <div className="h-3 w-1/2 rounded-full bg-purple-400/30 mb-4" />
+                      <div className="h-10 w-3/4 rounded-xl bg-white/10" />
+                    </div>
+                    <div className="h-40 rounded-3xl bg-white/5 border border-white/10 p-6">
+                      <div className="h-3 w-1/2 rounded-full bg-purple-400/30 mb-4" />
+                      <div className="h-10 w-3/4 rounded-xl bg-white/10" />
+                    </div>
+                    <div className="h-40 rounded-3xl bg-purple-600/10 border border-purple-500/20 p-6">
+                      <div className="h-3 w-1/2 rounded-full bg-purple-400/40 mb-4" />
+                      <div className="h-10 w-3/4 rounded-xl bg-white/10" />
+                    </div>
+                 </div>
+               </div>
             </div>
-          </div>
+            {/* Skeuomorphic Glass Light Leak */}
+            <div className="absolute -top-px -left-px -right-px h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
+          </GlassCard>
+          
+          {/* Floating Accents */}
+          <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-purple-500/20 blur-3xl" />
+          <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-purple-900/30 blur-3xl" />
         </div>
       </SectionContainer>
 
+      {/* Social Proof */}
+      <TrustStatsSection />
+
+      {/* Problem/Solution Card Grid */}
       <SectionContainer size="compact">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="marketing-card p-6 sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">The problem</p>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Shared spending breaks down when the group relies on memory and chat threads.
+        <div className="grid gap-8 lg:grid-cols-2">
+          <GlassCard className="p-8 sm:p-10 border-red-500/10 bg-red-500/[0.02]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-red-400/60 mb-4 block">The Friction</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Manual tracking causes headaches for everyone.
             </h2>
-            <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-300">
-              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Expenses get logged late, so balances drift.</li>
-              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Receipts disappear, leaving people to argue over details.</li>
-              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Manual settle-up math creates extra payments and extra friction.</li>
+            <ul className="mt-8 space-y-6">
+              {[
+                'Expenses get logged late, leading to balance drift.',
+                'Lost receipts cause arguments over price details.',
+                'Complex settle-up math adds unnecessary friction.'
+              ].map((item, i) => (
+                <li key={i} className="flex gap-4 items-start text-zinc-400">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-red-500/40 shrink-0" />
+                  <span className="text-base leading-relaxed">{item}</span>
+                </li>
+              ))}
             </ul>
-          </div>
-          <div className="marketing-card p-6 sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-purple-300">The solution</p>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              FairShare gives the group one place to log expenses, verify context, and act on the next step.
+          </GlassCard>
+          
+          <GlassCard className="p-8 sm:p-10 border-purple-500/20 bg-purple-500/[0.04]">
+            <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-purple-400 mb-4 block">The Solution</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              FairShare automates the busywork of group spending.
             </h2>
-            <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-300">
-              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Members see balance changes instantly after each expense.</li>
-              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Receipts stay attached to the record when clarification is needed.</li>
-              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Settlement suggestions reduce the number of payments to finish the job.</li>
+            <ul className="mt-8 space-y-6">
+              {[
+                'Members see balance changes instantly after each log.',
+                'Proof stays attached to the record for total transparency.',
+                'Optimized settlements reduce the number of payments.'
+              ].map((item, i) => (
+                <li key={i} className="flex gap-4 items-start text-zinc-300">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
+                  <span className="text-base leading-relaxed">{item}</span>
+                </li>
+              ))}
             </ul>
-          </div>
+          </GlassCard>
         </div>
       </SectionContainer>
 
-      <SectionContainer id="features" size="default">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/* Feature Grid */}
+      <SectionContainer id="features">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between mb-12">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Core features</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              The essentials a group needs to stay aligned.
+            <span className="eyebrow-label mb-6">Core Features</span>
+            <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+              Everything you need, nothing you don&apos;t.
             </h2>
-            <p className="mt-4 text-base leading-7 text-zinc-300">
-              Focused features, clear outcomes, and enough context to settle up without second-guessing the numbers.
-            </p>
           </div>
-          <Link href="/features" className="text-sm font-semibold text-purple-300 transition-colors hover:text-purple-200">
-            Explore every feature
+          <Link href="/features" className="group flex items-center gap-2 text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors">
+            Explore Full Feature Set
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {previewFeatures.map((feature) => (
             <FeatureCard key={feature.title} {...feature} />
           ))}
         </div>
       </SectionContainer>
 
-      <SectionContainer size="compact">
-        <div className="marketing-card p-6 sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Product preview</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                A cleaner workflow from first expense to final settlement.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-zinc-300">
-                The interface is organized around the actions groups repeat most: adding expenses, checking balances, and closing the loop on what is still owed.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {productSignals.map((item) => (
-                <div key={item.title} className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
-                  <item.icon className="text-purple-300" size={20} />
-                  <h3 className="mt-4 text-lg font-semibold text-white">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-300">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </SectionContainer>
+      {/* Mobile Teaser */}
+      <ComingSoonAppSection />
 
-      <SectionContainer id="waitlist" size="compact">
-        <div className="marketing-card relative overflow-hidden p-6 sm:p-8 lg:p-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_25%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.16),transparent_30%)]" />
-          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Mobile coming soon</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Coming soon on Android and iOS.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-zinc-300">
-                Join the waitlist to get early access when the mobile experience is ready, and be first in line for shared spending on the go.
-              </p>
-              <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                <Link href="/waitlist" className="btn-royal inline-flex items-center gap-2">
-                  Join the waitlist
-                  <ArrowRight size={16} />
-                </Link>
-                <span className="inline-flex items-center gap-2 text-sm text-zinc-400">
-                  <Smartphone size={16} />
-                  Mobile notifications and quick settle-up flows
-                </span>
-              </div>
-            </div>
-            <AppStoreButtons />
-          </div>
-        </div>
-      </SectionContainer>
-
-      <SectionContainer size="compact">
-        <div className="marketing-card p-6 sm:p-8 lg:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Social proof placeholder</p>
-          <div className="mt-4 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Built for the moments when shared spending gets messy fast.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-zinc-300">
-                This section is ready for future testimonials, usage stats, or partner logos. For now it reinforces the practical situations FairShare is designed to solve.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-              {proofItems.map((item) => (
-                <div key={item} className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-zinc-300">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </SectionContainer>
-
-      <SectionContainer size="compact">
-        <CTASection
-          eyebrow="Ready to stop the math"
-          title="Start tracking shared expenses with less friction."
-          description="FairShare gives your group a faster path from logging a bill to settling balances clearly."
-          primaryHref="/login"
-          primaryLabel="Start Splitting"
-          secondaryHref="/how-it-works"
-          secondaryLabel="See How It Works"
-        />
-      </SectionContainer>
+      {/* Final CTA */}
+      <CTASection
+        eyebrow="Join the future of group finances"
+        title="Ready to stop the manual math?"
+        description="FairShare gives your group the fastest path from logging a bill to settling balances clearly. Start splitting better today."
+        primaryHref="/register"
+        primaryLabel="Start Splitting Free"
+        secondaryHref="/features"
+        secondaryLabel="View Features"
+      />
     </main>
   );
 }
