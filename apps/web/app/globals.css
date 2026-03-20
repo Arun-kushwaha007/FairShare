@@ -12,6 +12,18 @@
 }
 
 @layer components {
+  .marketing-card {
+    background-color: color-mix(in srgb, var(--fs-surface) 82%, transparent);
+    border: 1px solid var(--fs-border);
+    box-shadow: var(--fs-shadow-soft);
+    @apply rounded-3xl backdrop-blur-xl transition-all duration-300;
+  }
+
+  .marketing-card:hover {
+    box-shadow: var(--fs-shadow-elevated);
+    @apply -translate-y-1 border-white/15;
+  }
+
   .glass-panel {
     background-color: var(--fs-glass);
     backdrop-filter: blur(16px);
@@ -32,12 +44,11 @@
     @apply -translate-y-1;
   }
 
-  /* 10% Brutalist Accent */
   .brutal-accent-border { border: 2px solid var(--fs-border-hard); }
   .brutal-accent-line { border-left: 4px solid var(--fs-primary); }
 
   .btn-royal {
-    @apply px-6 py-3 rounded-xl font-bold transition-all duration-200 active:scale-95;
+    @apply rounded-xl px-6 py-3 font-bold transition-all duration-200 active:scale-95;
     background: linear-gradient(135deg, var(--fs-primary), var(--fs-primary-hover));
     color: white;
     box-shadow: var(--fs-shadow-soft);
@@ -47,27 +58,28 @@
 
   .btn-royal::after {
     content: '';
-    @apply absolute top-0 left-1 right-1 h-px opacity-30 bg-white rounded-full;
+    @apply absolute left-1 right-1 top-0 h-px rounded-full bg-white opacity-30;
   }
-  /* Neo-pop / Brutalist Utilities */
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3 font-semibold text-white transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08];
+  }
+
+  .eyebrow-label {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-zinc-300;
+  }
+
   .neo-border {
     border: 4px solid white;
     box-shadow: 4px 4px 0px 0px rgba(255, 255, 255, 1);
   }
 
   .neo-pop-hover {
-    @apply transition-all duration-200 cursor-pointer;
+    @apply cursor-pointer transition-all duration-200;
   }
 
   .neo-pop-hover:hover {
-    @apply -translate-y-1 shadow-2xl border-white/20;
-    /* Glassmorphism & Modern Softness */
-  --glass-bg: rgba(9, 9, 11, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-
-  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --card-shadow-hover: 0 10px 40px -4px rgba(0, 0, 0, 0.6);
+    @apply -translate-y-1 border-white/20 shadow-2xl;
   }
 
   .neo-pop-hover-purple:hover {
@@ -96,53 +108,53 @@
 
   .grid-bg {
     background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
   .glitch-text {
     @apply relative inline-block;
-    text-shadow: 0.05em 0 0 rgba(255,0,0,0.75),
-                -0.025em -0.05em 0 rgba(0,255,0,0.75),
-                0.025em 0.05em 0 rgba(0,0,255,0.75);
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+      0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     animation: glitch 1s infinite linear alternate-reverse;
   }
 
   @keyframes glitch {
     0% {
       text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
-                  -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-                  0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+        -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+        0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     }
     14% {
       text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
-                  -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-                  0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+        -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+        0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     }
     15% {
       text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
-                  0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
-                  -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+        0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     49% {
       text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
-                  0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
-                  -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+        0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     50% {
       text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
-                  0.05em 0 0 rgba(0, 255, 0, 0.75),
-                  0 -0.05em 0 rgba(0, 0, 255, 0.75);
+        0.05em 0 0 rgba(0, 255, 0, 0.75),
+        0 -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     99% {
       text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
-                  0.05em 0 0 rgba(0, 255, 0, 0.75),
-                  0 -0.05em 0 rgba(0, 0, 255, 0.75);
+        0.05em 0 0 rgba(0, 255, 0, 0.75),
+        0 -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     100% {
       text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75),
-                  -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
-                  -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
+        -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
+        -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
   }
 }

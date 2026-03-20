@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Rocket, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Menu, X } from 'lucide-react';
 
 const navLinks = [
   { name: 'Features', href: '/features' },
@@ -23,104 +23,100 @@ export const Navbar = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <nav 
-      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
-        scrolled ? 'pt-4' : 'pt-8'
-      }`}
-    >
-      <div className="mx-auto max-w-7xl px-6">
-        <div 
-          className={`flex h-20 items-center justify-between px-8 rounded-[2rem] transition-all duration-500 ${
-            scrolled 
-              ? 'bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_0_50px_-12px_rgba(168,85,247,0.2)]' 
-              : 'bg-transparent border border-transparent'
+    <nav className={`fixed top-0 z-50 w-full transition-all duration-500 ${scrolled ? 'pt-3' : 'pt-5'}`}>
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div
+          className={`flex h-16 items-center justify-between rounded-[1.5rem] px-4 sm:px-5 transition-all duration-500 ${
+            scrolled
+              ? 'border border-white/10 bg-black/55 backdrop-blur-2xl shadow-[0_18px_50px_-24px_rgba(168,85,247,0.35)]'
+              : 'border border-transparent bg-transparent'
           }`}
         >
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-10 h-10 overflow-hidden rounded-xl transition-transform duration-500 group-hover:scale-110">
-              <Image 
-                src="/logo.png" 
-                alt="FairShare Logo" 
-                fill
-                className="object-contain"
-              />
+          <Link href="/" className="group flex items-center gap-3">
+            <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-transform duration-300 group-hover:scale-105">
+              <Image src="/logo.png" alt="FairShare Logo" fill className="object-contain" />
             </div>
-            <span className="text-2xl font-black italic tracking-tighter text-white group-hover:text-purple-400 transition-colors">
-              FAIRSHARE
-            </span>
+            <div>
+              <span className="block text-lg font-extrabold tracking-tight text-white transition-colors group-hover:text-purple-300">
+                FairShare
+              </span>
+              <span className="hidden text-[0.68rem] uppercase tracking-[0.22em] text-zinc-500 sm:block">
+                Group expenses, without friction
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden lg:flex lg:items-center lg:gap-10">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`text-xs font-black uppercase tracking-[0.2em] transition-all hover:text-purple-400 ${
-                  pathname === link.href ? 'text-purple-500' : 'text-zinc-400'
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+          <div className="hidden items-center gap-8 lg:flex">
+            {navLinks.map((link) => {
+              const active = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-sm font-medium transition-colors ${active ? 'text-white' : 'text-zinc-400 hover:text-white'}`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right Section */}
-          <div className="hidden lg:flex lg:items-center lg:gap-6">
-            <Link
-              href="/waitlist"
-              className="group relative flex items-center gap-2 px-8 py-3 bg-white text-black text-xs font-black uppercase tracking-widest rounded-xl transition-all hover:scale-105"
-            >
-              <span>LOCK IN SPOT</span>
-              <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link href="/how-it-works" className="btn-secondary px-4 py-2 text-sm">
+              See How It Works
+            </Link>
+            <Link href="/login" className="btn-royal inline-flex items-center gap-2 px-4 py-2 text-sm">
+              Start Splitting
+              <ArrowRight size={16} />
             </Link>
           </div>
 
-          {/* Mobile Toggle */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex lg:hidden text-white"
+            className="flex rounded-xl border border-white/10 bg-white/5 p-2 text-white lg:hidden"
             aria-label="Toggle menu"
           >
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
+            {isOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-black/95 backdrop-blur-3xl lg:hidden"
+            className="fixed inset-0 z-40 bg-black/95 backdrop-blur-2xl lg:hidden"
           >
-            <div className="flex flex-col h-full pt-32 px-10">
-              <div className="flex flex-col gap-10">
+            <div className="flex h-full flex-col px-6 pt-28">
+              <div className="marketing-card flex flex-col gap-6 p-6">
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsOpen(false)}
-                    className="text-4xl font-black italic tracking-tighter text-white uppercase"
+                    className="border-b border-white/10 pb-4 text-2xl font-semibold tracking-tight text-white last:border-b-0 last:pb-0"
                   >
                     {link.name}
                   </Link>
                 ))}
-                <Link
-                  href="/waitlist"
-                  onClick={() => setIsOpen(false)}
-                  className="mt-10 flex items-center justify-center gap-3 bg-purple-600 py-6 text-2xl font-black italic tracking-tighter text-white uppercase rounded-2xl"
-                >
-                  GET EARLY ACCESS <Rocket size={24} />
-                </Link>
+                <div className="mt-2 flex flex-col gap-3">
+                  <Link href="/login" onClick={() => setIsOpen(false)} className="btn-royal inline-flex items-center justify-center gap-2">
+                    Start Splitting
+                    <ArrowRight size={16} />
+                  </Link>
+                  <Link href="/how-it-works" onClick={() => setIsOpen(false)} className="btn-secondary">
+                    See How It Works
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>

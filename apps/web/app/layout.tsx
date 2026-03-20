@@ -25,12 +25,12 @@ const themeInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: 'FairShare – Smart Expense Sharing',
-  description: 'Split bills with friends easily. Coming soon on Android and iOS.',
+  title: 'FairShare - Smart Expense Sharing',
+  description: 'Split group expenses without confusion. FairShare helps friends, roommates, and teams track shared spending and settle up faster.',
   keywords: ['expense sharing', 'group expenses', 'split bills', 'settle up', 'fairshare'],
   openGraph: {
-    title: 'FairShare – Smart Expense Sharing',
-    description: 'Split bills with friends easily. Coming soon on Android and iOS.',
+    title: 'FairShare - Smart Expense Sharing',
+    description: 'Split group expenses without confusion. FairShare helps groups track spending and settle balances faster.',
     url: 'https://fairsharee.com',
     siteName: 'FairShare',
     type: 'website',
@@ -53,9 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black">
         <Providers>
           <Navbar />
-          <div className="pt-20">
-            {children}
-          </div>
+          <div className="pt-16 sm:pt-20">{children}</div>
           <Footer />
         </Providers>
       </body>
