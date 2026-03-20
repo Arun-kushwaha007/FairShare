@@ -20,7 +20,7 @@ const MAX_RETRY_DELAY_MS = 1000;
         const client = new Redis(config.redisUrl, {
           lazyConnect: true,
           maxRetriesPerRequest: 1,
-          enableOfflineQueue: false,
+          enableOfflineQueue: true,
           connectionName: 'fairshare:cache',
           retryStrategy: (times) => {
             if (times > MAX_REDIS_RETRIES) {

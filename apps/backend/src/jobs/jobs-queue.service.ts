@@ -120,7 +120,7 @@ export class JobsQueueService implements OnModuleDestroy {
       url: this.config.redisUrl,
       lazyConnect: true,
       maxRetriesPerRequest: null,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       connectionName: 'fairshare:jobs-queue',
       retryStrategy: (times: number) => {
         if (times > MAX_REDIS_RETRIES) {
@@ -142,7 +142,7 @@ export class JobsQueueService implements OnModuleDestroy {
     const probe = new Redis(this.config.redisUrl, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       connectTimeout: 750,
       retryStrategy: () => null,
     });

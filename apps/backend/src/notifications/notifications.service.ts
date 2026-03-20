@@ -213,7 +213,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     const client = new Redis(this.config.redisUrl, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       connectionName,
       retryStrategy: (times: number) => {
         if (times > MAX_REDIS_RETRIES) {
@@ -239,7 +239,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     const probe = new Redis(this.config.redisUrl, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       connectTimeout: 750,
       retryStrategy: () => null,
     });
