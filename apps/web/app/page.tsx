@@ -53,7 +53,7 @@ const productSignals = [
 const proofItems = [
   'Built for trips, roommates, clubs, and small teams',
   'Clearer than spreadsheets and easier than manual reminders',
-  'Real-time updates reduce “who already paid?” confusion',
+  'Real-time updates reduce ï¿½who already paid?ï¿½ confusion',
 ];
 
 export default function HomePage() {

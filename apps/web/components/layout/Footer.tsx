@@ -65,7 +65,7 @@ export const Footer = () => {
 
         <div className="mt-12 flex flex-col gap-5 border-t border-white/5 pt-6 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-500">
-            <span>© 2026 FairShare</span>
+            <span>ï¿½ 2026 FairShare</span>
             <a href="mailto:support@fairsharee.com" className="inline-flex items-center gap-2 transition-colors hover:text-white">
               support@fairsharee.com
               <Send size={14} />
