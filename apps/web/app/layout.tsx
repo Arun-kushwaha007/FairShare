@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black">
         <Providers>
           <Navbar />
-          <div className="pt-16 sm:pt-20">{children}</div>
+          <div>{children}</div>
           <Footer />
         </Providers>
       </body>
