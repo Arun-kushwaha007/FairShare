@@ -1,241 +1,264 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { MoveRight, CheckCircle2, Zap, Shield, TrendingUp, Rocket } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock3, CreditCard, ShieldCheck, Smartphone, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
-import { AppStoreButtons } from '../components/marketing/AppStoreButtons';
 import { SectionContainer } from '../components/layout/SectionContainer';
+import { AppStoreButtons } from '../components/marketing/AppStoreButtons';
+import { CTASection } from '../components/marketing/CTASection';
+import { FeatureCard } from '../components/marketing/FeatureCard';
 
-gsap.registerPlugin(ScrollTrigger);
-
-const features = [
-  { text: 'Smart expense splits', icon: Zap, color: 'text-yellow-400' },
-  { text: 'Automatic balance tracking', icon: TrendingUp, color: 'text-cyan-400' },
-  { text: 'Settle-up suggestions', icon: CheckCircle2, color: 'text-purple-400' },
-  { text: 'Receipt uploads', icon: Shield, color: 'text-pink-400' },
+const previewFeatures = [
+  {
+    title: 'Track every shared expense in one place',
+    description: 'Add bills, assign who owes what, and keep the group ledger current without bouncing between messages.',
+    iconName: 'ReceiptText' as const,
+    colorClass: 'shadow-yellow-500/20',
+  },
+  {
+    title: 'See balances change instantly across members',
+    description: 'Everyone stays aligned as new expenses land, so there is less backtracking when it is time to settle.',
+    iconName: 'RefreshCw' as const,
+    colorClass: 'shadow-cyan-500/20',
+  },
+  {
+    title: 'Upload receipts when context matters',
+    description: 'Keep proof attached to the expense so the group can verify details without digging through gallery screenshots.',
+    iconName: 'ShieldCheck' as const,
+    colorClass: 'shadow-purple-500/20',
+  },
+  {
+    title: 'Simplify payments down to the fewest moves',
+    description: 'FairShare reduces a messy web of debts into clear settle-up actions the group can complete quickly.',
+    iconName: 'GitMerge' as const,
+    colorClass: 'shadow-emerald-500/20',
+  },
 ];
 
-const stats = [
-  { label: 'Active Users', value: '10K+', description: 'Growing squad' },
-  { label: 'Settle Ups', value: '$2M+', description: 'Total debt cleared' },
-  { label: 'Latency', value: '100ms', description: 'Real-time sync' },
+const productSignals = [
+  {
+    title: 'Group summary',
+    description: 'See total spend, who is owed, and who needs to settle without opening multiple tabs.',
+    icon: Users,
+  },
+  {
+    title: 'Expense timeline',
+    description: 'Every charge, receipt, and note sits in a single running record the whole group can inspect.',
+    icon: CreditCard,
+  },
+  {
+    title: 'Settlement prompts',
+    description: 'Get a clear next action instead of manually figuring out who should pay whom.',
+    icon: CheckCircle2,
+  },
+];
+
+const proofItems = [
+  'Built for trips, roommates, clubs, and small teams',
+  'Clearer than spreadsheets and easier than manual reminders',
+  'Real-time updates reduce “who already paid?” confusion',
 ];
 
 export default function HomePage() {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Hero Animation
-      gsap.from('.hero-title span', {
-        y: 100,
-        opacity: 0,
-        rotateX: -45,
-        duration: 1.2,
-        stagger: 0.1,
-        ease: 'expo.out',
-      });
-
-      gsap.from('.hero-sub', {
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        delay: 0.6,
-        ease: 'power3.out',
-      });
-
-      gsap.from('.hero-cta', {
-        scale: 0.8,
-        opacity: 0,
-        duration: 1,
-        delay: 0.8,
-        ease: 'back.out(1.7)',
-      });
-
-      // Stats Stagger
-      gsap.from('.stat-card', {
-        scrollTrigger: {
-          trigger: '.stats-section',
-          start: 'top 80%',
-        },
-        y: 40,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.2,
-        ease: 'power3.out',
-      });
-    });
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <main className="relative min-h-screen bg-[#030303] overflow-hidden">
-      {/* Grid Background Overlay */}
-      <div className="absolute inset-0 grid-bg [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] pointer-events-none opacity-20" />
+    <main className="relative min-h-screen overflow-hidden bg-[#030303] text-white">
+      <div className="pointer-events-none absolute inset-0 grid-bg opacity-10" />
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative pt-44 pb-32 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="flex justify-center mb-10">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/5 bg-white/5 backdrop-blur-sm text-xs font-bold tracking-[0.2em] text-zinc-400 uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
-              Next-Gen Shared Finances
+      <SectionContainer size="spacious" className="relative pt-12 sm:pt-16">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+          <div className="max-w-3xl">
+            <span className="eyebrow-label">Shared expense tracking for groups</span>
+            <h1 className="mt-6 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Split group expenses without confusion.
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
+              FairShare helps roommates, trips, and teams log shared spending, track balances live, and settle up faster without spreadsheet cleanup.
+            </p>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <Link href="/login" className="btn-royal inline-flex items-center gap-2">
+                Start Splitting
+                <ArrowRight size={16} />
+              </Link>
+              <Link href="/how-it-works" className="btn-secondary">
+                See How It Works
+              </Link>
             </div>
-          </div>
-          
-          <h1 className="hero-title text-6xl md:text-8xl lg:text-[10rem] font-black italic tracking-tighter leading-[0.8] mb-8 select-none">
-            <span className="inline-block text-white">FAIR</span>
-            <span className="inline-block text-purple-600">SHARE</span>
-          </h1>
-
-          <p className="hero-sub mx-auto max-w-2xl text-lg md:text-2xl font-bold uppercase tracking-widest text-zinc-500 mb-12">
-            REDEFINING THE <span className="text-white italic underline decoration-purple-500/50 decoration-4 underline-offset-8">META</span> OF GROUP EXPENSES. 
-            <br className="hidden md:block" />
-            NO MATH. NO STRESS. JUST VIBES.
-          </p>
-
-          <div className="hero-cta flex flex-col items-center justify-center gap-6 sm:flex-row">
-            <a
-              href="/login"
-              className="group relative flex items-center gap-3 px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-white/10"
-            >
-              START SPLITTING <MoveRight className="group-hover:translate-x-2 transition-transform" />
-            </a>
-            <a
-              href="/features"
-              className="flex items-center gap-3 px-10 py-5 border border-white/10 bg-white/5 backdrop-blur-md text-white font-black uppercase tracking-widest rounded-2xl hover:bg-white/10 transition-all"
-            >
-              EXPLORE TECH
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      {/* <SectionContainer className="stats-section border-y border-white/5 bg-white/[0.02]">
-        <div className="grid gap-12 md:grid-cols-3">
-          {stats.map((stat) => (
-            <div key={stat.label} className="stat-card text-center group">
-              <div className="text-5xl font-black italic tracking-tighter text-white mb-2 group-hover:text-purple-400 transition-colors">
-                {stat.value}
-              </div>
-              <div className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-2">
-                {stat.label}
-              </div>
-              <p className="text-sm font-bold text-zinc-600 uppercase">
-                {stat.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </SectionContainer> */}
-
-      {/* Features Grid */}
-      <SectionContainer id="features">
-        <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
-          <div className="max-w-xl">
-            <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter text-white mb-6 uppercase">
-              POWER <br /> MECHANICS.
-            </h2>
-            <p className="text-lg font-bold uppercase tracking-widest text-zinc-500">
-              WE BUILT THE TOOLS. YOU JUST HAVE THE FUN. 
-              ELIMINATE THE FINANCIAL FRICTION IN YOUR SQUAD.
+            <p className="mt-4 text-sm text-zinc-400">
+              Built for everyday group spending, from rent and groceries to travel plans and event costs.
             </p>
           </div>
-          <Link href="/features" className="text-sm font-black uppercase tracking-[0.2em] text-purple-400 hover:text-white transition-colors border-b-2 border-purple-400/30 pb-2">
-            SEE ALL FEATURES
+
+          <div className="marketing-card relative overflow-hidden p-6 sm:p-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.1),transparent_28%)]" />
+            <div className="relative space-y-4">
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Weekend trip</p>
+                  <p className="mt-1 text-lg font-semibold text-white">5 people, 12 expenses</p>
+                </div>
+                <Sparkles className="text-purple-300" size={20} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-sm text-zinc-400">You are owed</p>
+                  <p className="mt-2 text-3xl font-bold text-white">$84</p>
+                  <p className="mt-2 text-sm text-emerald-300">2 members need to settle</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-sm text-zinc-400">Latest update</p>
+                  <p className="mt-2 text-lg font-semibold text-white">Dinner added by Maya</p>
+                  <p className="mt-2 text-sm text-zinc-400">Balances refreshed instantly</p>
+                </div>
+              </div>
+              <div className="rounded-[1.75rem] border border-white/10 bg-black/35 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-white">Suggested settlement</p>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400">
+                      Chris pays Maya $32 and Jo pays Alex $18 to bring the group back to even.
+                    </p>
+                  </div>
+                  <CheckCircle2 className="mt-1 text-emerald-300" size={20} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SectionContainer>
+
+      <SectionContainer size="compact">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="marketing-card p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">The problem</p>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              Shared spending breaks down when the group relies on memory and chat threads.
+            </h2>
+            <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-300">
+              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Expenses get logged late, so balances drift.</li>
+              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Receipts disappear, leaving people to argue over details.</li>
+              <li className="flex gap-3"><Clock3 className="mt-1 shrink-0 text-zinc-500" size={16} />Manual settle-up math creates extra payments and extra friction.</li>
+            </ul>
+          </div>
+          <div className="marketing-card p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-purple-300">The solution</p>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              FairShare gives the group one place to log expenses, verify context, and act on the next step.
+            </h2>
+            <ul className="mt-5 space-y-3 text-sm leading-6 text-zinc-300">
+              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Members see balance changes instantly after each expense.</li>
+              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Receipts stay attached to the record when clarification is needed.</li>
+              <li className="flex gap-3"><CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={16} />Settlement suggestions reduce the number of payments to finish the job.</li>
+            </ul>
+          </div>
+        </div>
+      </SectionContainer>
+
+      <SectionContainer id="features" size="default">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Core features</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              The essentials a group needs to stay aligned.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-zinc-300">
+              Focused features, clear outcomes, and enough context to settle up without second-guessing the numbers.
+            </p>
+          </div>
+          <Link href="/features" className="text-sm font-semibold text-purple-300 transition-colors hover:text-purple-200">
+            Explore every feature
           </Link>
         </div>
-        
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((item, index) => (
-            <div
-              key={item.text}
-              className="glass-card p-10 group hover:bg-white/5 transition-all"
-            >
-              <item.icon size={40} className={`mb-8 ${item.color} group-hover:scale-110 transition-transform`} />
-              <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">
-                {item.text}
-              </h3>
-            </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {previewFeatures.map((feature) => (
+            <FeatureCard key={feature.title} {...feature} />
           ))}
         </div>
       </SectionContainer>
 
-      {/* App Promo */}
-      <SectionContainer className="relative overflow-hidden rounded-[3rem] border border-white/10 bg-gradient-to-br from-purple-900/20 to-black p-0">
-        <div className="absolute inset-0 grid-bg opacity-10" />
-        <div className="relative px-8 py-20 md:px-20 md:py-32 flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-purple-600 rounded-3xl flex items-center justify-center mb-10 shadow-2xl shadow-purple-500/40">
-            <Rocket className="text-white" size={40} />
-          </div>
-          <h2 className="text-5xl md:text-[5rem] font-black italic tracking-tighter text-white mb-8 leading-none">
-            MOBILE INCOMING.
-          </h2>
-          <p className="max-w-2xl text-xl font-bold uppercase tracking-widest text-zinc-400 mb-12">
-            The smoothest sharing experience is hitting the stores. Android and iOS support is locked in.
-          </p>
-          <AppStoreButtons />
-        </div>
-      </SectionContainer>
-
-      {/* Comparison Preview (Reduced Brutalism) */}
-      <SectionContainer>
-        <div className="glass-panel p-12 md:p-20 overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-10 opacity-10 select-none">
-            <TrendingUp size={200} />
-          </div>
-          <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter text-white mb-16 uppercase">
-            UPGRADING THE <br /> STATUS QUO.
-          </h2>
-          
-          <div className="grid gap-12 lg:grid-cols-3">
-            <div className="space-y-4">
-              <div className="text-zinc-500 font-black uppercase tracking-widest text-xs">Standard</div>
-              <p className="text-xl font-bold text-zinc-400 uppercase">Manual math, passive-aggressive requests, lost receipts.</p>
+      <SectionContainer size="compact">
+        <div className="marketing-card p-6 sm:p-8 lg:p-10">
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Product preview</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                A cleaner workflow from first expense to final settlement.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-300">
+                The interface is organized around the actions groups repeat most: adding expenses, checking balances, and closing the loop on what is still owed.
+              </p>
             </div>
-            <div className="space-y-4 p-8 bg-white/5 rounded-3xl border border-white/10 ring-4 ring-white/5">
-              <div className="text-purple-400 font-black uppercase tracking-widest text-xs">FairShare</div>
-              <p className="text-xl font-bold text-white uppercase italic">Instant sync, AI parsing, one-tap settlement. Pure flow.</p>
-            </div>
-            <div className="space-y-4">
-              <div className="text-zinc-500 font-black uppercase tracking-widest text-xs">Spreadsheets</div>
-              <p className="text-xl font-bold text-zinc-400 uppercase">Broken formulas, desktop only, Zero mobility.</p>
+            <div className="grid gap-4 md:grid-cols-3">
+              {productSignals.map((item) => (
+                <div key={item.title} className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
+                  <item.icon className="text-purple-300" size={20} />
+                  <h3 className="mt-4 text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">{item.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </SectionContainer>
 
-      {/* Newsletter Refinement */}
-      <SectionContainer id="waitlist" className="mb-20">
-        <div className="glass-panel px-8 py-20 md:px-20 md:py-32 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent pointer-events-none" />
-          <h2 className="text-6xl md:text-9xl font-black italic tracking-tighter text-white mb-8 leading-none">
-            LOCK IN.
-          </h2>
-          <p className="max-w-xl mx-auto text-lg font-bold uppercase tracking-widest text-zinc-500 mb-16">
-            Join the waitlist for early access to the Pro engine and stop the group chat static.
-          </p>
-          <form className="relative flex flex-col gap-4 md:flex-row md:justify-center max-w-xl mx-auto">
-            <input 
-              type="email" 
-              placeholder="YOUR@EMAIL.XYZ" 
-              className="w-full border-2 border-white/10 bg-white/5 px-8 py-5 rounded-2xl font-black uppercase placeholder-zinc-500 outline-none focus:border-white/20 focus:bg-white/[0.08] transition-all" 
-            />
-            <button 
-              type="submit"
-              className="whitespace-nowrap px-10 py-5 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl"
-            >
-              JOIN SQUAD
-            </button>
-          </form>
+      <SectionContainer id="waitlist" size="compact">
+        <div className="marketing-card relative overflow-hidden p-6 sm:p-8 lg:p-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_25%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.16),transparent_30%)]" />
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Mobile coming soon</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Coming soon on Android and iOS.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-300">
+                Join the waitlist to get early access when the mobile experience is ready, and be first in line for shared spending on the go.
+              </p>
+              <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <Link href="/waitlist" className="btn-royal inline-flex items-center gap-2">
+                  Join the waitlist
+                  <ArrowRight size={16} />
+                </Link>
+                <span className="inline-flex items-center gap-2 text-sm text-zinc-400">
+                  <Smartphone size={16} />
+                  Mobile notifications and quick settle-up flows
+                </span>
+              </div>
+            </div>
+            <AppStoreButtons />
+          </div>
         </div>
+      </SectionContainer>
+
+      <SectionContainer size="compact">
+        <div className="marketing-card p-6 sm:p-8 lg:p-10">
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zinc-400">Social proof placeholder</p>
+          <div className="mt-4 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Built for the moments when shared spending gets messy fast.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-zinc-300">
+                This section is ready for future testimonials, usage stats, or partner logos. For now it reinforces the practical situations FairShare is designed to solve.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {proofItems.map((item) => (
+                <div key={item} className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-zinc-300">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SectionContainer>
+
+      <SectionContainer size="compact">
+        <CTASection
+          eyebrow="Ready to stop the math"
+          title="Start tracking shared expenses with less friction."
+          description="FairShare gives your group a faster path from logging a bill to settling balances clearly."
+          primaryHref="/login"
+          primaryLabel="Start Splitting"
+          secondaryHref="/how-it-works"
+          secondaryLabel="See How It Works"
+        />
       </SectionContainer>
     </main>
   );
 }
-
