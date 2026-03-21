@@ -22,21 +22,37 @@ import { fadeUp, staggerContainer } from '../../components/home/motion-variants'
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AccentButton } from '../../components/ui/AccentButton';
 
+import { joinWaitlistAction } from '../actions/waitlist';
+
 export default function WaitlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsVerifying(true);
+    setError(null);
     
-    // Simulate system verification
-    setTimeout(() => {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('email', email);
+
+    try {
+      const result = await joinWaitlistAction(formData);
+      
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setError(result.error || 'System override failed. Try again.');
+      }
+    } catch (err) {
+      setError('Connection to protocol lost. Try again.');
+    } finally {
       setIsVerifying(false);
-      setSubmitted(true);
-    }, 2500);
+    }
   };
 
   return (
@@ -116,6 +132,17 @@ export default function WaitlistPage() {
                     </h2>
                     
                     <form onSubmit={handleSubmit} className="space-y-6">
+                      {error && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-xs font-bold text-red-500"
+                        >
+                          <AlertCircle size={14} />
+                          <span>{error}</span>
+                        </motion.div>
+                      )}
+                      
                       <div className="group relative">
                         <input
                           required

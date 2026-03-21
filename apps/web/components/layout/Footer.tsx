@@ -25,9 +25,9 @@ const footerLinks = {
     { name: 'Cookie Policy', href: '/cookies' },
   ],
   social: [
-    { name: 'Twitter', href: 'https://twitter.com/fairshare', icon: Twitter },
-    { name: 'GitHub', href: 'https://github.com/fairshare', icon: Github },
-    { name: 'LinkedIn', href: 'https://linkedin.com/company/fairshare', icon: Linkedin },
+    // { name: 'Twitter', href: 'https://twitter.com/fairshare', icon: Twitter },
+    { name: 'GitHub', href: 'https://github.com/Arun-kushwaha007/FairShare', icon: Github },
+    // { name: 'LinkedIn', href: 'https://linkedin.com/company/fairshare', icon: Linkedin },
   ],
 };
 
@@ -152,9 +152,9 @@ export function Footer() {
             </div>
             
             <div className="flex items-center gap-8">
-              <a href="mailto:hello@fairshare.com" className="group flex items-center gap-2 text-xs font-bold text-zinc-500 transition-colors hover:text-white">
+              <a href="mailto:fairshare4u@gmail.com" className="group flex items-center gap-2 text-xs font-bold text-zinc-500 transition-colors hover:text-white">
                 <Mail size={14} className="text-zinc-600 group-hover:text-purple-400" />
-                hello@fairshare.com
+                fairshare4u@gmail.com
               </a>
               <div className="hidden h-4 w-px bg-white/5 md:block" />
               <p className="hidden text-xs font-bold text-zinc-800 md:block">
