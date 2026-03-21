@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "how-to-split-trip-expenses-easily",
+    "title": "The Vacation CFO: Mastering Group Trip Expenses",
+    "excerpt": "From multi-currency flights to late-night taco runs, here is the architectural setup for frictionless group travel in 2025.",
+    "date": "March 15, 2026",
+    "category": "Guide",
+    "readTime": "6 min",
+    "author": "Arun Kushwaha",
+    "content": "# The Vacation CFO: Mastering Group Trip Expenses\n\nPlanning group travel in 2025 has evolved beyond simple spreadsheets. As digital nomads and social groups move toward more complex itineraries, the friction of 'who owes what' can often overshadow the experience itself. To maintain group harmony, you need a protocol.\n\n### 1. Appoint a 'Vacation CFO'\nEvery successful trip needs a point-person for financial operations. This isn't about control; it's about synchronization. The CFO ensures that big-ticket items like accommodation and transport are logged immediately, preventing the 'mental debt' that accumulates during a week of spending.\n\n### 2. Establish the 'Everything Optional' Mantra\nFinancial pressure is the #1 killer of group vibes. Market research suggests that groups who use an 'opt-in' model for expensive dinners or activities report 40% higher satisfaction. Use FairShare to create specific sub-nodes for activities, so only those who participate carry the cost.\n\n### 3. The Power of Real-Time Reconciliation\nDon't wait until the airport ride home to settle up. Market trends show that 'micro-settlements'—clearing balances every 2-3 days—reduce end-of-trip awkwardness. Our automated algorithm handles the math, so you can focus on the destination, not the ledger."
+  },
+  {
+    "slug": "managing-roommate-bills-without-stress",
+    "title": "Roommate Dynamics: Automating the Household Ledger",
+    "excerpt": "Stop the passive-aggressive Venmo requests. Here is how to utilize AI-driven automation for your shared living expenses.",
+    "date": "March 10, 2026",
+    "category": "Tips",
+    "readTime": "5 min",
+    "author": "FairShare Team",
+    "content": "# Roommate Dynamics: Automating the Household Ledger\n\nCo-living is the new standard, but managing shared utilities, rent, and groceries remains a relic of the past. In 2025, 'humanized' automation is the key to preventing household friction.\n\n### AI-Powered Receipt Processing\nGone are the days of manual entry. Modern fintech allows you to scan a grocery receipt and have the AI instantly identify which items are shared (like milk or cleaning supplies) and which are personal (that fancy steak). FairShare's engine is designed to handle this granularity.\n\n### The Recurring Bill Protocol\nRent and utilities shouldn't require a monthly discussion. By setting up recurring logic within your shared ledger, you transform an active stressor into a background process. \n\n### Transparency over Directness\nA central dashboard of 'Truth'—where every bill is visible—eliminates the need for 'reminders'. When the system sends the notification, it's not personal; it's just the protocol."
+  },
+  {
+    "slug": "real-time-sync-architecture",
+    "title": "Engine Deep Dive: Real-Time Sync & CRDTs",
+    "excerpt": "How we keep balances updated across all devices in under 100ms using a distributed state architecture.",
+    "date": "February 28, 2026",
+    "category": "Engine",
+    "readTime": "8 min",
+    "author": "Lead Architect",
+    "content": "# Engine Deep Dive: Real-Time Sync & CRDTs\n\nIn financial applications, data integrity is everything. But in collaborative environments, waiting for a central server to confirm every transaction (the 'request-response' cycle) creates unacceptable latency. \n\n### Enter CRDTs (Conflict-free Replicated Data Types)\nFairShare utilizes CRDTs to allow every user to edit the ledger simultaneously without a central coordinator. This ensures that even if you're offline (e.g., in a mountain cabin or a basement bar), your changes will merge perfectly once you reconnect. \n\n### WebSocket Infusion\nWhile CRDTs handle the 'what', WebSockets handle the 'when'. We maintain a persistent full-duplex connection to push updates to every participant's device in under 100ms. This 'Main Character' experience means you see your friend log a coffee before they've even put their phone away.\n\n### Distributed Truth\nBy moving away from a single-point-of-failure database model toward a distributed state, we ensure that the ledger is always available, always accurate, and always synchronized."
+  },
+  {
+    "slug": "best-apps-for-shared-expenses-2025",
+    "title": "The 2025 Meta: Best Apps for Shared Expenses",
+    "excerpt": "The landscape of social finance is shifting. We break down why the 'Protocol' approach is winning over simple IOU trackers.",
+    "date": "March 05, 2026",
+    "category": "Compass",
+    "readTime": "7 min",
+    "author": "Fintech Pulse",
+    "content": "# The 2025 Meta: Best Apps for Shared Expenses\n\nFor years, Splitwise dominated the market. But as we move into 2025, users are demanding more than just 'IOU' tracking. They want integrated financial operating systems.\n\n### The Rise of Embedded Finance\nUsers no longer want to switch between three apps to log, split, and pay. The 'Meta' has shifted toward apps that provide a single-pane-of-glass view of their social net-worth. \n\n### Why FairShare leads the pack\nWhile others focus on UI-skins, we've focused on the 'Protocol'. By building on open standards and prioritizing real-time sync, FairShare offers a level of trust that simple trackers can't match. \n\n### 2025 Feature Requirements:\n* **AI Receipt Digitization**: Mandatory for modern efficiency.\n* **Cross-Currency Settlement**: Essential for the global traveler.\n* **Privacy-First Data**: In an age of data leaks, your social spending should be encrypted by default."
+  }
+]
