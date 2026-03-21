@@ -80,7 +80,7 @@ export function Navbar() {
                     {pathname === link.href && (
                       <motion.div
                         layoutId="nav-pill"
-                        className="absolute inset-0 z-[-1] rounded-xl bg-white/[0.05]"
+                        className="absolute inset-0 z-[-1] rounded-2xl bg-white/[0.05]"
                         transition={{ duration: 0.3 }}
                       />
                     )}

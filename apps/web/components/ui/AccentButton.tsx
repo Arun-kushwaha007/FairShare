@@ -11,6 +11,8 @@ interface AccentButtonProps {
   variant?: ButtonVariant;
   className?: string;
   icon?: ReactNode;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
 export function AccentButton({
@@ -20,6 +22,8 @@ export function AccentButton({
   variant = 'primary',
   className = '',
   icon,
+  type = 'button',
+  disabled,
 }: AccentButtonProps) {
   const baseClasses = "group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl px-7 py-3.5 text-sm font-bold transition-all active:scale-95";
   
@@ -48,7 +52,12 @@ export function AccentButton({
   }
 
   return (
-    <button onClick={onClick} className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+    <button 
+      type={type}
+      disabled={disabled}
+      onClick={onClick} 
+      className={`${baseClasses} ${variantClasses[variant]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+    >
       {content}
     </button>
   );
