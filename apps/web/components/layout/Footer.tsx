@@ -16,13 +16,13 @@ const footerLinks = {
   company: [
     { name: 'About', href: '/about' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Careers', href: '/careers' },
+    // { name: 'Careers', href: '/careers' },
     { name: 'Contact', href: '/contact' },
   ],
   legal: [
     { name: 'Privacy', href: '/privacy' },
     { name: 'Terms', href: '/terms' },
-    { name: 'Cookie Policy', href: '/cookies' },
+    // { name: 'Cookie Policy', href: '/cookies' },
   ],
   social: [
     // { name: 'Twitter', href: 'https://twitter.com/fairshare', icon: Twitter },
