@@ -9,6 +9,7 @@ import { fadeUp, staggerContainer } from '../home/motion-variants';
 const footerLinks = {
   product: [
     { name: 'Features', href: '/features' },
+    { name: 'How it Works', href: '/how-it-works' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'Waitlist', href: '/waitlist' },
     { name: 'FAQ', href: '/faq' },
