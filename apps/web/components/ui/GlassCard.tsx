@@ -1,26 +1,36 @@
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { ReactNode, HTMLAttributes } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface GlassCardProps {
+interface GlassCardProps extends HTMLMotionProps<"div"> {
   children: ReactNode;
   className?: string;
   hoverable?: boolean;
 }
 
-export function GlassCard({ children, className = '', hoverable = true }: GlassCardProps) {
+export function GlassCard({ 
+  children, 
+  className = '', 
+  hoverable = true,
+  initial = { opacity: 0, y: 20 },
+  whileInView = { opacity: 1, y: 0 },
+  viewport = { once: true },
+  transition = { duration: 0.5 },
+  ...props 
+}: GlassCardProps) {
   const baseClasses = "relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.03] backdrop-blur-xl shadow-2xl";
   const hoverClasses = hoverable ? "transition-all duration-300 hover:border-white/15 hover:bg-white/[0.05] hover:-translate-y-1" : "";
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      initial={initial}
+      whileInView={whileInView}
+      viewport={viewport}
+      transition={transition}
       className={`${baseClasses} ${hoverClasses} ${className}`}
+      {...props}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent pointer-events-none" />
-      <div className="relative z-10">
+      <div className="relative z-10 p-6 md:p-8">
         {children}
       </div>
       {/* Skeuomorphic Highlight */}
