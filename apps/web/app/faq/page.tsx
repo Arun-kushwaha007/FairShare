@@ -211,7 +211,6 @@ export default function FAQPage() {
               >
                 CONTACT SUPPORT
               </AccentButton>
-            
             </div>
           </div>
         </motion.div>
