@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, Twitter, Github, Linkedin, Mail, ArrowRight, Heart, ExternalLink } from 'lucide-react';
 import { SectionContainer } from './SectionContainer';
@@ -33,6 +34,11 @@ const footerLinks = {
 };
 
 export function Footer() {
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith('/dashboard');
+
+  if (isDashboard) return null;
+
   return (
     <footer className="relative z-10 w-full overflow-hidden bg-[#030303] pt-24">
       {/* ── Newsletter / Engagement Section ── */}

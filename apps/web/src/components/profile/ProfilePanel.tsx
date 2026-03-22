@@ -54,7 +54,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
       className="space-y-8 max-w-4xl mx-auto"
     >
       {/* ── User Identity ── */}
-      <GlassCard className=" border-white/10 bg-white/[0.02]">
+      <GlassCard className="p-6 border-white/10 bg-white/[0.02]">
         <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/20">
             <span className="text-2xl font-black italic tracking-tighter text-white">
@@ -75,7 +75,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
       {/* ── Actions ── */}
       <div className="grid gap-4 sm:grid-cols-4">
         <Link href="/dashboard/settings" className="block h-full">
-          <GlassCard className=" border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group flex items-center gap-4">
+          <GlassCard className="p-6 border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
               <Settings size={18} />
             </div>
@@ -87,7 +87,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
         </Link>
 
         <div className="h-full">
-          <GlassCard className=" border-white/5 bg-white/[0.01] flex items-center gap-4">
+          <GlassCard className="p-6 border-white/5 bg-white/[0.01] flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
               <ShieldCheck size={18} />
             </div>
@@ -99,7 +99,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
         </div>
 
         <div className="h-full">  
-          <GlassCard className=" border-white/5 bg-white/[0.01] flex items-center gap-4">
+          <GlassCard className="p-6 border-white/5 bg-white/[0.01] flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-zinc-500/10 text-zinc-400 flex items-center justify-center border border-white/5">
               <LifeBuoy size={18} />
             </div>
@@ -115,7 +115,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
           disabled={loading}
           className="w-full text-left h-full"
         >
-          <GlassCard className=" border-white/5 bg-white/[0.01] hover:bg-rose-500/5 hover:border-rose-500/20 transition-all group flex items-center gap-4">
+          <GlassCard className="p-6 border-white/5 bg-white/[0.01] hover:bg-rose-500/5 hover:border-rose-500/20 transition-all group flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20">
               <LogOut size={18} />
             </div>
