@@ -82,7 +82,7 @@ export function Sidebar() {
                 <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Stable</span>
               </div>
             </div>
-            <p className="text-xs font-bold text-[var(--fs-text-primary)]">FairShare v1.2.0</p>
+            <p className="text-xs font-bold text-[var(--fs-text-primary)]">FairShare v1.0.0</p>
           </div>
         </div>
       </div>

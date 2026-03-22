@@ -25,7 +25,7 @@ export function Topbar({ rightSlot }: { rightSlot?: React.ReactNode }) {
         <div className="flex items-center gap-2 mt-1.5">
           <div className="h-1.5 w-1.5 rounded-full bg-[var(--fs-primary)] opacity-50 shadow-[0_0_8px_var(--fs-primary)]" />
           <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--fs-text-muted)]">
-            Royal Session Active • {new Date().toLocaleDateString(undefined, { weekday: 'long', hour: '2-digit', minute: '2-digit'})}
+            Session Active • {new Date().toLocaleDateString(undefined, { weekday: 'long', hour: '2-digit', minute: '2-digit'})}
           </p>
         </div>
       </div>

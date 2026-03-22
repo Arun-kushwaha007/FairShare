@@ -14,9 +14,8 @@ export default async function ProfilePage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-8 shadow-[var(--fs-shadow-soft)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Profile</p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Your account</h1>
+        <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-6 shadow-[var(--fs-shadow-soft)]">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--fs-text-primary)]">Your account</h1>
           <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
             Mirror the mobile profile: review your identity, hop to settings, and sign out securely.
           </p>
