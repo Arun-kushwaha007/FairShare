@@ -6,10 +6,15 @@ import {
   PaginatedExpensesResponseDto,
 } from '@fairshare/shared-types';
 import { api } from './api';
+import { generateIdempotencyKey } from './idempotency';
 
 export const expenseService = {
   create: async (groupId: string, payload: CreateExpenseRequestDto) =>
-    (await api.post<ExpenseDto>(`/groups/${groupId}/expenses`, payload)).data,
+    (
+      await api.post<ExpenseDto>(`/groups/${groupId}/expenses`, payload, {
+        headers: { 'x-idempotency-key': generateIdempotencyKey('expense') },
+      })
+    ).data,
   list: async (groupId: string, cursor = 0, limit = 20) =>
     (
       await api.get<PaginatedExpensesResponseDto>(`/groups/${groupId}/expenses`, {

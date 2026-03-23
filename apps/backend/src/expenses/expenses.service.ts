@@ -26,7 +26,7 @@ export class ExpensesService {
     private readonly realtime: RealtimeService,
   ) {}
 
-  async create(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<ExpenseDto> {
+  async create(groupId: string, actorUserId: string, dto: CreateExpenseDto, idempotencyKey?: string): Promise<ExpenseDto> {
     const totalAmount = BigInt(dto.totalAmountCents);
     if (totalAmount <= 0n) {
       throw new BadRequestException('Expense amount must be positive');
@@ -40,6 +40,16 @@ export class ExpensesService {
       assertMoneyEquality(owedSum, totalAmount, 'Split sum must equal total amount');
     } catch {
       throw new BadRequestException('Split sum must equal total amount');
+    }
+
+    if (idempotencyKey) {
+      const existingByKey = await this.prisma.expense.findUnique({
+        where: { idempotencyKey },
+        include: { splits: true, receipt: true },
+      });
+      if (existingByKey) {
+        return this.toExpenseDto(existingByKey);
+      }
     }
 
     const memberIds = new Set<string>([actorUserId, dto.payerId, ...dto.splits.map((split) => split.userId)]);
@@ -65,58 +75,74 @@ export class ExpensesService {
       throw new BadRequestException('All split users must be group members');
     }
 
-    const expense = await this.prisma.$transaction(async (tx) => {
-      const createdExpense = await tx.expense.create({
-        data: {
-          groupId,
-          payerId: dto.payerId,
-          description: dto.description,
-          totalAmountCents: totalAmount,
-          currency: dto.currency,
-          category: dto.category ?? null,
-        },
-      });
+    let expense;
+    try {
+      expense = await this.prisma.$transaction(async (tx) => {
+        const createdExpense = await tx.expense.create({
+          data: {
+            groupId,
+            payerId: dto.payerId,
+            description: dto.description,
+            totalAmountCents: totalAmount,
+            currency: dto.currency,
+            category: dto.category ?? null,
+            idempotencyKey: idempotencyKey ?? null,
+          },
+        });
 
-      await tx.split.createMany({
-        data: dto.splits.map((split) => ({
-          expenseId: createdExpense.id,
-          userId: split.userId,
-          owedAmountCents: BigInt(split.owedAmountCents),
-          paidAmountCents: BigInt(split.paidAmountCents),
-        })),
-      });
+        await tx.split.createMany({
+          data: dto.splits.map((split) => ({
+            expenseId: createdExpense.id,
+            userId: split.userId,
+            owedAmountCents: BigInt(split.owedAmountCents),
+            paidAmountCents: BigInt(split.paidAmountCents),
+          })),
+        });
 
-      const deltas = calculateBalanceDeltas(dto.payerId, dto.splits);
-      for (const delta of deltas) {
-        await this.balancesService.adjustBalance(
-          tx as unknown as Prisma.TransactionClient,
-          groupId,
-          delta.userId,
-          delta.counterpartyUserId,
-          delta.delta,
-        );
+        const deltas = calculateBalanceDeltas(dto.payerId, dto.splits);
+        for (const delta of deltas) {
+          await this.balancesService.adjustBalance(
+            tx as unknown as Prisma.TransactionClient,
+            groupId,
+            delta.userId,
+            delta.counterpartyUserId,
+            delta.delta,
+          );
+        }
+
+        await tx.activity.create({
+          data: {
+            groupId,
+            actorUserId,
+            type: 'expense_created',
+            entityId: createdExpense.id,
+            metadata: {
+              payerId: dto.payerId,
+              totalAmountCents: totalAmount.toString(),
+              category: dto.category ?? null,
+              currency: dto.currency,
+            },
+          },
+        });
+
+        return tx.expense.findUniqueOrThrow({
+          where: { id: createdExpense.id },
+          include: { splits: true, receipt: true },
+        });
+      });
+    } catch (error) {
+      if (idempotencyKey && this.isUniqueConstraintError(error)) {
+        const existing = await this.prisma.expense.findUnique({
+          where: { idempotencyKey },
+          include: { splits: true, receipt: true },
+        });
+        if (existing) {
+          return this.toExpenseDto(existing);
+        }
       }
 
-      await tx.activity.create({
-        data: {
-          groupId,
-          actorUserId,
-          type: 'expense_created',
-          entityId: createdExpense.id,
-          metadata: {
-            payerId: dto.payerId,
-            totalAmountCents: totalAmount.toString(),
-            category: dto.category ?? null,
-            currency: dto.currency,
-          },
-        },
-      });
-
-      return tx.expense.findUniqueOrThrow({
-        where: { id: createdExpense.id },
-        include: { splits: true, receipt: true },
-      });
-    });
+      throw error;
+    }
 
     await this.redis.invalidateGroupCache(groupId);
 
@@ -281,5 +307,9 @@ export class ExpensesService {
         paidAmountCents: split.paidAmountCents.toString(),
       })),
     };
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2002');
   }
 }

@@ -6,6 +6,7 @@ type OfflineRequest = {
   method: 'POST';
   url: string;
   data: unknown;
+  headers?: Record<string, string>;
 };
 
 type OfflineRequestExecutor = (request: OfflineRequest) => Promise<void>;

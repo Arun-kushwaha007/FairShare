@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { AddressInfo } from 'net';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../common/prisma.service';
+import { JobsQueueService } from '../jobs/jobs-queue.service';
 import { S3Service } from '../s3/s3.service';
 import { ReceiptsController } from './receipts.controller';
 import { ReceiptsService } from './receipts.service';
@@ -28,8 +29,14 @@ describe('Receipt URL endpoint (integration-ish)', () => {
               findUnique: jest.fn().mockResolvedValue({ id: 'expense-1', groupId: 'group-1' }),
             },
             receipt: {
-              upsert: jest.fn().mockResolvedValue(undefined),
+              upsert: jest.fn().mockResolvedValue({ id: 'receipt-1' }),
             },
+          },
+        },
+        {
+          provide: JobsQueueService,
+          useValue: {
+            enqueueReceiptProcessing: jest.fn().mockResolvedValue(undefined),
           },
         },
         {

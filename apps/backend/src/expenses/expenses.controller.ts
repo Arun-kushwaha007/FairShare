@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/types/auth.types';
@@ -12,8 +12,13 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Post('groups/:id/expenses')
-  create(@Param('id') groupId: string, @CurrentUser() user: JwtPayload, @Body() dto: CreateExpenseDto) {
-    return this.expensesService.create(groupId, user.sub, dto);
+  create(
+    @Param('id') groupId: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateExpenseDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.expensesService.create(groupId, user.sub, dto, idempotencyKey);
   }
 
   @Get('groups/:id/expenses')

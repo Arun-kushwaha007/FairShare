@@ -19,6 +19,15 @@ type ExpoConstantsDevHostShape = {
   };
 };
 
+function readIdempotencyHeader(headers: unknown): string | undefined {
+  if (!headers || typeof headers !== 'object') {
+    return undefined;
+  }
+
+  const value = (headers as Record<string, unknown>)['x-idempotency-key'];
+  return typeof value === 'string' ? value : undefined;
+}
+
 function resolveApiBaseUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
@@ -48,7 +57,10 @@ offlineQueue.setRequestExecutor(async (request) => {
     method: request.method,
     url: request.url,
     data: request.data,
-    headers: { 'x-offline-retry': '1' },
+    headers: {
+      ...request.headers,
+      'x-offline-retry': '1',
+    },
   });
 });
 
@@ -106,6 +118,7 @@ api.interceptors.response.use(
 
     if (shouldQueue) {
       let data: unknown = error?.config?.data;
+      const idempotencyKey = readIdempotencyHeader(error?.config?.headers);
       if (typeof data === 'string') {
         try {
           data = JSON.parse(data);
@@ -119,6 +132,7 @@ api.interceptors.response.use(
         method: 'POST',
         url,
         data,
+        headers: idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined,
       });
     }
 

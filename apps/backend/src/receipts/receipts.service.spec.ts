@@ -8,13 +8,16 @@ describe('ReceiptsService', () => {
         findUnique: jest.fn().mockResolvedValue({ id: 'expense-1', groupId: 'group-1' }),
       },
       receipt: {
-        upsert: jest.fn().mockResolvedValue(undefined),
+        upsert: jest.fn().mockResolvedValue({ id: 'receipt-1' }),
       },
     };
     const s3: any = {
       getPresignedUploadUrl: jest.fn().mockResolvedValue('https://signed.example/upload'),
     };
-    const service = new ReceiptsService(prisma, s3);
+    const jobsQueue: any = {
+      enqueueReceiptProcessing: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new ReceiptsService(prisma, s3, jobsQueue);
 
     const result = await service.createUploadUrl('expense-1', { extension: 'png' });
 
@@ -33,6 +36,10 @@ describe('ReceiptsService', () => {
       expect.stringMatching(/^receipts\/group-1\/expense-1\/.+\.png$/),
       'image/png',
     );
+    expect(jobsQueue.enqueueReceiptProcessing).toHaveBeenCalledWith({
+      receiptId: 'receipt-1',
+      expenseId: 'expense-1',
+    });
     expect(result).toEqual({
       uploadUrl: 'https://signed.example/upload',
       fileKey: expect.stringMatching(/^receipts\/group-1\/expense-1\/.+\.png$/),
@@ -48,9 +55,13 @@ describe('ReceiptsService', () => {
     const s3: any = {
       getPresignedUploadUrl: jest.fn(),
     };
-    const service = new ReceiptsService(prisma, s3);
+    const jobsQueue: any = {
+      enqueueReceiptProcessing: jest.fn(),
+    };
+    const service = new ReceiptsService(prisma, s3, jobsQueue);
 
     await expect(service.createUploadUrl('missing-expense', {})).rejects.toBeInstanceOf(NotFoundException);
     expect(s3.getPresignedUploadUrl).not.toHaveBeenCalled();
+    expect(jobsQueue.enqueueReceiptProcessing).not.toHaveBeenCalled();
   });
 });

@@ -58,7 +58,10 @@ export class JobsWorkerService implements OnModuleInit, OnModuleDestroy {
     const receiptWorker = new Worker(
       RECEIPT_PROCESSING_QUEUE,
       async (job) => {
-        this.logger.log(`Receipt processing job queued for future OCR id=${job.id}`);
+        const data = job.data as { receiptId?: string; expenseId?: string };
+        this.logger.log(
+          `Receipt processing job received id=${job.id} receiptId=${data.receiptId ?? 'unknown'} expenseId=${data.expenseId ?? 'unknown'}`,
+        );
       },
       { connection },
     );

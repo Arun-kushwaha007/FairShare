@@ -2,6 +2,7 @@
 import { randomUUID } from 'crypto';
 import { PresignedReceiptUrlResponseDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
+import { JobsQueueService } from '../jobs/jobs-queue.service';
 import { S3Service } from '../s3/s3.service';
 import { CreateReceiptUrlDto } from './dto/create-receipt-url.dto';
 
@@ -10,6 +11,7 @@ export class ReceiptsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
+    private readonly jobsQueue: JobsQueueService,
   ) {}
 
   async createUploadUrl(expenseId: string, dto: CreateReceiptUrlDto): Promise<PresignedReceiptUrlResponseDto> {
@@ -21,13 +23,18 @@ export class ReceiptsService {
     const extension = dto.extension ?? 'jpg';
     const fileKey = `receipts/${expense.groupId}/${expenseId}/${randomUUID()}.${extension}`;
 
-    await this.prisma.receipt.upsert({
+    const receipt = await this.prisma.receipt.upsert({
       where: { expenseId },
       update: { fileKey },
       create: {
         expenseId,
         fileKey,
       },
+    });
+
+    await this.jobsQueue.enqueueReceiptProcessing({
+      receiptId: receipt.id,
+      expenseId,
     });
 
     const uploadUrl = await this.s3.getPresignedUploadUrl(fileKey, `image/${extension}`);

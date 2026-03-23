@@ -96,6 +96,7 @@ model Expense {
   totalAmountCents BigInt
   currency         String
   category         String?
+  idempotencyKey   String?  @unique
   createdAt        DateTime @default(now())
   group            Group    @relation(fields: [groupId], references: [id])
   payer            User     @relation("expense_payer", fields: [payerId], references: [id])
@@ -103,6 +104,7 @@ model Expense {
   receipt          Receipt?
 
   @@index([groupId])
+  @@index([payerId])
   @@index([createdAt])
   @@index([groupId, createdAt])
   @@map("expenses")
@@ -238,5 +240,4 @@ model Payment {
   @@index([receiverId])
   @@map("payments")
 }
-
 
