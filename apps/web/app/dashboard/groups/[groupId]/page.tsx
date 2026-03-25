@@ -33,7 +33,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Group</p>
                 <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">{group.name}</h1>
                 <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
-                  Created {new Date(group.createdAt).toLocaleDateString()} � ID {groupId.slice(0, 8)}
+                  Created {new Date(group.createdAt).toLocaleDateString()} · ID {groupId.slice(0, 8)}
                 </p>
               </div>
               <div className="flex items-center gap-3">
