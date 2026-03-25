@@ -2,6 +2,31 @@ import { NotFoundException } from '@nestjs/common';
 import { ReceiptsService } from './receipts.service';
 
 describe('ReceiptsService', () => {
+  it('maps jpg uploads to image/jpeg', async () => {
+    const prisma: any = {
+      expense: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'expense-1', groupId: 'group-1' }),
+      },
+      receipt: {
+        upsert: jest.fn().mockResolvedValue({ id: 'receipt-1' }),
+      },
+    };
+    const s3: any = {
+      getPresignedUploadUrl: jest.fn().mockResolvedValue('https://signed.example/upload'),
+    };
+    const jobsQueue: any = {
+      enqueueReceiptProcessing: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new ReceiptsService(prisma, s3, jobsQueue);
+
+    await service.createUploadUrl('expense-1', { extension: 'jpg' });
+
+    expect(s3.getPresignedUploadUrl).toHaveBeenCalledWith(
+      expect.stringMatching(/^receipts\/group-1\/expense-1\/.+\.jpg$/),
+      'image/jpeg',
+    );
+  });
+
   it('creates a receipt record and returns a presigned upload URL', async () => {
     const prisma: any = {
       expense: {

@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, INestApplication } from '@nestjs/common';
+import { CanActivate, ExecutionContext, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AddressInfo } from 'net';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -52,6 +52,13 @@ describe('Receipt URL endpoint (integration-ish)', () => {
       .compile();
 
     app = moduleRef.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
     await app.listen(0, '127.0.0.1');
   });
@@ -74,6 +81,23 @@ describe('Receipt URL endpoint (integration-ish)', () => {
     await expect(response.json()).resolves.toEqual({
       uploadUrl: 'https://signed.example/upload',
       fileKey: expect.stringMatching(/^receipts\/group-1\/expense-1\/.+\.jpg$/),
+    });
+  });
+
+  it('rejects unsupported receipt extensions', async () => {
+    const address = app.getHttpServer().address() as AddressInfo;
+    const response = await fetch(`http://127.0.0.1:${address.port}/expenses/expense-1/receipt-url`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ extension: 'exe' }),
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      message: expect.arrayContaining([expect.stringContaining('extension')]),
+      statusCode: 400,
     });
   });
 });

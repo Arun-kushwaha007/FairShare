@@ -4,7 +4,14 @@ import { PresignedReceiptUrlResponseDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { JobsQueueService } from '../jobs/jobs-queue.service';
 import { S3Service } from '../s3/s3.service';
-import { CreateReceiptUrlDto } from './dto/create-receipt-url.dto';
+import { CreateReceiptUrlDto, ReceiptExtension } from './dto/create-receipt-url.dto';
+
+const RECEIPT_MIME_TYPES: Record<ReceiptExtension, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
 
 @Injectable()
 export class ReceiptsService {
@@ -37,7 +44,7 @@ export class ReceiptsService {
       expenseId,
     });
 
-    const uploadUrl = await this.s3.getPresignedUploadUrl(fileKey, `image/${extension}`);
+    const uploadUrl = await this.s3.getPresignedUploadUrl(fileKey, RECEIPT_MIME_TYPES[extension]);
     return { uploadUrl, fileKey };
   }
 }
