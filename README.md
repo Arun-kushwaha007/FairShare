@@ -90,8 +90,13 @@ Set:
 - `EXPO_PUBLIC_S3_BASE_URL` (optional, public S3 base URL)
 
 Web app environment:
-- `FAIRSHARE_API_URL` or `NEXT_PUBLIC_API_URL`
-- Defaults to `http://localhost:3001/api/v1`
+```
+cp apps/web/.env.example apps/web/.env.local
+```
+- `FAIRSHARE_API_URL` for server-side web requests
+- `NEXT_PUBLIC_API_URL` for client-side web requests
+- `FAIRSHARE_S3_BASE_URL` and `NEXT_PUBLIC_S3_BASE_URL` for receipt previews when using S3
+- Defaults to `http://localhost:3001/api/v1` when API vars are unset
 
 ### 3) Start local infrastructure
 ```
