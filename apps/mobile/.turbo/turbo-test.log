@@ -2,34 +2,7 @@
 > mobile@1.0.0 test D:\ak\project\FairShare\apps\mobile
 > jest --runInBand --passWithNoTests
 
-PASS app/screens/AddExpenseScreen.spec.tsx (17.452 s)
-  ● Console
-
-    console.log
-      [api] baseURL: http://localhost:3001/api/v1
-
-      at Object.log (app/services/api.ts:48:11)
-
-    console.log
-      [api] Set EXPO_PUBLIC_API_URL in apps/mobile/.env to your PC LAN IP, e.g. http://192.168.1.10:3001/api/v1
-
-      at Object.log (app/services/api.ts:50:13)
-
-PASS app/screens/GroupListScreen.spec.tsx
-PASS app/screens/LoginScreen.spec.tsx
-  ● Console
-
-    console.log
-      [api] baseURL: http://localhost:3001/api/v1
-
-      at Object.log (app/services/api.ts:48:11)
-
-    console.log
-      [api] Set EXPO_PUBLIC_API_URL in apps/mobile/.env to your PC LAN IP, e.g. http://192.168.1.10:3001/api/v1
-
-      at Object.log (app/services/api.ts:50:13)
-
-PASS app/components/ui/SplitSelector.spec.tsx
+PASS app/components/ui/SplitSelector.spec.tsx (38.318 s)
   ● Console
 
     console.error
@@ -50,14 +23,491 @@ PASS app/components/ui/SplitSelector.spec.tsx
       at scheduleUpdateOnFiber (../../node_modules/.pnpm/react-test-renderer@19.1.0_react@19.1.0/node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10326:9)
       at Object.enqueueSetState (../../node_modules/.pnpm/react-test-renderer@19.1.0_react@19.1.0/node_modules/react-test-renderer/cjs/react-test-renderer.development.js:14179:14)
       at Icon.Object.<anonymous>.process.env.NODE_ENV.Component.setState (../../node_modules/.pnpm/react@19.1.0/node_modules/react/cjs/react.development.js:632:20)
-      at Icon.setState (../../node_modules/.pnpm/@expo+vector-icons@14.1.0_expo-font@14.0.11_react-native@0.81.4_react@19.1.0/node_modules/@expo/vector-icons/src/createIconSet.tsx:133:31)
+      at Icon.setState (../../node_modules/.pnpm/@expo+vector-icons@15.1.1_expo-font@14.0.11_react-native@0.81.5_react@19.1.0/node_modules/@expo/vector-icons/src/createIconSet.tsx:181:31)
+      at asyncGeneratorStep (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL app/screens/AddExpenseScreen.spec.tsx (53.145 s)
+  ● Console
+
+    console.log
+      [api] baseURL: http://localhost:3001/api/v1
+
+      at Object.log (app/services/api.ts:69:11)
+
+    console.log
+      [api] Set EXPO_PUBLIC_API_URL in apps/mobile/.env to your PC LAN IP, e.g. http://192.168.1.10:3001/api/v1
+
+      at Object.log (app/services/api.ts:71:13)
+
+  ● AddExpenseScreen › shows validation error when no payer is available
+
+    Unable to find an element with testID: description-input
+
+    [36m<RNCSafeAreaProvider>[39m
+      [36m<View[39m
+        [33mpointerEvents[39m=[32m"box-none"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View />[39m
+              [36m<View />[39m
+              [36m<View />[39m
+              [36m<View />[39m
+              [36m<View />[39m
+            [36m</View>[39m
+            [36m<View>[39m
+              [36m<Text>[39m
+                [0mDetails[0m
+              [36m</Text>[39m
+              [36m<Text>[39m
+                [0mWhat was the expense?[0m
+              [36m</Text>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33mnativeID[39m=[32m"0"[39m
+            [36m>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33mpointerEvents[39m=[32m"none"[39m
+                  [33mtestID[39m=[32m"text-input-outline"[39m
+                [36m/>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33mpointerEvents[39m=[32m"none"[39m
+                  [36m>[39m
+                    [36m<View[39m
+                      [33mpointerEvents[39m=[32m"none"[39m
+                    [36m>[39m
+                      [36m<View>[39m
+                        [36m<Text[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-background"[39m
+                        [36m/>[39m
+                        [36m<Text[39m
+                          [33mstyle[39m=[32m{
+                            {
+                              "opacity": 0,
+                            }
+                          }[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-active"[39m
+                        [36m>[39m
+                          [0mDescription[0m
+                        [36m</Text>[39m
+                        [36m<Text[39m
+                          [33mstyle[39m=[32m{
+                            {
+                              "opacity": 0,
+                            }
+                          }[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-inactive"[39m
+                        [36m>[39m
+                          [0mDescription[0m
+                        [36m</Text>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<TextInput[39m
+                    [33meditable[39m=[32m{true}[39m
+                    [33mtestID[39m=[32m"text-input-outlined"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33mpointerEvents[39m=[32m"none"[39m
+                  [33mtestID[39m=[32m"text-input-outline"[39m
+                [36m/>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33mpointerEvents[39m=[32m"none"[39m
+                  [36m>[39m
+                    [36m<View[39m
+                      [33mpointerEvents[39m=[32m"none"[39m
+                      [33mstyle[39m=[32m{
+                        {
+                          "opacity": 0,
+                        }
+                      }[39m
+                    [36m>[39m
+                      [36m<View>[39m
+                        [36m<Text[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-background"[39m
+                        [36m/>[39m
+                        [36m<Text[39m
+                          [33mstyle[39m=[32m{
+                            {
+                              "opacity": 0,
+                            }
+                          }[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-active"[39m
+                        [36m>[39m
+                          [0mAmount[0m
+                        [36m</Text>[39m
+                        [36m<Text[39m
+                          [33mstyle[39m=[32m{
+                            {
+                              "opacity": 0,
+                            }
+                          }[39m
+                          [33mtestID[39m=[32m"text-input-outlined-label-inactive"[39m
+                        [36m>[39m
+                          [0mAmount[0m
+                        [36m</Text>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                  [36m</View>[39m
+                  [36m<TextInput[39m
+                    [33meditable[39m=[32m{true}[39m
+                    [33mtestID[39m=[32m"text-input-outlined"[39m
+                    [33mvalue[39m=[32m"0"[39m
+                  [36m/>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33mtestID[39m=[32m"left-affix-adornment"[39m
+                [36m>[39m
+                  [36m<Text[39m
+                    [33mtestID[39m=[32m"left-affix-adornment-text"[39m
+                  [36m>[39m
+                    [0m$[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+          [36m<View>[39m
+            [36m<View>[39m
+              [36m<View[39m
+                [33maccessible[39m=[32m{true}[39m
+              [36m>[39m
+                [36m<View[39m
+                  [33mnativeID[39m=[32m"1"[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mCancel[0m
+                  [36m</Text>[39m
+                  [36m<View />[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View[39m
+                [33maccessible[39m=[32m{true}[39m
+              [36m>[39m
+                [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                  [36m<View[39m
+                    [33mnativeID[39m=[32m"2"[39m
+                  [36m>[39m
+                    [36m<Text>[39m
+                      [0mNext[0m
+                    [36m</Text>[39m
+                    [36m<View />[39m
+                  [36m</View>[39m
+                [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</RNCSafeAreaProvider>[39m
+
+    [0m [90m 23 |[39m     [36mawait[39m waitFor(() [33m=>[39m expect(groupService[33m.[39mmembers)[33m.[39mtoHaveBeenCalledWith([32m'g1'[39m))[33m;[39m
+     [90m 24 |[39m
+    [31m[1m>[22m[39m[90m 25 |[39m     fireEvent[33m.[39mchangeText(getByTestId([32m'description-input'[39m)[33m,[39m [32m'Dinner'[39m)[33m;[39m
+     [90m    |[39m                          [31m[1m^[22m[39m
+     [90m 26 |[39m     fireEvent[33m.[39mchangeText(getByTestId([32m'amount-input'[39m)[33m,[39m [32m'1000'[39m)[33m;[39m
+     [90m 27 |[39m     fireEvent[33m.[39mpress(getByTestId([32m'next-button'[39m))[33m;[39m
+     [90m 28 |[39m     fireEvent[33m.[39mpress(getByTestId([32m'next-button'[39m))[33m;[39m[0m
+
+      at Object.getByTestId (app/screens/AddExpenseScreen.spec.tsx:25:26)
+      at asyncGeneratorStep (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL app/screens/GroupListScreen.spec.tsx
+  ● GroupListScreen › renders empty state when no groups are returned
+
+    Unable to find an element with text: Create your first group to start splitting expenses
+
+    [36m<RNCSafeAreaProvider>[39m
+      [36m<View[39m
+        [33mpointerEvents[39m=[32m"box-none"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<RCTScrollView>[39m
+            [36m<RCTRefreshControl />[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View[39m
+                  [33mnativeID[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mYour Groups[0m
+                  [36m</Text>[39m
+                  [36m<View>[39m
+                    [36m<Text>[39m
+                      [0m0[0m
+                      [0m total[0m
+                    [36m</Text>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0m󰭘[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mNo groups yet[0m
+                [36m</Text>[39m
+                [36m<Text>[39m
+                  [0mYou haven't joined any groups yet.[0m
+                [36m</Text>[39m
+                [36m<View[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                    [36m<View[39m
+                      [33mnativeID[39m=[32m"1"[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mCreate Group[0m
+                      [36m</Text>[39m
+                      [36m<View />[39m
+                    [36m</View>[39m
+                  [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</RCTScrollView>[39m
+          [36m<View>[39m
+            [36m<View[39m
+              [33maccessible[39m=[32m{true}[39m
+            [36m>[39m
+              [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                [36m<Text>[39m
+                  [0m󰐕[0m
+                [36m</Text>[39m
+                [36m<View />[39m
+              [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+            [36m</View>[39m
+          [36m</View>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</RNCSafeAreaProvider>[39m
+
+    [0m [90m 22 |[39m
+     [90m 23 |[39m     [36mawait[39m waitFor(() [33m=>[39m expect(getByText([32m'No groups yet'[39m))[33m.[39mtoBeTruthy())[33m;[39m
+    [31m[1m>[22m[39m[90m 24 |[39m     expect(getByText([32m'Create your first group to start splitting expenses'[39m))[33m.[39mtoBeTruthy()[33m;[39m
+     [90m    |[39m            [31m[1m^[22m[39m
+     [90m 25 |[39m   })[33m;[39m
+     [90m 26 |[39m })[33m;[39m
+     [90m 27 |[39m[0m
+
+      at Object.getByText (app/screens/GroupListScreen.spec.tsx:24:12)
       at asyncGeneratorStep (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
       at _next (../../node_modules/.pnpm/@babel+runtime@7.28.6/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
 
 PASS app/utils/split.test.ts
+FAIL app/screens/LoginScreen.spec.tsx
+  ● Console
 
-Test Suites: 5 passed, 5 total
-Tests:       7 passed, 7 total
+    console.log
+      [api] baseURL: http://localhost:3001/api/v1
+
+      at Object.log (app/services/api.ts:69:11)
+
+    console.log
+      [api] Set EXPO_PUBLIC_API_URL in apps/mobile/.env to your PC LAN IP, e.g. http://192.168.1.10:3001/api/v1
+
+      at Object.log (app/services/api.ts:71:13)
+
+  ● LoginScreen › renders login action
+
+    Unable to find an element with text: Login
+
+    [36m<RNCSafeAreaProvider>[39m
+      [36m<View[39m
+        [33mpointerEvents[39m=[32m"box-none"[39m
+      [36m>[39m
+        [36m<View>[39m
+          [36m<RCTScrollView>[39m
+            [36m<View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<Text>[39m
+                    [0mFS[0m
+                  [36m</Text>[39m
+                [36m</View>[39m
+                [36m<Text>[39m
+                  [0mFairShare[0m
+                [36m</Text>[39m
+                [36m<Text>[39m
+                  [0mSecure the vibes, sign in[0m
+                [36m</Text>[39m
+              [36m</View>[39m
+              [36m<View>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33mpointerEvents[39m=[32m"none"[39m
+                    [33mtestID[39m=[32m"text-input-outline"[39m
+                  [36m/>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33mpointerEvents[39m=[32m"none"[39m
+                    [36m>[39m
+                      [36m<View[39m
+                        [33mpointerEvents[39m=[32m"none"[39m
+                      [36m>[39m
+                        [36m<View>[39m
+                          [36m<Text[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-background"[39m
+                          [36m/>[39m
+                          [36m<Text[39m
+                            [33mstyle[39m=[32m{
+                              {
+                                "opacity": 0,
+                              }
+                            }[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-active"[39m
+                          [36m>[39m
+                            [0mEmail[0m
+                          [36m</Text>[39m
+                          [36m<Text[39m
+                            [33mstyle[39m=[32m{
+                              {
+                                "opacity": 0,
+                              }
+                            }[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-inactive"[39m
+                          [36m>[39m
+                            [0mEmail[0m
+                          [36m</Text>[39m
+                        [36m</View>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mtestID[39m=[32m"text-input-outlined"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text[39m
+                  [33mstyle[39m=[32m{
+                    {
+                      "opacity": 0,
+                    }
+                  }[39m
+                [36m/>[39m
+                [36m<View>[39m
+                  [36m<View[39m
+                    [33mpointerEvents[39m=[32m"none"[39m
+                    [33mtestID[39m=[32m"text-input-outline"[39m
+                  [36m/>[39m
+                  [36m<View>[39m
+                    [36m<View[39m
+                      [33mpointerEvents[39m=[32m"none"[39m
+                    [36m>[39m
+                      [36m<View[39m
+                        [33mpointerEvents[39m=[32m"none"[39m
+                      [36m>[39m
+                        [36m<View>[39m
+                          [36m<Text[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-background"[39m
+                          [36m/>[39m
+                          [36m<Text[39m
+                            [33mstyle[39m=[32m{
+                              {
+                                "opacity": 0,
+                              }
+                            }[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-active"[39m
+                          [36m>[39m
+                            [0mPassword[0m
+                          [36m</Text>[39m
+                          [36m<Text[39m
+                            [33mstyle[39m=[32m{
+                              {
+                                "opacity": 0,
+                              }
+                            }[39m
+                            [33mtestID[39m=[32m"text-input-outlined-label-inactive"[39m
+                          [36m>[39m
+                            [0mPassword[0m
+                          [36m</Text>[39m
+                        [36m</View>[39m
+                      [36m</View>[39m
+                    [36m</View>[39m
+                    [36m<TextInput[39m
+                      [33meditable[39m=[32m{true}[39m
+                      [33mtestID[39m=[32m"text-input-outlined"[39m
+                      [33mvalue[39m=[32m""[39m
+                    [36m/>[39m
+                  [36m</View>[39m
+                [36m</View>[39m
+                [36m<Text[39m
+                  [33mstyle[39m=[32m{
+                    {
+                      "opacity": 0,
+                    }
+                  }[39m
+                [36m/>[39m
+                [36m<View[39m
+                  [33maccessibilityState[39m=[32m{
+                    {
+                      "disabled": false,
+                    }
+                  }[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<ViewManagerAdapter_ExpoLinearGradient>[39m
+                    [36m<View[39m
+                      [33mnativeID[39m=[32m"0"[39m
+                    [36m>[39m
+                      [36m<Text>[39m
+                        [0mSign In[0m
+                      [36m</Text>[39m
+                      [36m<View />[39m
+                    [36m</View>[39m
+                  [36m</ViewManagerAdapter_ExpoLinearGradient>[39m
+                [36m</View>[39m
+                [36m<View[39m
+                  [33maccessibilityState[39m=[32m{
+                    {
+                      "disabled": false,
+                    }
+                  }[39m
+                  [33maccessible[39m=[32m{true}[39m
+                [36m>[39m
+                  [36m<Text>[39m
+                    [0mNew to FairShare? [0m
+                    [36m<Text>[39m
+                      [0mCreate account[0m
+                    [36m</Text>[39m
+                  [36m</Text>[39m
+                [36m</View>[39m
+              [36m</View>[39m
+            [36m</View>[39m
+          [36m</RCTScrollView>[39m
+        [36m</View>[39m
+      [36m</View>[39m
+    [36m</RNCSafeAreaProvider>[39m
+
+    [0m [90m 12 |[39m     )[33m;[39m
+     [90m 13 |[39m
+    [31m[1m>[22m[39m[90m 14 |[39m     expect(getByText([32m'Login'[39m))[33m.[39mtoBeTruthy()[33m;[39m
+     [90m    |[39m            [31m[1m^[22m[39m
+     [90m 15 |[39m   })[33m;[39m
+     [90m 16 |[39m })[33m;[39m
+     [90m 17 |[39m[0m
+
+      at Object.getByText (app/screens/LoginScreen.spec.tsx:14:12)
+
+Test Suites: 3 failed, 2 passed, 5 total
+Tests:       3 failed, 4 passed, 7 total
 Snapshots:   0 total
-Time:        27.586 s
+Time:        100.857 s
 Ran all test suites.
+ ELIFECYCLE  Test failed. See above for more details.

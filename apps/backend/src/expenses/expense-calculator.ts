@@ -1,4 +1,4 @@
-﻿import { CreateExpenseSplitInputDto } from './dto/create-expense.dto';
+import { CreateExpenseSplitInputDto } from './dto/create-expense.dto';
 
 export interface BalanceDelta {
   userId: string;
@@ -18,7 +18,7 @@ export const calculateBalanceDeltas = (payerId: string, splits: CreateExpenseSpl
     const paid = BigInt(split.paidAmountCents);
     const net = owed - paid;
 
-    if (net > 0n) {
+    if (net !== 0n) {
       deltas.push({
         userId: split.userId,
         counterpartyUserId: payerId,

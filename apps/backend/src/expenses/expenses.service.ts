@@ -36,10 +36,12 @@ export class ExpensesService {
     }
 
     const owedSum = sumMoney(dto.splits.map((split) => split.owedAmountCents));
+    const paidSum = sumMoney(dto.splits.map((split) => split.paidAmountCents));
     try {
-      assertMoneyEquality(owedSum, totalAmount, 'Split sum must equal total amount');
-    } catch {
-      throw new BadRequestException('Split sum must equal total amount');
+      assertMoneyEquality(owedSum, totalAmount, 'Total owed sum must equal total amount');
+      assertMoneyEquality(paidSum, totalAmount, 'Total paid sum must equal total amount');
+    } catch (e: any) {
+      throw new BadRequestException(e.message);
     }
 
     if (idempotencyKey) {
@@ -230,12 +232,34 @@ export class ExpensesService {
   }
 
   async remove(id: string, actorUserId: string): Promise<{ success: true }> {
-    const expense = await this.prisma.expense.findUnique({ where: { id } });
+    const expense = await this.prisma.expense.findUnique({
+      where: { id },
+      include: { splits: true },
+    });
     if (!expense) {
       throw new NotFoundException('Expense not found');
     }
 
     await this.prisma.$transaction(async (tx) => {
+      const deltas = calculateBalanceDeltas(
+        expense.payerId,
+        expense.splits.map((s) => ({
+          userId: s.userId,
+          owedAmountCents: s.owedAmountCents.toString(),
+          paidAmountCents: s.paidAmountCents.toString(),
+        })),
+      );
+
+      for (const delta of deltas) {
+        await this.balancesService.adjustBalance(
+          tx as unknown as Prisma.TransactionClient,
+          expense.groupId,
+          delta.userId,
+          delta.counterpartyUserId,
+          -delta.delta,
+        );
+      }
+
       await tx.split.deleteMany({ where: { expenseId: id } });
       await tx.expense.delete({ where: { id } });
       await tx.activity.create({

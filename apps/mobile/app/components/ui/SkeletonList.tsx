@@ -16,7 +16,7 @@ export function SkeletonList({ rows = 4 }: { rows?: number }) {
             height: 56,
             borderRadius: 8,
             marginBottom: 12,
-            backgroundColor: '#E2E8F0',
+            backgroundColor: `${colors.primary}10`,
           }}
         />
       ))}

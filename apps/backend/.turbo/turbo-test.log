@@ -2,27 +2,47 @@
 > backend@1.0.0 test D:\ak\project\FairShare\apps\backend
 > jest --runInBand --passWithNoTests
 
-PASS src/settlements/settlements.integration.spec.ts (30.803 s)
-(node:22644) NOTE: The AWS SDK for JavaScript (v2) has reached end-of-support.
-It will no longer receive updates or releases.
-
-Please migrate your code to use AWS SDK for JavaScript (v3).
-For more information, check the blog post at https://a.co/cUPnyil
-(Use `node --trace-warnings ...` to show where the warning was created)
-PASS src/receipts/receipts.service.spec.ts
+PASS src/receipts/receipts.integration.spec.ts (27.096 s)
+PASS src/payments/payments.service.spec.ts
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:32 PM [32m    LOG[39m [38;5;3m[PaymentsService] [39m[32mPayment succeeded and settlement recorded paymentId=payment-1[39m
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:32 PM [32m    LOG[39m [38;5;3m[PaymentsService] [39m[32mPayment succeeded and settlement recorded paymentId=payment-1[39m
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:32 PM [32m    LOG[39m [38;5;3m[PaymentsService] [39m[32mPayment succeeded and settlement recorded paymentId=payment-1[39m
 PASS src/expenses/expenses.integration.spec.ts
+PASS src/groups/groups.service.spec.ts
 PASS src/expenses/expenses.service.spec.ts
 PASS src/settlements/settlements.service.spec.ts
-PASS src/groups/groups.service.spec.ts
+PASS src/settlements/settlements.integration.spec.ts
+[31m[Nest] 27236  - [39m03/25/2026, 11:37:42 PM [31m  ERROR[39m [38;5;3m[NotificationsService] [39m[31mExpo push send failed[39m
+Error: transient failure
+    at Object.<anonymous> (D:\ak\project\FairShare\apps\backend\src\notifications\notifications.service.spec.ts:98:30)
+    at Promise.then.completed (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (<anonymous>)
+    at callAsyncCircusFn (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:316:40)
+    at runNextTicks (node:internal/process/task_queues:64:5)
+    at processImmediate (node:internal/timers:472:9)
+    at async _runTest (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:252:3)
+    at async _runTestsForDescribeBlock (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:126:9)
+    at async _runTestsForDescribeBlock (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:121:9)
+    at async run (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\run.js:71:3)
+    at async runAndTransformResultsToJestFormat (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at async jestAdapter (D:\ak\project\FairShare\node_modules\.pnpm\jest-circus@29.7.0\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at async runTestInternal (D:\ak\project\FairShare\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:367:16)
+    at async runTest (D:\ak\project\FairShare\node_modules\.pnpm\jest-runner@29.7.0\node_modules\jest-runner\build\runTest.js:444:34)
 PASS src/notifications/notifications.service.spec.ts
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:42 PM [32m    LOG[39m [38;5;3m[NotificationsService] [39m[32m{"event":"notification_event_queued","channel":"fairshare:notifications","payload":{"userIds":["user-1"],"payload":{"type":"expense_created","title":"Expense added","body":"Dinner was added"},"queuedAt":"2026-03-25T18:07:42.461Z"}}[39m
+[33m[Nest] 27236  - [39m03/25/2026, 11:37:42 PM [33m   WARN[39m [38;5;3m[NotificationsService] [39m[33m{"event":"notification_invalid_tokens_removed","count":1}[39m
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:42 PM [32m    LOG[39m [38;5;3m[NotificationsService] [39m[32m{"event":"notification_push_sent","ticketCount":2}[39m
+[32m[Nest] 27236  - [39m03/25/2026, 11:37:42 PM [32m    LOG[39m [38;5;3m[NotificationsService] [39m[32m{"event":"notification_push_sent","ticketCount":1}[39m
 PASS src/balances/balances.service.spec.ts
 PASS src/users/users.service.spec.ts
 PASS src/simplify/simplify.service.spec.ts
+PASS src/receipts/receipts.service.spec.ts
 PASS src/activity/activity.service.spec.ts
 PASS src/expenses/expense-calculator.spec.ts
 
-Test Suites: 12 passed, 12 total
-Tests:       16 passed, 16 total
+Test Suites: 14 passed, 14 total
+Tests:       30 passed, 30 total
 Snapshots:   0 total
-Time:        38.565 s
+Time:        45.038 s
 Ran all test suites.
