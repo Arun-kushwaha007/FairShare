@@ -20,7 +20,7 @@ export function MemberList({ groupId, members }: MemberListProps) {
 
   return (
     <>
-      <div className={`${glassPanel} p-6`}>
+      <div className={`${glassPanel} p-4 sm:p-6`}>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Members</h2>
@@ -44,11 +44,11 @@ export function MemberList({ groupId, members }: MemberListProps) {
               key={member.memberId}
               className="flex items-center gap-4 rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 p-4"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--fs-primary)]/10 text-[var(--fs-primary)] font-bold text-lg shrink-0 border border-[var(--fs-border)]">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[var(--fs-primary)]/10 text-[var(--fs-primary)] font-bold text-base sm:text-lg shrink-0 border border-[var(--fs-border)]">
                 {member.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-lg font-semibold text-[var(--fs-text-primary)] truncate">
+                <p className="text-base sm:text-lg font-semibold text-[var(--fs-text-primary)] truncate">
                   {member.name}
                 </p>
                 <p className="text-[12px] font-medium text-[var(--fs-text-muted)] truncate">

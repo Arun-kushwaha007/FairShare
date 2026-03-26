@@ -60,7 +60,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup }:
         return (
           <div
             key={key}
-            className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3 flex items-center justify-between gap-4"
+            className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4"
           >
             <div>
               <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
@@ -70,7 +70,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup }:
               <p className="text-[11px] font-medium text-[var(--fs-text-muted)]">{formatAmount(item.amountCents)}</p>
             </div>
             <button
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
               onClick={() => void markSettled(item)}
               disabled={pending}
             >

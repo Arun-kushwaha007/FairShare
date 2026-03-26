@@ -78,7 +78,7 @@ export function ExpenseTable({ expenses, members }: ExpenseTableProps) {
 
   return (
     <div className={`${glassPanel} overflow-hidden`}>
-      <div className="p-6 border-b border-[var(--fs-border)] bg-[var(--fs-background)]/40 flex flex-col gap-5">
+      <div className="p-4 sm:p-6 border-b border-[var(--fs-border)] bg-[var(--fs-background)]/40 flex flex-col gap-4 sm:gap-5">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Expense history</h2>
@@ -89,7 +89,7 @@ export function ExpenseTable({ expenses, members }: ExpenseTableProps) {
           </span>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
           <input
             className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
             placeholder="Search description, payer, amount, date..."

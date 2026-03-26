@@ -27,11 +27,11 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
 
   return (
     <>
-      <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-8 shadow-[var(--fs-shadow-soft)] space-y-8">
+      <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-5 sm:p-8 shadow-[var(--fs-shadow-soft)] space-y-6 sm:space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Expense detail</p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">{expense.description}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">{expense.description}</h1>
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
               <span>Expense ID {expense.id.slice(0, 8)}</span>
               {expense.category ? (
@@ -47,7 +47,7 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/50 p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Date</p>
             <p className="mt-2 text-sm font-semibold text-[var(--fs-text-primary)]">
@@ -67,7 +67,7 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Receipt</h2>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Receipt</h2>
               <p className="text-sm font-medium text-[var(--fs-text-muted)]">
                 {expense.receiptFileKey ? 'Preview the attached receipt or replace it with a new upload.' : 'No receipt attached yet.'}
               </p>
