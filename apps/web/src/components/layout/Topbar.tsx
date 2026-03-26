@@ -19,13 +19,13 @@ export function Topbar({ rightSlot }: { rightSlot?: React.ReactNode }) {
   return (
     <header className={`${glassPanel} flex items-center justify-between px-5 sm:px-6 py-4`}>
       <div className="space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
           {title}
         </h1>
         <div className="flex items-center gap-2 mt-1.5">
           <div className="h-1.5 w-1.5 rounded-full bg-[var(--fs-primary)] opacity-50 shadow-[0_0_8px_var(--fs-primary)]" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--fs-text-muted)]">
-            Session Active • {new Date().toLocaleDateString(undefined, { weekday: 'long', hour: '2-digit', minute: '2-digit'})}
+          <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--fs-text-muted)]">
+            Session Active<span className="hidden sm:inline"> • {new Date().toLocaleDateString(undefined, { weekday: 'long', hour: '2-digit', minute: '2-digit'})}</span>
           </p>
         </div>
       </div>

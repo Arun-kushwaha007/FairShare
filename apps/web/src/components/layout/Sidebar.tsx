@@ -23,7 +23,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="lg:sticky lg:top-10 h-fit">
+    <aside className="hidden lg:block lg:sticky lg:top-10 h-fit">
       <div className={`${glassPanel} p-6 md:p-7 min-h-[520px] flex flex-col`}>
         {/* Brand */}
         <div className="flex items-center gap-3 mb-12 px-2">
