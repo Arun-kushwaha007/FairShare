@@ -57,12 +57,12 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
       <GlassCard className="p-6 border-white/10 bg-white/[0.02]">
         <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg border border-white/20">
-            <span className="text-2xl font-black italic tracking-tighter text-white">
+            <span className="text-xl sm:text-2xl font-black italic tracking-tighter text-white">
               {initials(currentUser?.name)}
             </span>
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-black italic tracking-tighter text-white uppercase">
+            <h1 className="text-xl sm:text-2xl font-black italic tracking-tighter text-white uppercase">
               {currentUser?.name ?? 'Guest User'}
             </h1>
             <p className="text-sm font-bold tracking-widest text-zinc-500 uppercase">
@@ -73,7 +73,7 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
       </GlassCard>
 
       {/* ── Actions ── */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/dashboard/settings" className="block h-full">
           <GlassCard className="p-6 border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">

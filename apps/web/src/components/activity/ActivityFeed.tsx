@@ -177,10 +177,10 @@ export function ActivityFeed({
             return (
               <div
                 key={item.id}
-                className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3 flex items-center gap-3"
+                className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-3"
               >
                 <div
-                  className="h-10 w-10 rounded-xl flex items-center justify-center text-white shrink-0"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center text-white shrink-0"
                   style={{ backgroundColor: accent }}
                   aria-hidden
                 >
@@ -203,7 +203,7 @@ export function ActivityFeed({
                   </div>
                 </div>
                 {formatAmount(item) ? (
-                  <span className="text-sm font-bold text-[var(--fs-text-primary)]">{formatAmount(item)}</span>
+                  <span className="text-xs sm:text-sm font-bold text-[var(--fs-text-primary)]">{formatAmount(item)}</span>
                 ) : null}
               </div>
             );

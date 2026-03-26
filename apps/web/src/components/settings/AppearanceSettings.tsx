@@ -44,7 +44,7 @@ export function AppearanceSettings() {
             key={option.mode}
             onClick={() => setMode(option.mode)}
             className={[
-              'w-full text-left rounded-2xl border px-4 py-3 flex items-start gap-3 transition-all duration-200',
+              'w-full text-left rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 flex items-start gap-3 transition-all duration-200',
               active
                 ? 'border-[var(--fs-primary)] shadow-[var(--fs-shadow-soft)] bg-[var(--fs-primary)]/8'
                 : 'border-[var(--fs-border)] hover:border-[var(--fs-primary)] bg-[var(--fs-background)]/70',
@@ -70,7 +70,7 @@ export function AppearanceSettings() {
               </p>
               <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">{option.description}</p>
             </div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
+            <div className="hidden sm:block text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
               {option.mode === 'system' ? `Now: ${resolved}` : ''}
             </div>
           </button>

@@ -223,7 +223,7 @@ export function CreateExpenseModal({
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-3xl rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
+              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>
@@ -248,7 +248,7 @@ export function CreateExpenseModal({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Amount ({currency})</label>
                       <input
