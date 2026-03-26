@@ -15,11 +15,11 @@ export function GroupCard({ id, name, currency, memberCount, balance }: GroupCar
   return (
     <Link
       href={`/dashboard/groups/${id}`}
-      className="group block card-royal p-6 hover:border-[var(--fs-primary)] transition-all duration-300"
+      className="group block card-royal p-4 sm:p-6 hover:border-[var(--fs-primary)] transition-all duration-300"
     >
       <div className="flex items-start justify-between">
         <div className="space-y-3">
-          <h3 className="text-xl font-bold text-[var(--fs-text-primary)] group-hover:text-[var(--fs-primary)] transition-colors">
+          <h3 className="text-lg sm:text-xl font-bold text-[var(--fs-text-primary)] group-hover:text-[var(--fs-primary)] transition-colors">
             {name}
           </h3>
           <div className="flex items-center gap-3">

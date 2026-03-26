@@ -25,7 +25,7 @@ export function GroupActions({ groupId, currency, members, defaultSplitPreferenc
 
   return (
     <>
-      <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-6 shadow-[var(--fs-shadow-soft)]">
+      <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-4 sm:p-6 shadow-[var(--fs-shadow-soft)]">
         <h3 className="text-lg font-bold text-[var(--fs-text-primary)] mb-4">Actions</h3>
         <div className="grid gap-3">
           <button className="btn-royal w-full inline-flex items-center justify-center gap-2" onClick={() => setOpen(true)}>
