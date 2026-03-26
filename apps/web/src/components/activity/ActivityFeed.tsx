@@ -26,8 +26,8 @@ const accentByType: Record<ActivityDto['type'], string> = {
   member_invited: '#EC4899',
 };
 
-function labelFor(activity: ActivityDto): string {
-  const actor = activity.actorUserId;
+function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): string {
+  const actor = userNameMap[activity.actorUserId] ?? activity.actorUserId.slice(0, 8);
   switch (activity.type) {
     case 'expense_created':
       return `${actor} created an expense`;
@@ -69,10 +69,12 @@ export function ActivityFeed({
   groups,
   initialItems,
   initialCursor,
+  userNameMap = {},
 }: {
   groups: GroupDto[];
   initialItems: ActivityDto[];
   initialCursor: number | null;
+  userNameMap?: Record<string, string>;
 }) {
   const { toast } = useToast();
   const [items, setItems] = useState<ActivityDto[]>(initialItems);
@@ -188,7 +190,7 @@ export function ActivityFeed({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--fs-text-primary)] truncate">
-                    {labelFor(item)}
+                    {labelFor(item, userNameMap)}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-[var(--fs-text-muted)]">
                     <span className="flex items-center gap-1">
