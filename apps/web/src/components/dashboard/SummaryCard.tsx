@@ -40,7 +40,7 @@ export function SummaryCard({
   return (
     <motion.div 
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-6 transition-all hover:border-purple-500/20 hover:bg-white/[0.04]"
+      className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-6 transition-all hover:border-purple-500/20 hover:bg-white/[0.04]"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-500 group-hover:text-purple-400 transition-colors">
@@ -54,7 +54,7 @@ export function SummaryCard({
       </div>
 
       <div className="space-y-1">
-        <div className="text-2xl sm:text-3xl font-black tracking-tight text-white italic">
+        <div className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white italic">
           {value}
         </div>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 group-hover:text-zinc-400 transition-colors">
@@ -63,7 +63,7 @@ export function SummaryCard({
       </div>
       
       {hint ? (
-        <div className="mt-6 pt-4 border-t border-white/5 flex items-center gap-2">
+        <div className="mt-6 pt-4 border-t border-white/5 hidden sm:flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-purple-500/40" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">
             {hint}

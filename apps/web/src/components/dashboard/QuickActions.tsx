@@ -28,9 +28,9 @@ export function QuickActions({ groupId }: { groupId?: string }) {
   ];
 
   return (
-    <div className="card-royal p-8 brutal-accent-line bg-[var(--fs-surface)]">
+    <div className="card-royal p-5 sm:p-8 brutal-accent-line bg-[var(--fs-surface)]">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Quick Actions</h2>
+        <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Quick Actions</h2>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">2 min setup</span>
       </div>
       <div className="grid gap-3">

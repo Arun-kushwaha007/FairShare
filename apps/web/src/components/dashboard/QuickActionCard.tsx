@@ -15,7 +15,7 @@ export function QuickActionCard({ title, description, href, badge, icon, disable
     <div
       className={[
         'flex items-center justify-between gap-4 rounded-2xl border border-[var(--fs-border)]',
-        'bg-[var(--fs-background)]/70 px-4 py-3 transition-all duration-200',
+        'bg-[var(--fs-background)]/70 px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200',
         disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-[var(--fs-primary)] hover:-translate-y-[1px]',
       ].join(' ')}
     >
@@ -27,7 +27,7 @@ export function QuickActionCard({ title, description, href, badge, icon, disable
         ) : null}
         <div>
           <p className="text-sm font-semibold text-[var(--fs-text-primary)]">{title}</p>
-          <p className="text-[11px] font-medium text-[var(--fs-text-muted)]">{description}</p>
+          <p className="text-[11px] font-medium text-[var(--fs-text-muted)] hidden sm:block">{description}</p>
         </div>
       </div>
       {badge ? (

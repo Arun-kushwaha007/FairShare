@@ -7,13 +7,13 @@ const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
 export function SpendingChart() {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.01] p-6 transition-all hover:bg-white/[0.02]">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.01] p-4 sm:p-6 transition-all hover:bg-white/[0.02]">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-sm font-black italic tracking-tight text-white">SPENDING FLOW</h3>
-          <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">Aggregate Protocol Metrics</p>
+          <h3 className="text-xs sm:text-sm font-black italic tracking-tight text-white">SPENDING FLOW</h3>
+          <p className="text-[9px] sm:text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">Aggregate Protocol Metrics</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">2026</span>
@@ -25,7 +25,8 @@ export function SpendingChart() {
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-2 h-44 sm:h-52">
+      <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="flex items-end justify-between gap-2 h-44 sm:h-52 min-w-[420px]">
         {chartData.map((h, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-2 group/bar cursor-pointer">
             <div className="w-full relative h-[100%] flex items-end">
@@ -51,6 +52,7 @@ export function SpendingChart() {
             </span>
           </div>
         ))}
+        </div>
       </div>
 
       {/* Decorative Overlays */}

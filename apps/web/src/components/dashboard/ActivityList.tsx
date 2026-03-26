@@ -26,8 +26,8 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.01] p-6 transition-all hover:bg-white/[0.02]">
-      <div className="flex items-center justify-between gap-3 mb-8">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.01] p-4 sm:p-6 transition-all hover:bg-white/[0.02]">
+      <div className="flex items-center justify-between gap-3 mb-5 sm:mb-8">
         <div>
           <h2 className="text-sm font-black italic tracking-tight text-white uppercase">Live Signals</h2>
           <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">Real-time ledger audit</p>
@@ -40,7 +40,7 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
         </Link>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {safeItems.map((item, idx) => {
           const { Icon, color } = getIconForType(item.type);
           return (
@@ -50,9 +50,9 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               whileHover={{ x: 2 }}
-              className="flex items-center gap-4 group/item cursor-pointer"
+              className="flex items-center gap-3 sm:gap-4 group/item cursor-pointer"
             >
-              <div className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-xl border ${color}`}>
+              <div className={`h-8 w-8 sm:h-10 sm:w-10 shrink-0 flex items-center justify-center rounded-xl border ${color}`}>
                 <Icon size={16} />
               </div>
               
