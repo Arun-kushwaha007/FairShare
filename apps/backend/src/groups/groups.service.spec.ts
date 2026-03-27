@@ -10,6 +10,9 @@ describe('GroupsService', () => {
     user: {
       findUnique: jest.fn(),
     },
+    activity: {
+      create: jest.fn(),
+    },
     $transaction: jest.fn(),
   } as any;
 
@@ -79,9 +82,7 @@ describe('GroupsService', () => {
   });
 
   it('invites a user and writes activity event', async () => {
-    prisma.groupMember.findUnique
-      .mockResolvedValueOnce({ id: 'actor-membership' })
-      .mockResolvedValueOnce(null);
+    prisma.groupMember.findUnique.mockResolvedValueOnce({ id: 'actor-membership' }).mockResolvedValueOnce(null);
     prisma.user.findUnique.mockResolvedValueOnce({ id: 'u2', email: 'test@example.com' });
 
     prisma.$transaction.mockImplementationOnce(async (fn: any) => {
@@ -107,10 +108,62 @@ describe('GroupsService', () => {
     );
   });
 
+  it('records settlement reminder activity when sending a reminder', async () => {
+    prisma.groupMember.findUnique.mockResolvedValueOnce({ id: 'actor-membership' });
+    prisma.groupMember.findMany.mockResolvedValueOnce([
+      { userId: 'u1', user: { name: 'Asha' } },
+      { userId: 'u2', user: { name: 'Ben' } },
+      { userId: 'u3', user: { name: 'Cara' } },
+    ]);
+    prisma.activity.create.mockResolvedValueOnce({
+      id: 'activity-1',
+      groupId: 'g1',
+      actorUserId: 'u1',
+      type: 'settlement_reminder',
+      entityId: 'u2-u3-1250',
+      metadata: { payerId: 'u2', receiverId: 'u3', amountCents: '1250' },
+      createdAt: new Date('2026-03-28T10:00:00.000Z'),
+    });
+
+    const result = await service.remindSettlement('g1', 'u1', {
+      payerId: 'u2',
+      receiverId: 'u3',
+      amountCents: '1250',
+    });
+
+    expect(notificationsService.sendPushNotification).toHaveBeenCalledWith(
+      ['u2'],
+      expect.objectContaining({
+        type: 'settlement_reminder',
+        data: expect.objectContaining({ groupId: 'g1', payerId: 'u2', receiverId: 'u3', amountCents: '1250' }),
+      }),
+    );
+    expect(prisma.activity.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          groupId: 'g1',
+          actorUserId: 'u1',
+          type: 'settlement_reminder',
+          entityId: 'u2-u3-1250',
+        }),
+      }),
+    );
+    expect(result).toEqual({
+      success: true,
+      activity: {
+        id: 'activity-1',
+        groupId: 'g1',
+        actorUserId: 'u1',
+        type: 'settlement_reminder',
+        entityId: 'u2-u3-1250',
+        metadata: { payerId: 'u2', receiverId: 'u3', amountCents: '1250' },
+        createdAt: '2026-03-28T10:00:00.000Z',
+      },
+    });
+  });
+
   it('prevents duplicate invites', async () => {
-    prisma.groupMember.findUnique
-      .mockResolvedValueOnce({ id: 'actor-membership' })
-      .mockResolvedValueOnce({ id: 'existing-membership' });
+    prisma.groupMember.findUnique.mockResolvedValueOnce({ id: 'actor-membership' }).mockResolvedValueOnce({ id: 'existing-membership' });
     prisma.user.findUnique.mockResolvedValueOnce({ id: 'u2', email: 'test@example.com' });
 
     await expect(service.invite('g1', 'u1', { email: 'test@example.com' })).rejects.toBeInstanceOf(ConflictException);

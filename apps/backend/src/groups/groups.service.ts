@@ -1,5 +1,6 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  ActivityDto,
   GroupDefaultSplitDto,
   GroupDto,
   GroupMemberSummaryDto,
@@ -363,7 +364,7 @@ export class GroupsService {
     return { success: true };
   }
 
-  async remindSettlement(groupId: string, actorUserId: string, dto: RemindSettlementRequestDto): Promise<{ success: true }> {
+  async remindSettlement(groupId: string, actorUserId: string, dto: RemindSettlementRequestDto): Promise<{ success: true; activity: ActivityDto }> {
     await this.assertMembership(groupId, actorUserId);
 
     const memberRecords = await this.prisma.groupMember.findMany({
@@ -398,7 +399,32 @@ export class GroupsService {
       },
     });
 
-    return { success: true };
+    const activity = await this.prisma.activity.create({
+      data: {
+        groupId,
+        actorUserId,
+        type: 'settlement_reminder',
+        entityId: `${dto.payerId}-${dto.receiverId}-${dto.amountCents}`,
+        metadata: {
+          payerId: dto.payerId,
+          receiverId: dto.receiverId,
+          amountCents: dto.amountCents,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      activity: {
+        id: activity.id,
+        groupId: activity.groupId,
+        actorUserId: activity.actorUserId,
+        type: activity.type,
+        entityId: activity.entityId,
+        metadata: activity.metadata as Record<string, unknown>,
+        createdAt: activity.createdAt.toISOString(),
+      },
+    };
   }
 
   async resolvePendingInvites(userId: string, email: string): Promise<void> {
@@ -485,3 +511,5 @@ export class GroupsService {
     }
   }
 }
+
+

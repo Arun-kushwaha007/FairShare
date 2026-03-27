@@ -17,6 +17,7 @@ enum ActivityType {
   expense_updated
   expense_deleted
   settlement_created
+  settlement_reminder
   member_joined
   member_invited
 }
@@ -284,3 +285,4 @@ model Payment {
   @@index([receiverId])
   @@map("payments")
 }
+

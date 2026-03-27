@@ -51,6 +51,11 @@ export interface RemindSettlementRequestDto {
   amountCents: string;
 }
 
+export interface RemindSettlementResponseDto {
+  success: true;
+  activity: ActivityDto;
+}
+
 export interface GroupMemberDto {
   id: string;
   userId: string;
@@ -212,6 +217,7 @@ export type ActivityType =
   | 'expense_updated'
   | 'expense_deleted'
   | 'settlement_created'
+  | 'settlement_reminder'
   | 'member_joined'
   | 'member_invited';
 
@@ -243,3 +249,5 @@ export interface CreatePaymentIntentResponseDto {
   clientSecret: string;
   paymentIntentId: string;
 }
+
+
