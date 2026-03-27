@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ExpenseDto } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
+import { ExpenseDeleteButton } from './ExpenseDeleteButton';
 
 const ReceiptUploadModal = dynamic(() => import('./ReceiptUploadModal').then((mod) => mod.ReceiptUploadModal), {
   ssr: false,
@@ -54,12 +55,15 @@ export function ExpenseRow({ expense, payerName }: { expense: ExpenseDto; payerN
           {new Date(expense.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
         </td>
         <td className="hidden sm:table-cell px-3 py-3 sm:px-6 sm:py-4 text-right">
-          <button
-            className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
-            onClick={() => setOpen(true)}
-          >
-            {expense.receiptFileKey ? 'Replace receipt' : 'Upload receipt'}
-          </button>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+              onClick={() => setOpen(true)}
+            >
+              {expense.receiptFileKey ? 'Replace receipt' : 'Upload receipt'}
+            </button>
+            <ExpenseDeleteButton expenseId={expense.id} compact />
+          </div>
         </td>
       </tr>
 

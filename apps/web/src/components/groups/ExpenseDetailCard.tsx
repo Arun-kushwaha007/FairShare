@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ExpenseDto } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
+import { ExpenseDeleteButton } from './ExpenseDeleteButton';
 
 const ReceiptUploadModal = dynamic(() => import('./ReceiptUploadModal').then((mod) => mod.ReceiptUploadModal), {
   ssr: false,
@@ -19,6 +21,7 @@ const categoryLabels: Record<string, string> = {
 
 export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto; receiptUrl: string | null }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
     style: 'currency',
@@ -41,9 +44,15 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
               ) : null}
             </div>
           </div>
-          <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-5 py-4 text-right">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Amount</p>
-            <p className="text-2xl font-extrabold text-[var(--fs-primary)]">{amount}</p>
+          <div className="flex flex-col items-end gap-3">
+            <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-5 py-4 text-right">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Amount</p>
+              <p className="text-2xl font-extrabold text-[var(--fs-primary)]">{amount}</p>
+            </div>
+            <ExpenseDeleteButton
+              expenseId={expense.id}
+              onDeleted={() => router.push(`/dashboard/groups/${expense.groupId}`)}
+            />
           </div>
         </div>
 
