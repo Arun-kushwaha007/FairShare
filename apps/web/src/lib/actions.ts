@@ -12,6 +12,7 @@ import {
   SettlementDto,
   UpdateExpenseRequestDto,
   UpdateGroupDefaultSplitRequestDto,
+  UpdateRecurringExpenseRequestDto,
 } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
 import { getBackendBaseUrl } from './env';
@@ -90,6 +91,31 @@ export async function updateExpenseAction(expenseId: string, payload: UpdateExpe
   }
 
   return { success: true, expense: data as ExpenseDto };
+}
+
+export async function updateRecurringExpenseAction(recurringExpenseId: string, payload: UpdateRecurringExpenseRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/recurring-expenses/${recurringExpenseId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to update recurring expense',
+    };
+  }
+
+  return { success: true, recurringExpense: data as RecurringExpenseDto };
 }
 
 export async function updateGroupDefaultSplitAction(groupId: string, payload: UpdateGroupDefaultSplitRequestDto) {
@@ -230,6 +256,7 @@ export async function deleteExpenseAction(expenseId: string) {
 
   return { success: true };
 }
+
 export async function exportExpensesCsvAction(groupId: string) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
 
@@ -289,4 +316,3 @@ export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
 
   return { success: true };
 }
-

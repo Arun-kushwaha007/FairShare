@@ -1,10 +1,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { RecurringExpenseDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
-import { Trash2 } from 'lucide-react';
-import { deleteRecurringExpenseAction } from '../../lib/actions';
+import {
+  EXPENSE_CATEGORIES,
+  RECURRING_EXPENSE_FREQUENCIES,
+  RecurringExpenseDto,
+  GroupMemberSummaryDto,
+  type ExpenseCategory,
+  type RecurringExpenseFrequency,
+} from '@fairshare/shared-types';
+import { Pencil, Trash2 } from 'lucide-react';
+import { deleteRecurringExpenseAction, updateRecurringExpenseAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
 
 type RecurringExpenseListProps = {
@@ -20,11 +26,69 @@ const recurringLabels: Record<RecurringExpenseDto['frequency'], string> = {
   monthly: 'Monthly',
 };
 
+const categoryLabels: Record<ExpenseCategory, string> = {
+  FOOD: 'Food',
+  TRAVEL: 'Travel',
+  UTILITIES: 'Utilities',
+  GROCERIES: 'Groceries',
+  ENTERTAINMENT: 'Entertainment',
+  OTHER: 'Other',
+};
+
 export function RecurringExpenseList({ recurringExpenses, members, currency, onChanged }: RecurringExpenseListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState<ExpenseCategory | ''>('');
+  const [frequency, setFrequency] = useState<RecurringExpenseFrequency>('monthly');
   const { toast } = useToast();
-  const router = useRouter();
   const memberNameById = useMemo(() => Object.fromEntries(members.map((member) => [member.userId, member.name])), [members]);
+
+  const startEdit = (item: RecurringExpenseDto) => {
+    setEditingId(item.id);
+    setDescription(item.description);
+    setAmount((Number(item.totalAmountCents) / 100).toFixed(2));
+    setCategory((item.category as ExpenseCategory | null) ?? '');
+    setFrequency(item.frequency);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDescription('');
+    setAmount('');
+    setCategory('');
+    setFrequency('monthly');
+  };
+
+  const handleSave = async (recurringExpenseId: string) => {
+    try {
+      setSavingId(recurringExpenseId);
+      const totalCents = Math.round(Number(amount || 0) * 100);
+      if (!description.trim() || totalCents <= 0) {
+        throw new Error('Enter a description and amount greater than zero');
+      }
+
+      const result = await updateRecurringExpenseAction(recurringExpenseId, {
+        description: description.trim(),
+        totalAmountCents: String(totalCents),
+        category: category || null,
+        frequency,
+      });
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      toast('Recurring bill updated');
+      cancelEdit();
+      onChanged?.();
+    } catch (error) {
+      toast((error as Error).message || 'Failed to update recurring bill', 'error');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const handleRemove = async (recurringExpenseId: string) => {
     const confirmed = window.confirm('Remove this recurring bill? Future auto-created expenses will stop.');
@@ -65,34 +129,104 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
         {recurringExpenses.length > 0 ? (
           recurringExpenses.map((item) => (
             <div key={item.id} className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-base font-bold text-[var(--fs-text-primary)]">{item.description}</h3>
-                    <span className="rounded-full bg-[var(--fs-primary)]/10 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-primary)]">
-                      {recurringLabels[item.frequency]}
+              {editingId === item.id ? (
+                <div className="space-y-3">
+                  <input
+                    className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Description"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <input
+                      className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      placeholder="Amount"
+                    />
+                    <select
+                      className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                      value={category}
+                      onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
+                    >
+                      <option value="">No category</option>
+                      {EXPENSE_CATEGORIES.map((value) => (
+                        <option key={value} value={value}>
+                          {categoryLabels[value]}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                      value={frequency}
+                      onChange={(event) => setFrequency(event.target.value as RecurringExpenseFrequency)}
+                    >
+                      {RECURRING_EXPENSE_FREQUENCIES.map((value) => (
+                        <option key={value} value={value}>
+                          {recurringLabels[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={cancelEdit} className="rounded-xl border border-[var(--fs-border)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)]">
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSave(item.id)}
+                      disabled={savingId === item.id}
+                      className="rounded-xl bg-[var(--fs-primary)] px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+                    >
+                      {savingId === item.id ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-bold text-[var(--fs-text-primary)]">{item.description}</h3>
+                        <span className="rounded-full bg-[var(--fs-primary)]/10 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-primary)]">
+                          {recurringLabels[item.frequency]}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-[var(--fs-text-muted)]">
+                        Next run {new Date(item.nextOccurrenceAt).toLocaleDateString()} • Paid by {memberNameById[item.payerId] ?? 'Unknown'} • {item.splits.length} participants
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(item)}
+                        className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-2 text-[var(--fs-text-primary)] transition-colors hover:border-[var(--fs-primary)]"
+                        title="Edit recurring bill"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleRemove(item.id)}
+                        disabled={removingId === item.id}
+                        className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-2 text-rose-500 transition-colors hover:bg-rose-500/20 disabled:opacity-60"
+                        title="Remove recurring bill"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="font-medium text-[var(--fs-text-muted)]">Amount</span>
+                    <span className="text-lg font-extrabold text-[var(--fs-primary)]">
+                      {(Number(item.totalAmountCents) / 100).toLocaleString(undefined, { style: 'currency', currency })}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-[var(--fs-text-muted)]">
-                    Next run {new Date(item.nextOccurrenceAt).toLocaleDateString()} • Paid by {memberNameById[item.payerId] ?? 'Unknown'} • {item.splits.length} participants
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleRemove(item.id)}
-                  disabled={removingId === item.id}
-                  className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-2 text-rose-500 transition-colors hover:bg-rose-500/20 disabled:opacity-60"
-                  title="Remove recurring bill"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="font-medium text-[var(--fs-text-muted)]">Amount</span>
-                <span className="text-lg font-extrabold text-[var(--fs-primary)]">
-                  {(Number(item.totalAmountCents) / 100).toLocaleString(undefined, { style: 'currency', currency })}
-                </span>
-              </div>
+                </>
+              )}
             </div>
           ))
         ) : (
