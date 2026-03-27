@@ -18,6 +18,7 @@ const iconByType: Record<ActivityType, keyof typeof MaterialCommunityIcons.glyph
   expense_updated: 'file-document-edit',
   expense_deleted: 'delete',
   settlement_created: 'cash',
+  settlement_reminder: 'bell-ring-outline',
   member_joined: 'account-plus',
   member_invited: 'account-arrow-right',
 };
@@ -27,6 +28,7 @@ const colorByType: Record<ActivityType, string> = {
   expense_updated: '#F59E0B',
   expense_deleted: '#EF4444',
   settlement_created: '#22C55E',
+  settlement_reminder: '#8B5CF6',
   member_joined: '#14B8A6',
   member_invited: '#EC4899',
 };
@@ -42,6 +44,11 @@ const actionText = (activity: ActivityDto): string => {
       return `${actor} deleted an expense`;
     case 'settlement_created':
       return `${actor} recorded a settlement`;
+    case 'settlement_reminder': {
+      const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : 'a member';
+      const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : 'another member';
+      return `${actor} reminded ${payerId} to pay ${receiverId}`;
+    }
     case 'member_joined':
       return `${actor} joined the group`;
     case 'member_invited':
@@ -81,7 +88,7 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
 
   const loadFirstPage = React.useCallback(async () => {
     try {
-      const data = groupId 
+      const data = groupId
         ? await groupService.activity(groupId, 0, PAGE_SIZE)
         : await groupService.userActivity(0, PAGE_SIZE);
       setEvents(data.items);
@@ -137,7 +144,7 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
             <MaterialCommunityIcons name={iconByType[item.type] || 'information-outline'} size={20} color={iconColor} />
           </View>
           <View style={styles.content}>
-            <Text style={[styles.title, { color: colors.text_primary }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.text_primary }]} numberOfLines={2}>
               {actionText(item)}
             </Text>
             <Text style={[styles.time, { color: colors.text_secondary }]}>

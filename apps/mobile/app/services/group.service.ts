@@ -6,6 +6,7 @@ import {
   GroupSummaryDto,
   InviteMemberRequestDto,
   RemindSettlementRequestDto,
+  RemindSettlementResponseDto,
   type UpdateGroupDefaultSplitRequestDto,
 } from '@fairshare/shared-types';
 import { api } from './api';
@@ -20,7 +21,7 @@ export const groupService = {
     (await api.patch<GroupDto>(`/groups/${id}/default-split`, payload)).data,
   invite: async (id: string, payload: InviteMemberRequestDto) => (await api.post(`/groups/${id}/invite`, payload)).data,
   remindSettlement: async (id: string, payload: RemindSettlementRequestDto) =>
-    (await api.post(`/groups/${id}/remind-settlement`, payload)).data,
+    (await api.post<RemindSettlementResponseDto>(`/groups/${id}/remind-settlement`, payload)).data,
   balances: async (id: string) => (await api.get(`/groups/${id}/balances`)).data,
   userSummary: async () => (await api.get<{ totalBalanceCents: string }>('/groups/summary')).data,
   simplify: async (id: string) => (await api.get(`/groups/${id}/simplify`)).data,
