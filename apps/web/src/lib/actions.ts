@@ -7,6 +7,7 @@ import {
   ExpenseDto,
   GroupDto,
   PresignedReceiptUrlResponseDto,
+  RemindSettlementRequestDto,
   SettlementDto,
   UpdateExpenseRequestDto,
   UpdateGroupDefaultSplitRequestDto,
@@ -138,6 +139,31 @@ export async function createSettlementAction(groupId: string, payload: CreateSet
   }
 
   return { success: true, settlement: data as SettlementDto };
+}
+
+export async function remindSettlementAction(groupId: string, payload: RemindSettlementRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/remind-settlement`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to send reminder',
+    };
+  }
+
+  return { success: true };
 }
 
 export async function createReceiptUrlAction(expenseId: string, extension?: string) {

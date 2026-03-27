@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { SimplifySuggestionDto } from '@fairshare/shared-types';
-import { CheckCircle2, HandCoins } from 'lucide-react';
+import { BellRing, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createSettlementAction } from '../../lib/actions';
+import { createSettlementAction, remindSettlementAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
 
 type SettlementListProps = {
@@ -16,6 +16,7 @@ type SettlementListProps = {
 
 export function SettlementList({ groupId, currency, suggestions, memberLookup }: SettlementListProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [reminderId, setReminderId] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -43,6 +44,25 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup }:
     router.refresh();
   };
 
+  const sendReminder = async (suggestion: SimplifySuggestionDto) => {
+    const key = `${suggestion.fromUserId}-${suggestion.toUserId}-${suggestion.amountCents}`;
+    setReminderId(key);
+    const result = await remindSettlementAction(groupId, {
+      payerId: suggestion.fromUserId,
+      receiverId: suggestion.toUserId,
+      amountCents: suggestion.amountCents,
+    });
+
+    if (!result.success) {
+      toast(result.message ?? 'Failed to send reminder', 'error');
+      setReminderId(null);
+      return;
+    }
+
+    toast(`Reminder sent to ${labelForUser(suggestion.fromUserId)}`);
+    setReminderId(null);
+  };
+
   if (suggestions.length === 0) {
     return (
       <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-8 text-center shadow-[var(--fs-shadow-soft)]">
@@ -57,6 +77,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup }:
       {suggestions.map((item) => {
         const key = `${item.fromUserId}-${item.toUserId}-${item.amountCents}`;
         const pending = pendingId === key;
+        const reminding = reminderId === key;
         return (
           <div
             key={key}
@@ -69,20 +90,29 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup }:
               </p>
               <p className="text-[11px] font-medium text-[var(--fs-text-muted)]">{formatAmount(item.amountCents)}</p>
             </div>
-            <button
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
-              onClick={() => void markSettled(item)}
-              disabled={pending}
-            >
-              {pending ? (
-                'Saving...'
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-[var(--fs-primary)]" />
-                  Confirm
-                </>
-              )}
-            </button>
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <button
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+                onClick={() => void sendReminder(item)}
+                disabled={reminding}
+              >
+                {reminding ? 'Sending...' : <><BellRing className="w-4 h-4 text-[var(--fs-primary)]" />Remind</>}
+              </button>
+              <button
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+                onClick={() => void markSettled(item)}
+                disabled={pending}
+              >
+                {pending ? (
+                  'Saving...'
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-[var(--fs-primary)]" />
+                    Confirm
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         );
       })}
