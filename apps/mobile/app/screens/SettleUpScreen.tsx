@@ -1,23 +1,32 @@
 import React from 'react';
-import { Linking, Modal, ScrollView, View } from 'react-native';
+import { Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
+import type { GroupMemberSummaryDto, SimplifySuggestionDto } from '@fairshare/shared-types';
 import LottieView from 'lottie-react-native';
 import { settlementService } from '../services/settlement.service';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
+import { spacing } from '../theme/spacing';
 
 export function SettleUpScreen({ route }: { route: { params: { groupId: string } } }) {
-  const [suggestions, setSuggestions] = React.useState<Array<{ fromUserId: string; toUserId: string; amountCents: string }>>([]);
+  const [suggestions, setSuggestions] = React.useState<SimplifySuggestionDto[]>([]);
+  const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [upiReceiver, setUpiReceiver] = React.useState('');
   const [upiName, setUpiName] = React.useState('FairShare Member');
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
+  const [remindingIndex, setRemindingIndex] = React.useState<number | null>(null);
   const toast = useToastStore((state) => state.show);
 
   React.useEffect(() => {
     const load = async () => {
       try {
-        setSuggestions(await groupService.simplify(route.params.groupId));
+        const [nextSuggestions, nextMembers] = await Promise.all([
+          groupService.simplify(route.params.groupId),
+          groupService.members(route.params.groupId),
+        ]);
+        setSuggestions(nextSuggestions);
+        setMembers(nextMembers);
       } catch {
         toast('Failed to load suggestions');
       }
@@ -26,9 +35,11 @@ export function SettleUpScreen({ route }: { route: { params: { groupId: string }
     void load();
   }, [route.params.groupId, toast]);
 
+  const labelForUser = (userId: string) => members.find((member) => member.userId === userId)?.name ?? userId;
+
   return (
     <>
-      <ScrollView style={{ padding: 16 }}>
+      <ScrollView style={{ padding: 16 }} contentContainerStyle={styles.container}>
         <Text variant="headlineSmall">Settle Up</Text>
         <TextInput
           mode="outlined"
@@ -46,29 +57,59 @@ export function SettleUpScreen({ route }: { route: { params: { groupId: string }
           style={{ marginTop: 12, marginBottom: 12 }}
         />
         {suggestions.map((item, index) => (
-          <View key={`${item.fromUserId}-${item.toUserId}-${index}`} style={{ marginBottom: 12 }}>
-            <Button
-              mode="outlined"
-              onPress={async () => {
-                if (!upiReceiver.trim()) {
-                  toast('Enter receiver UPI ID first');
-                  return;
-                }
-                const amount = (Number(item.amountCents) / 100).toFixed(2);
-                const upiLink = `upi://pay?pa=${encodeURIComponent(upiReceiver)}&pn=${encodeURIComponent(
-                  upiName || 'FairShare Member',
-                )}&am=${encodeURIComponent(amount)}&cu=INR`;
-                const supported = await Linking.canOpenURL(upiLink);
-                if (!supported) {
-                  toast('No UPI app found on this device');
-                  return;
-                }
-                setSelectedIndex(index);
-                await Linking.openURL(upiLink);
-              }}
-            >
-              Pay via UPI: {item.fromUserId} to {item.toUserId} ${(Number(item.amountCents) / 100).toFixed(2)}
-            </Button>
+          <View key={`${item.fromUserId}-${item.toUserId}-${index}`} style={styles.card}>
+            <Text style={styles.title}>
+              {labelForUser(item.fromUserId)} pays {labelForUser(item.toUserId)}
+            </Text>
+            <Text style={styles.amount}>${(Number(item.amountCents) / 100).toFixed(2)}</Text>
+            <View style={styles.actionRow}>
+              <Button
+                mode="outlined"
+                style={styles.actionButton}
+                loading={remindingIndex === index}
+                disabled={remindingIndex === index}
+                onPress={async () => {
+                  try {
+                    setRemindingIndex(index);
+                    await groupService.remindSettlement(route.params.groupId, {
+                      payerId: item.fromUserId,
+                      receiverId: item.toUserId,
+                      amountCents: item.amountCents,
+                    });
+                    toast(`Reminder sent to ${labelForUser(item.fromUserId)}`);
+                  } catch {
+                    toast('Failed to send reminder');
+                  } finally {
+                    setRemindingIndex(null);
+                  }
+                }}
+              >
+                Remind
+              </Button>
+              <Button
+                mode="outlined"
+                style={styles.actionButton}
+                onPress={async () => {
+                  if (!upiReceiver.trim()) {
+                    toast('Enter receiver UPI ID first');
+                    return;
+                  }
+                  const amount = (Number(item.amountCents) / 100).toFixed(2);
+                  const upiLink = `upi://pay?pa=${encodeURIComponent(upiReceiver)}&pn=${encodeURIComponent(
+                    upiName || 'FairShare Member',
+                  )}&am=${encodeURIComponent(amount)}&cu=INR`;
+                  const supported = await Linking.canOpenURL(upiLink);
+                  if (!supported) {
+                    toast('No UPI app found on this device');
+                    return;
+                  }
+                  setSelectedIndex(index);
+                  await Linking.openURL(upiLink);
+                }}
+              >
+                Pay via UPI
+              </Button>
+            </View>
             {selectedIndex === index ? (
               <Button
                 mode="contained"
@@ -107,3 +148,32 @@ export function SettleUpScreen({ route }: { route: { params: { groupId: string }
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingBottom: spacing.xl,
+  },
+  card: {
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.24)',
+    gap: spacing.sm,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  amount: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+  },
+});
