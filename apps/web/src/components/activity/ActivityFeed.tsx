@@ -3,7 +3,7 @@
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityDto, GroupDto } from '@fairshare/shared-types';
-import { ActivitySquare, BadgeCheck, Clock3, Mail, Receipt, RefreshCw, UsersRound } from 'lucide-react';
+import { ActivitySquare, BadgeCheck, BellRing, Clock3, Mail, Receipt, RefreshCw, UsersRound } from 'lucide-react';
 import { useToast } from '../ui/Toaster';
 
 type ActivityResponse = { items: ActivityDto[]; nextCursor: number | null };
@@ -13,6 +13,7 @@ const iconByType: Record<ActivityDto['type'], JSX.Element> = {
   expense_updated: <RefreshCw className="w-4 h-4" />,
   expense_deleted: <ActivitySquare className="w-4 h-4" />,
   settlement_created: <BadgeCheck className="w-4 h-4" />,
+  settlement_reminder: <BellRing className="w-4 h-4" />,
   member_joined: <UsersRound className="w-4 h-4" />,
   member_invited: <Mail className="w-4 h-4" />,
 };
@@ -22,6 +23,7 @@ const accentByType: Record<ActivityDto['type'], string> = {
   expense_updated: '#F59E0B',
   expense_deleted: '#EF4444',
   settlement_created: '#22C55E',
+  settlement_reminder: '#8B5CF6',
   member_joined: '#14B8A6',
   member_invited: '#EC4899',
 };
@@ -37,6 +39,13 @@ function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): s
       return `${actor} deleted an expense`;
     case 'settlement_created':
       return `${actor} recorded a settlement`;
+    case 'settlement_reminder': {
+      const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : '';
+      const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : '';
+      const payer = userNameMap[payerId] ?? payerId.slice(0, 8);
+      const receiver = userNameMap[receiverId] ?? receiverId.slice(0, 8);
+      return `${actor} reminded ${payer} to pay ${receiver}`;
+    }
     case 'member_joined':
       return `${actor} joined the group`;
     case 'member_invited':
@@ -217,7 +226,7 @@ export function ActivityFeed({
               className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] px-4 py-3 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
               disabled={loadingMore}
             >
-              {loadingMore ? 'Loading more…' : 'Load more'}
+              {loadingMore ? 'Loading more...' : 'Load more'}
             </button>
           ) : null}
         </div>

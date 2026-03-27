@@ -9,6 +9,7 @@ import {
   PresignedReceiptUrlResponseDto,
   RecurringExpenseDto,
   RemindSettlementRequestDto,
+  RemindSettlementResponseDto,
   SettlementDto,
   UpdateExpenseRequestDto,
   UpdateGroupDefaultSplitRequestDto,
@@ -190,7 +191,7 @@ export async function remindSettlementAction(groupId: string, payload: RemindSet
     };
   }
 
-  return { success: true };
+  return { ...(data as RemindSettlementResponseDto), success: true };
 }
 
 export async function createReceiptUrlAction(expenseId: string, extension?: string) {
@@ -316,3 +317,7 @@ export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
 
   return { success: true };
 }
+
+
+
+

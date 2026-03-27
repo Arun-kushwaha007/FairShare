@@ -1,4 +1,4 @@
-import { GroupDto, GroupMemberSummaryDto, SimplifySuggestionDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDto, GroupMemberSummaryDto, SimplifySuggestionDto } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { DashboardLayout } from '../../../../../src/components/layout';
 import { SettlementList } from '../../../../../src/components/groups';
@@ -8,10 +8,11 @@ export default async function SettleGroupPage({ params }: { params: { groupId: s
   const { groupId } = params;
 
   try {
-    const [group, members, suggestions] = await Promise.all([
+    const [group, members, suggestions, activity] = await Promise.all([
       backendFetch<GroupDto>(`/groups/${groupId}`),
       backendFetch<GroupMemberSummaryDto[]>(`/groups/${groupId}/members`),
       backendFetch<SimplifySuggestionDto[]>(`/groups/${groupId}/simplify`),
+      backendFetch<{ items: ActivityDto[]; nextCursor: number | null }>(`/activity/group/${groupId}?cursor=0&limit=20`),
     ]);
 
     const memberLookup = members.reduce<Record<string, { name: string; email: string }>>((acc, member) => {
@@ -35,6 +36,7 @@ export default async function SettleGroupPage({ params }: { params: { groupId: s
             currency={group.currency}
             suggestions={suggestions}
             memberLookup={memberLookup}
+            initialReminderActivity={activity.items.filter((event) => event.type === 'settlement_reminder')}
           />
         </div>
       </DashboardLayout>
