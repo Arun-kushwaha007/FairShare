@@ -6,7 +6,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, FadeInDown } from 'react-native-reanimated';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type GroupMemberSummaryDto } from '@fairshare/shared-types';
+import {
+  EXPENSE_CATEGORIES,
+  type ExpenseCategory,
+  type GroupDefaultSplitDto,
+  type GroupMemberSummaryDto,
+} from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { groupService } from '../services/group.service';
 import type { GroupDto } from '@fairshare/shared-types';
@@ -63,11 +68,45 @@ export function AddExpenseScreen({
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
   const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward');
+  const [savingDefault, setSavingDefault] = React.useState(false);
   const toast = useToastStore((state) => state.show);
   const { colors, typography } = useAppTheme();
 
   const watchedDescription = watch('description');
   const watchedAmount = watch('amountCents');
+
+  const applyDefaultSplitPreference = React.useCallback(
+    (defaultSplitPreference: GroupDefaultSplitDto | null | undefined, memberIds: string[]) => {
+      const fallbackParticipants = memberIds;
+      if (!defaultSplitPreference) {
+        setSplitType('equal');
+        setSelectedParticipantIds(fallbackParticipants);
+        setExactByUser({});
+        setPercentagesByUser({});
+        return;
+      }
+
+      const preferredParticipants = defaultSplitPreference.participantUserIds.filter((userId) => memberIds.includes(userId));
+      const nextParticipants = preferredParticipants.length > 0 ? preferredParticipants : fallbackParticipants;
+      const nextExact: Record<string, string> = {};
+      const nextPercentages: Record<string, string> = {};
+
+      nextParticipants.forEach((userId) => {
+        if (defaultSplitPreference.exactAmountsCentsByUser?.[userId]) {
+          nextExact[userId] = defaultSplitPreference.exactAmountsCentsByUser[userId];
+        }
+        if (defaultSplitPreference.percentagesByUser?.[userId]) {
+          nextPercentages[userId] = defaultSplitPreference.percentagesByUser[userId];
+        }
+      });
+
+      setSplitType(defaultSplitPreference.splitType);
+      setSelectedParticipantIds(nextParticipants);
+      setExactByUser(nextExact);
+      setPercentagesByUser(nextPercentages);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const loadMembers = async () => {
@@ -80,15 +119,24 @@ export function AddExpenseScreen({
         setGroup(groupData);
         if (memberData.length > 0) {
           setPayerId(memberData[0].userId);
-          setSelectedParticipantIds(memberData.map((member) => member.userId));
         }
+        applyDefaultSplitPreference(
+          groupData.defaultSplitPreference,
+          memberData.map((member) => member.userId),
+        );
       } catch {
         toast('Failed to load members');
       }
     };
 
     void loadMembers();
-  }, [route.params.groupId, toast]);
+  }, [applyDefaultSplitPreference, route.params.groupId, toast]);
+
+  React.useEffect(() => {
+    if (payerId && !selectedParticipantIds.includes(payerId)) {
+      setSelectedParticipantIds((prev) => [...prev, payerId]);
+    }
+  }, [payerId, selectedParticipantIds]);
 
   const buildShares = (totalAmount: number): Record<string, number> => {
     if (splitType === 'equal') {
@@ -98,6 +146,64 @@ export function AddExpenseScreen({
       return exactShares(selectedParticipantIds, exactByUser);
     }
     return percentageShares(totalAmount, selectedParticipantIds, percentagesByUser);
+  };
+
+  const buildDefaultSplitPreference = React.useCallback(
+    (nextSplitType: SplitType, nextParticipants: string[]): GroupDefaultSplitDto => ({
+      splitType: nextSplitType,
+      participantUserIds: Array.from(new Set(nextParticipants)),
+      exactAmountsCentsByUser: nextSplitType === 'exact' ? exactByUser : undefined,
+      percentagesByUser: nextSplitType === 'percentage' ? percentagesByUser : undefined,
+    }),
+    [exactByUser, percentagesByUser],
+  );
+
+  const saveDefaultSplit = async () => {
+    if (!group || selectedParticipantIds.length === 0) {
+      setInlineError('Select participants before saving a default split');
+      return;
+    }
+
+    try {
+      setSavingDefault(true);
+      const updatedGroup = await groupService.updateDefaultSplit(route.params.groupId, {
+        defaultSplitPreference: buildDefaultSplitPreference(splitType, selectedParticipantIds),
+      });
+      setGroup(updatedGroup);
+      toast('Default split saved');
+    } catch {
+      setInlineError('Unable to save default split');
+    } finally {
+      setSavingDefault(false);
+    }
+  };
+
+  const resetDefaultSplit = async () => {
+    if (!members.length) {
+      return;
+    }
+
+    const nextParticipants = members.map((member) => member.userId);
+    setSplitType('equal');
+    setSelectedParticipantIds(nextParticipants);
+    setExactByUser({});
+    setPercentagesByUser({});
+
+    try {
+      setSavingDefault(true);
+      const updatedGroup = await groupService.updateDefaultSplit(route.params.groupId, {
+        defaultSplitPreference: {
+          splitType: 'equal',
+          participantUserIds: nextParticipants,
+        },
+      });
+      setGroup(updatedGroup);
+      toast('Default split reset');
+    } catch {
+      setInlineError('Unable to reset default split');
+    } finally {
+      setSavingDefault(false);
+    }
   };
 
   const goNext = () => {
@@ -321,6 +427,20 @@ export function AddExpenseScreen({
       case 3:
         return (
           <Animated.View key="step3" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
+            <View style={styles.defaultSplitSection}>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>Default split</Text>
+                <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Save the current split setup for this group.</Text>
+              </View>
+              <View style={styles.defaultSplitActions}>
+                <Button variant="secondary" onPress={() => void resetDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
+                  Reset
+                </Button>
+                <Button variant="primary" onPress={() => void saveDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
+                  Save Default
+                </Button>
+              </View>
+            </View>
             <SplitSelector
               members={members}
               splitType={splitType}
@@ -516,6 +636,20 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  defaultSplitSection: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.24)',
+  },
+  defaultSplitActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  defaultSplitButton: {
+    flex: 1,
   },
   memberCard: {
     flexDirection: 'row',
