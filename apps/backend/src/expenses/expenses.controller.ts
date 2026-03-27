@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/types/auth.types';
@@ -24,6 +25,14 @@ export class ExpensesController {
   @Get('groups/:id/expenses')
   listByGroup(@Param('id') groupId: string, @Query('cursor') cursor = '0', @Query('limit') limit = '20') {
     return this.expensesService.listByGroup(groupId, Number(cursor), Number(limit));
+  }
+
+  @Get('groups/:id/expenses/export.csv')
+  async exportCsv(@Param('id') groupId: string, @CurrentUser() user: JwtPayload, @Res({ passthrough: true }) res: Response) {
+    const csv = await this.expensesService.exportCsv(groupId, user.sub);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="fairshare-${groupId}.csv"`);
+    return csv;
   }
 
   @Get('groups/:id/recurring-expenses')

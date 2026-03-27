@@ -139,6 +139,49 @@ export class ExpensesService {
     return rows.map((row) => this.toRecurringExpenseDto(row));
   }
 
+  async exportCsv(groupId: string, actorUserId: string): Promise<string> {
+    await this.assertGroupMember(groupId, actorUserId);
+    await this.materializeDueRecurringExpenses(groupId);
+
+    const expenses = await this.prisma.expense.findMany({
+      where: { groupId },
+      include: {
+        payer: { select: { name: true, email: true } },
+        splits: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+        },
+        receipt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const rows = [
+      ['Date', 'Description', 'Category', 'Amount', 'Currency', 'Payer', 'Participants', 'Split Details', 'Receipt Attached'],
+      ...expenses.map((expense) => [
+        this.formatCsvDate(expense.createdAt),
+        expense.description,
+        expense.category ?? '',
+        (Number(expense.totalAmountCents) / 100).toFixed(2),
+        expense.currency,
+        expense.payer.name || expense.payer.email,
+        String(expense.splits.length),
+        expense.splits
+          .map(
+            (split) =>
+              `${split.user.name || split.user.email}: owes ${(Number(split.owedAmountCents) / 100).toFixed(2)}, paid ${(Number(split.paidAmountCents) / 100).toFixed(2)}`,
+          )
+          .join(' | '),
+        expense.receipt ? 'yes' : 'no',
+      ]),
+    ];
+
+    return rows
+      .map((row) => row.map((value) => this.escapeCsv(value)).join(','))
+      .join('\n');
+  }
+
   async getById(id: string): Promise<ExpenseDto> {
     const expense = await this.prisma.expense.findUnique({ where: { id }, include: { splits: true, receipt: true } });
     if (!expense) {
@@ -245,11 +288,22 @@ export class ExpensesService {
       throw new NotFoundException('Recurring expense not found');
     }
 
+    await this.assertGroupMember(recurringExpense.groupId, actorUserId);
+
+    await this.prisma.recurringExpense.update({
+      where: { id },
+      data: { active: false },
+    });
+
+    return { success: true };
+  }
+
+  private async assertGroupMember(groupId: string, userId: string): Promise<void> {
     const membership = await this.prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
-          groupId: recurringExpense.groupId,
-          userId: actorUserId,
+          groupId,
+          userId,
         },
       },
       select: { userId: true },
@@ -258,13 +312,6 @@ export class ExpensesService {
     if (!membership) {
       throw new ForbiddenException('Actor is not a group member');
     }
-
-    await this.prisma.recurringExpense.update({
-      where: { id },
-      data: { active: false },
-    });
-
-    return { success: true };
   }
 
   private validateAmountAndSplits(dto: CreateExpenseDto): void {
@@ -491,6 +538,15 @@ export class ExpensesService {
     incrementExpenseCreated(groupId);
   }
 
+  private escapeCsv(value: string): string {
+    const normalized = value.replace(/\r?\n/g, ' ').replace(/"/g, '""');
+    return `"${normalized}"`;
+  }
+
+  private formatCsvDate(value: Date): string {
+    return value.toISOString();
+  }
+
   private computeNextOccurrence(frequency: RecurringExpenseFrequency, base: Date): Date {
     const next = new Date(base);
     if (frequency === 'daily') {
@@ -589,3 +645,4 @@ export class ExpensesService {
     return Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2002');
   }
 }
+
