@@ -1,9 +1,9 @@
-import { ExpenseDto, GroupDto, GroupMemberSummaryDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
+import { AuthUserDto, BalanceDto, ExpenseDto, GroupDto, GroupMemberSummaryDto, GroupSummaryDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { DashboardLayout } from '../../../../src/components/layout';
-import { ExpenseTable, GroupActions, MemberList } from '../../../../src/components/groups';
+import { ExpenseTable, GroupActions, GroupSummaryPanel, MemberList } from '../../../../src/components/groups';
 import { backendFetch } from '../../../../src/lib/backend';
 
 interface GroupDetailPageProps {
@@ -16,10 +16,13 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
   const { groupId } = params;
 
   try {
-    const [group, members, expenses] = await Promise.all([
+    const [group, members, expenses, summary, balances, currentUser] = await Promise.all([
       backendFetch<GroupDto>(`/groups/${groupId}`),
       backendFetch<GroupMemberSummaryDto[]>(`/groups/${groupId}/members`),
       backendFetch<PaginatedExpensesResponseDto>(`/groups/${groupId}/expenses?limit=50`),
+      backendFetch<GroupSummaryDto>(`/groups/${groupId}/summary`),
+      backendFetch<BalanceDto[]>(`/groups/${groupId}/balances`),
+      backendFetch<AuthUserDto>('/users/me'),
     ]);
 
     const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
@@ -33,7 +36,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Group</p>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">{group.name}</h1>
                 <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
-                  Created {new Date(group.createdAt).toLocaleDateString()} · ID {groupId.slice(0, 8)}
+                  Created {new Date(group.createdAt).toLocaleDateString()} - ID {groupId.slice(0, 8)}
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3 w-full sm:w-auto">
@@ -57,6 +60,13 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
 
           <div className="grid gap-6 sm:gap-10 lg:grid-cols-[1fr_360px]">
             <div className="space-y-10">
+              <GroupSummaryPanel
+                currency={group.currency}
+                summary={summary}
+                balances={balances}
+                currentUserId={currentUser.id}
+                members={members}
+              />
               <ExpenseTable expenses={expenses.items as ExpenseDto[]} members={members} />
             </div>
 
@@ -82,3 +92,4 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     return notFound();
   }
 }
+

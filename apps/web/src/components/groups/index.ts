@@ -9,3 +9,4 @@ export * from './ExpenseRow';
 export * from './ExpenseDetailCard';
 export * from './CreateGroupModal';
 export * from './CreateGroupButton';
+export * from './GroupSummaryPanel';
