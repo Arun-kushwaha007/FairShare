@@ -4,6 +4,7 @@ import {
   PaginatedExpensesResponseDto,
   RecurringExpenseDto,
   RecurringExpenseFrequency,
+  UpdateRecurringExpenseRequestDto,
 } from '@fairshare/shared-types';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
@@ -16,6 +17,7 @@ import { RealtimeService } from '../realtime/realtime.service';
 import { incrementExpenseCreated } from '../observability/metrics';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { UpdateRecurringExpenseDto } from './dto/update-recurring-expense.dto';
 import { calculateBalanceDeltas } from './expense-calculator';
 
 @Injectable()
@@ -214,6 +216,86 @@ export class ExpensesService {
     return this.toExpenseDto(expense);
   }
 
+  async updateRecurring(id: string, actorUserId: string, dto: UpdateRecurringExpenseDto): Promise<RecurringExpenseDto> {
+    const recurringExpense = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+      include: { splits: true },
+    });
+
+    if (!recurringExpense) {
+      throw new NotFoundException('Recurring expense not found');
+    }
+
+    await this.assertGroupMember(recurringExpense.groupId, actorUserId);
+
+    let nextTotal = recurringExpense.totalAmountCents;
+    if (dto.totalAmountCents !== undefined) {
+      nextTotal = BigInt(dto.totalAmountCents);
+      if (nextTotal <= 0n) {
+        throw new BadRequestException('Expense amount must be positive');
+      }
+      if (nextTotal > ExpensesService.MAX_EXPENSE_CENTS) {
+        throw new BadRequestException('Expense amount exceeds maximum allowed');
+      }
+    }
+
+    const currentSplits = recurringExpense.splits.map((split) => ({
+      userId: split.userId,
+      owedAmountCents: split.owedAmountCents.toString(),
+      paidAmountCents: split.paidAmountCents.toString(),
+    }));
+    const nextSplits = dto.totalAmountCents !== undefined
+      ? this.scaleRecurringSplits(currentSplits, recurringExpense.totalAmountCents, nextTotal, recurringExpense.payerId)
+      : currentSplits;
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.recurringExpense.update({
+        where: { id },
+        data: {
+          description: dto.description ?? undefined,
+          totalAmountCents: dto.totalAmountCents !== undefined ? nextTotal : undefined,
+          category: dto.category !== undefined ? dto.category : undefined,
+          frequency: dto.frequency ?? undefined,
+          nextOccurrenceAt: dto.frequency ? this.computeNextOccurrence(dto.frequency, recurringExpense.lastGeneratedAt ?? new Date()) : undefined,
+        },
+      });
+
+      if (dto.totalAmountCents !== undefined) {
+        await tx.recurringExpenseSplit.deleteMany({ where: { recurringExpenseId: id } });
+        await tx.recurringExpenseSplit.createMany({
+          data: nextSplits.map((split) => ({
+            recurringExpenseId: id,
+            userId: split.userId,
+            owedAmountCents: BigInt(split.owedAmountCents),
+            paidAmountCents: BigInt(split.paidAmountCents),
+          })),
+        });
+      }
+
+      return tx.recurringExpense.findUniqueOrThrow({
+        where: { id },
+        include: { splits: true },
+      });
+    });
+
+    await this.activityService.log({
+      groupId: recurringExpense.groupId,
+      actorUserId,
+      type: 'expense_updated',
+      entityId: recurringExpense.id,
+      metadata: {
+        recurring: true,
+        description: dto.description ?? recurringExpense.description,
+        category: dto.category ?? recurringExpense.category,
+        frequency: dto.frequency ?? recurringExpense.frequency,
+        totalAmountCents: nextTotal.toString(),
+        currency: recurringExpense.currency,
+      },
+    });
+
+    return this.toRecurringExpenseDto(updated);
+  }
+
   async remove(id: string, actorUserId: string): Promise<{ success: true }> {
     const expense = await this.prisma.expense.findUnique({
       where: { id },
@@ -356,6 +438,37 @@ export class ExpensesService {
     if (invalidSplitUsers.length > 0) {
       throw new BadRequestException('All split users must be group members');
     }
+  }
+
+  private scaleRecurringSplits(
+    splits: Array<{ userId: string; owedAmountCents: string; paidAmountCents: string }>,
+    oldTotal: bigint,
+    newTotal: bigint,
+    payerId: string,
+  ): Array<{ userId: string; owedAmountCents: string; paidAmountCents: string }> {
+    if (oldTotal <= 0n) {
+      throw new BadRequestException('Recurring expense amount must be positive');
+    }
+
+    const scaled = splits.map((split) => ({
+      userId: split.userId,
+      owedAmount: (BigInt(split.owedAmountCents) * newTotal) / oldTotal,
+    }));
+
+    let diff = newTotal - scaled.reduce((sum, split) => sum + split.owedAmount, 0n);
+    let index = 0;
+    while (diff !== 0n && scaled.length > 0) {
+      const direction = diff > 0n ? 1n : -1n;
+      scaled[index % scaled.length].owedAmount += direction;
+      diff -= direction;
+      index += 1;
+    }
+
+    return scaled.map((split) => ({
+      userId: split.userId,
+      owedAmountCents: split.owedAmount.toString(),
+      paidAmountCents: split.userId === payerId ? newTotal.toString() : '0',
+    }));
   }
 
   private async createExpenseWithTransaction(
@@ -645,4 +758,3 @@ export class ExpensesService {
     return Boolean(error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2002');
   }
 }
-

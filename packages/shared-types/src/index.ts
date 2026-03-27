@@ -120,6 +120,13 @@ export interface UpdateExpenseRequestDto {
   category?: ExpenseCategory | null;
 }
 
+export interface UpdateRecurringExpenseRequestDto {
+  description?: string;
+  totalAmountCents?: string;
+  category?: ExpenseCategory | null;
+  frequency?: RecurringExpenseFrequency;
+}
+
 export interface SplitDto {
   id: string;
   userId: string;

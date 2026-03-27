@@ -6,6 +6,7 @@ import { JwtPayload } from '../auth/types/auth.types';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { UpdateRecurringExpenseDto } from './dto/update-recurring-expense.dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -48,6 +49,11 @@ export class ExpensesController {
   @Patch('expenses/:id')
   update(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: UpdateExpenseDto) {
     return this.expensesService.update(id, user.sub, dto);
+  }
+
+  @Patch('recurring-expenses/:id')
+  updateRecurring(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: UpdateRecurringExpenseDto) {
+    return this.expensesService.updateRecurring(id, user.sub, dto);
   }
 
   @Delete('expenses/:id')
