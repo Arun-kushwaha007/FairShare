@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrencyCode, GroupDefaultSplitDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import Link from 'next/link';
-import { PlusCircle, Wallet } from 'lucide-react';
+import { Download, PlusCircle, Wallet } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { exportExpensesCsvAction } from '../../lib/actions';
+import { useToast } from '../ui/Toaster';
 
 const CreateExpenseModal = dynamic(
   () => import('./CreateExpenseModal').then((mod) => mod.CreateExpenseModal),
@@ -21,7 +23,35 @@ type GroupActionsProps = {
 
 export function GroupActions({ groupId, currency, members, defaultSplitPreference }: GroupActionsProps) {
   const [open, setOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const result = await exportExpensesCsvAction(groupId);
+      const csv = result.success ? result.csv ?? '' : '';
+      if (!csv) {
+        throw new Error(result.success ? 'Failed to export CSV' : result.message);
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `fairshare-${groupId}.csv`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+      toast('CSV exported');
+    } catch (error) {
+      toast((error as Error).message || 'Failed to export CSV', 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
@@ -39,6 +69,15 @@ export function GroupActions({ groupId, currency, members, defaultSplitPreferenc
             <Wallet className="w-4 h-4 text-[var(--fs-primary)]" />
             Settle up
           </Link>
+          <button
+            type="button"
+            onClick={() => void handleExport()}
+            disabled={exporting}
+            className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <Download className="w-4 h-4 text-[var(--fs-primary)]" />
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
           <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-medium text-[var(--fs-text-muted)]">
             Invite teammates from the member panel to keep your ledger accurate.
           </div>

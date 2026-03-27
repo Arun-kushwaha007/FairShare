@@ -230,6 +230,25 @@ export async function deleteExpenseAction(expenseId: string) {
 
   return { success: true };
 }
+export async function exportExpensesCsvAction(groupId: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/expenses/export.csv`, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.text().catch(() => '');
+
+  if (!response.ok) {
+    return { success: false, message: data || 'Failed to export CSV' };
+  }
+
+  return { success: true, csv: data };
+}
 
 export async function listRecurringExpensesAction(groupId: string) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
@@ -270,3 +289,4 @@ export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
 
   return { success: true };
 }
+
