@@ -28,46 +28,50 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  passwordHash String
-  name         String
-  avatarUrl    String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  memberships  GroupMember[]
-  createdGroups Group[]      @relation("group_creator")
-  expenses     Expense[]     @relation("expense_payer")
-  splits       Split[]
-  settlementsPaid     Settlement[] @relation("settlement_payer")
-  settlementsReceived Settlement[] @relation("settlement_receiver")
-  balances     Balance[]     @relation("balance_user")
-  counterpartyBalances Balance[] @relation("balance_counterparty")
-  refreshTokens RefreshToken[]
-  activities   Activity[]
-  pushTokens   PushToken[]
-  paymentsSent Payment[] @relation("payment_payer")
-  paymentsReceived Payment[] @relation("payment_receiver")
+  id                        String                 @id @default(uuid())
+  email                     String                 @unique
+  passwordHash              String
+  name                      String
+  avatarUrl                 String?
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  memberships               GroupMember[]
+  createdGroups             Group[]                @relation("group_creator")
+  expenses                  Expense[]              @relation("expense_payer")
+  recurringExpensesPaid     RecurringExpense[]     @relation("recurring_expense_payer")
+  recurringExpensesCreated  RecurringExpense[]     @relation("recurring_expense_creator")
+  splits                    Split[]
+  recurringExpenseSplits    RecurringExpenseSplit[]
+  settlementsPaid           Settlement[]           @relation("settlement_payer")
+  settlementsReceived       Settlement[]           @relation("settlement_receiver")
+  balances                  Balance[]              @relation("balance_user")
+  counterpartyBalances      Balance[]              @relation("balance_counterparty")
+  refreshTokens             RefreshToken[]
+  activities                Activity[]
+  pushTokens                PushToken[]
+  paymentsSent              Payment[]              @relation("payment_payer")
+  paymentsReceived          Payment[]              @relation("payment_receiver")
 
   @@map("users")
 }
 
 model Group {
-  id          String        @id @default(uuid())
-  name        String
-  createdBy   String
-  currency    String
-  defaultSplitType String?
+  id                 String            @id @default(uuid())
+  name               String
+  createdBy          String
+  currency           String
+  defaultSplitType   String?
   defaultSplitConfig String?
-  createdAt   DateTime      @default(now())
-  creator     User          @relation("group_creator", fields: [createdBy], references: [id])
-  members     GroupMember[]
-  expenses    Expense[]
-  balances    Balance[]
-  settlements Settlement[]
-  activities   Activity[]
-  payments     Payment[]
-  invites      GroupInvite[]
+  createdAt          DateTime          @default(now())
+  creator            User              @relation("group_creator", fields: [createdBy], references: [id])
+  members            GroupMember[]
+  expenses           Expense[]
+  recurringExpenses  RecurringExpense[]
+  balances           Balance[]
+  settlements        Settlement[]
+  activities         Activity[]
+  payments           Payment[]
+  invites            GroupInvite[]
 
   @@index([createdBy])
   @@map("groups")
@@ -110,17 +114,57 @@ model Expense {
   @@map("expenses")
 }
 
+model RecurringExpense {
+  id               String                 @id @default(uuid())
+  groupId          String
+  payerId          String
+  createdBy        String
+  description      String
+  totalAmountCents BigInt
+  currency         String
+  category         String?
+  frequency        String
+  nextOccurrenceAt DateTime
+  lastGeneratedAt  DateTime?
+  active           Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  group            Group                  @relation(fields: [groupId], references: [id])
+  payer            User                   @relation("recurring_expense_payer", fields: [payerId], references: [id])
+  creator          User                   @relation("recurring_expense_creator", fields: [createdBy], references: [id])
+  splits           RecurringExpenseSplit[]
+
+  @@index([groupId])
+  @@index([payerId])
+  @@index([createdBy])
+  @@index([active, nextOccurrenceAt])
+  @@index([groupId, active])
+  @@map("recurring_expenses")
+}
+
 model Split {
-  id             String @id @default(uuid())
-  expenseId      String
-  userId         String
+  id              String @id @default(uuid())
+  expenseId       String
+  userId          String
   owedAmountCents BigInt
   paidAmountCents BigInt
-  expense        Expense @relation(fields: [expenseId], references: [id])
-  user           User    @relation(fields: [userId], references: [id])
+  expense         Expense @relation(fields: [expenseId], references: [id])
+  user            User    @relation(fields: [userId], references: [id])
 
   @@index([expenseId])
   @@map("splits")
+}
+
+model RecurringExpenseSplit {
+  id                 String           @id @default(uuid())
+  recurringExpenseId String
+  userId             String
+  owedAmountCents    BigInt
+  paidAmountCents    BigInt
+  recurringExpense   RecurringExpense @relation(fields: [recurringExpenseId], references: [id])
+  user               User             @relation(fields: [userId], references: [id])
+
+  @@index([recurringExpenseId])
+  @@map("recurring_expense_splits")
 }
 
 model Balance {
@@ -140,16 +184,16 @@ model Balance {
 }
 
 model Settlement {
-  id          String   @id @default(uuid())
-  groupId     String
-  payerId     String
-  receiverId  String
-  amountCents BigInt
-  idempotencyKey String? @unique
-  createdAt   DateTime @default(now())
-  group       Group    @relation(fields: [groupId], references: [id])
-  payer       User     @relation("settlement_payer", fields: [payerId], references: [id])
-  receiver    User     @relation("settlement_receiver", fields: [receiverId], references: [id])
+  id             String   @id @default(uuid())
+  groupId        String
+  payerId        String
+  receiverId     String
+  amountCents    BigInt
+  idempotencyKey String?  @unique
+  createdAt      DateTime @default(now())
+  group          Group    @relation(fields: [groupId], references: [id])
+  payer          User     @relation("settlement_payer", fields: [payerId], references: [id])
+  receiver       User     @relation("settlement_receiver", fields: [receiverId], references: [id])
 
   @@index([groupId])
   @@map("settlements")
@@ -196,13 +240,13 @@ model Activity {
 }
 
 model GroupInvite {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   groupId   String
   email     String
   role      GroupRole @default(MEMBER)
   invitedBy String
-  createdAt DateTime @default(now())
-  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime  @default(now())
+  group     Group     @relation(fields: [groupId], references: [id])
 
   @@unique([groupId, email])
   @@index([email])
@@ -240,4 +284,3 @@ model Payment {
   @@index([receiverId])
   @@map("payments")
 }
-

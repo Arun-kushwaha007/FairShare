@@ -1,6 +1,12 @@
 import { IsArray, IsIn, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { CreateExpenseRequestDto, CreateExpenseSplitDto, EXPENSE_CATEGORIES } from '@fairshare/shared-types';
+import {
+  CreateExpenseRequestDto,
+  CreateExpenseSplitDto,
+  EXPENSE_CATEGORIES,
+  RECURRING_EXPENSE_FREQUENCIES,
+  RecurringExpenseConfigDto,
+} from '@fairshare/shared-types';
 import { sanitizeText } from '../../common/utils/sanitize.util';
 
 export class CreateExpenseSplitInputDto implements CreateExpenseSplitDto {
@@ -12,6 +18,12 @@ export class CreateExpenseSplitInputDto implements CreateExpenseSplitDto {
 
   @IsString()
   paidAmountCents!: string;
+}
+
+export class RecurringExpenseConfigInputDto implements RecurringExpenseConfigDto {
+  @IsString()
+  @IsIn([...RECURRING_EXPENSE_FREQUENCIES])
+  frequency!: (typeof RECURRING_EXPENSE_FREQUENCIES)[number];
 }
 
 export class CreateExpenseDto implements CreateExpenseRequestDto {
@@ -34,6 +46,11 @@ export class CreateExpenseDto implements CreateExpenseRequestDto {
   @IsString()
   @IsIn([...EXPENSE_CATEGORIES])
   category?: (typeof EXPENSE_CATEGORIES)[number];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RecurringExpenseConfigInputDto)
+  recurring?: RecurringExpenseConfigInputDto;
 
   @IsArray()
   @ValidateNested({ each: true })

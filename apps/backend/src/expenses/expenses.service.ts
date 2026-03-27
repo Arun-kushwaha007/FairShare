@@ -1,5 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ExpenseDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
+import {
+  ExpenseDto,
+  PaginatedExpensesResponseDto,
+  RecurringExpenseDto,
+  RecurringExpenseFrequency,
+} from '@fairshare/shared-types';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
@@ -16,6 +21,7 @@ import { calculateBalanceDeltas } from './expense-calculator';
 @Injectable()
 export class ExpensesService {
   private static readonly MAX_EXPENSE_CENTS = 1_000_000n;
+  private static readonly MAX_RECURRING_CATCH_UP = 12;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,22 +33,8 @@ export class ExpensesService {
   ) {}
 
   async create(groupId: string, actorUserId: string, dto: CreateExpenseDto, idempotencyKey?: string): Promise<ExpenseDto> {
-    const totalAmount = BigInt(dto.totalAmountCents);
-    if (totalAmount <= 0n) {
-      throw new BadRequestException('Expense amount must be positive');
-    }
-    if (totalAmount > ExpensesService.MAX_EXPENSE_CENTS) {
-      throw new BadRequestException('Expense amount exceeds maximum allowed');
-    }
-
-    const owedSum = sumMoney(dto.splits.map((split) => split.owedAmountCents));
-    const paidSum = sumMoney(dto.splits.map((split) => split.paidAmountCents));
-    try {
-      assertMoneyEquality(owedSum, totalAmount, 'Total owed sum must equal total amount');
-      assertMoneyEquality(paidSum, totalAmount, 'Total paid sum must equal total amount');
-    } catch (e: any) {
-      throw new BadRequestException(e.message);
-    }
+    this.validateAmountAndSplits(dto);
+    await this.validateExpenseMembers(groupId, actorUserId, dto);
 
     if (idempotencyKey) {
       const existingByKey = await this.prisma.expense.findUnique({
@@ -54,83 +46,37 @@ export class ExpensesService {
       }
     }
 
-    const memberIds = new Set<string>([actorUserId, dto.payerId, ...dto.splits.map((split) => split.userId)]);
-    const memberships = await this.prisma.groupMember.findMany({
-      where: {
-        groupId,
-        userId: { in: Array.from(memberIds) },
-      },
-      select: { userId: true },
-    });
-    const memberSet = new Set(memberships.map((member) => member.userId));
-
-    if (!memberSet.has(actorUserId)) {
-      throw new ForbiddenException('Actor is not a group member');
-    }
-
-    if (!memberSet.has(dto.payerId)) {
-      throw new BadRequestException('Payer must be a group member');
-    }
-
-    const invalidSplitUsers = dto.splits.filter((split) => !memberSet.has(split.userId));
-    if (invalidSplitUsers.length > 0) {
-      throw new BadRequestException('All split users must be group members');
-    }
-
     let expense;
     try {
       expense = await this.prisma.$transaction(async (tx) => {
-        const createdExpense = await tx.expense.create({
-          data: {
-            groupId,
-            payerId: dto.payerId,
-            description: dto.description,
-            totalAmountCents: totalAmount,
-            currency: dto.currency,
-            category: dto.category ?? null,
-            idempotencyKey: idempotencyKey ?? null,
-          },
-        });
+        const createdExpense = await this.createExpenseWithTransaction(tx, groupId, actorUserId, dto, idempotencyKey ?? null);
 
-        await tx.split.createMany({
-          data: dto.splits.map((split) => ({
-            expenseId: createdExpense.id,
-            userId: split.userId,
-            owedAmountCents: BigInt(split.owedAmountCents),
-            paidAmountCents: BigInt(split.paidAmountCents),
-          })),
-        });
-
-        const deltas = calculateBalanceDeltas(dto.payerId, dto.splits);
-        for (const delta of deltas) {
-          await this.balancesService.adjustBalance(
-            tx as unknown as Prisma.TransactionClient,
-            groupId,
-            delta.userId,
-            delta.counterpartyUserId,
-            delta.delta,
-          );
+        if (dto.recurring) {
+          await tx.recurringExpense.create({
+            data: {
+              groupId,
+              payerId: dto.payerId,
+              createdBy: actorUserId,
+              description: dto.description,
+              totalAmountCents: BigInt(dto.totalAmountCents),
+              currency: dto.currency,
+              category: dto.category ?? null,
+              frequency: dto.recurring.frequency,
+              nextOccurrenceAt: this.computeNextOccurrence(dto.recurring.frequency, new Date()),
+              splits: {
+                createMany: {
+                  data: dto.splits.map((split) => ({
+                    userId: split.userId,
+                    owedAmountCents: BigInt(split.owedAmountCents),
+                    paidAmountCents: BigInt(split.paidAmountCents),
+                  })),
+                },
+              },
+            },
+          });
         }
 
-        await tx.activity.create({
-          data: {
-            groupId,
-            actorUserId,
-            type: 'expense_created',
-            entityId: createdExpense.id,
-            metadata: {
-              payerId: dto.payerId,
-              totalAmountCents: totalAmount.toString(),
-              category: dto.category ?? null,
-              currency: dto.currency,
-            },
-          },
-        });
-
-        return tx.expense.findUniqueOrThrow({
-          where: { id: createdExpense.id },
-          include: { splits: true, receipt: true },
-        });
+        return createdExpense;
       });
     } catch (error) {
       if (idempotencyKey && this.isUniqueConstraintError(error)) {
@@ -146,33 +92,15 @@ export class ExpensesService {
       throw error;
     }
 
-    await this.redis.invalidateGroupCache(groupId);
-
-    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } })).map(
-      (member) => member.userId,
-    );
-    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
-      type: 'expense_created',
-      title: 'New expense added',
-      body: dto.description,
-      data: { groupId, expenseId: expense.id, notificationType: 'expense_created' },
-    });
-    this.realtime.emitToGroup(groupId, 'expense_created', {
-      groupId,
-      expenseId: expense.id,
-      payerId: expense.payerId,
-      totalAmountCents: expense.totalAmountCents.toString(),
-      category: expense.category,
-      currency: expense.currency,
-    });
-    incrementExpenseCreated(groupId);
-
+    await this.postCreateExpenseSideEffects(groupId, actorUserId, expense);
     return this.toExpenseDto(expense);
   }
 
   async listByGroup(groupId: string, cursor = 0, limit = 20): Promise<PaginatedExpensesResponseDto> {
     const safeCursor = Number.isFinite(cursor) && cursor >= 0 ? cursor : 0;
     const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 100) : 20;
+
+    await this.materializeDueRecurringExpenses(groupId);
 
     const cachedSummary = await this.redis.getGroupExpenseSummaryCache(groupId);
     let expenses: ExpenseDto[];
@@ -197,6 +125,18 @@ export class ExpensesService {
       items,
       nextCursor: end < expenses.length ? end : null,
     };
+  }
+
+  async listRecurringByGroup(groupId: string): Promise<RecurringExpenseDto[]> {
+    await this.materializeDueRecurringExpenses(groupId);
+
+    const rows = await this.prisma.recurringExpense.findMany({
+      where: { groupId, active: true },
+      include: { splits: true },
+      orderBy: [{ nextOccurrenceAt: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    return rows.map((row) => this.toRecurringExpenseDto(row));
   }
 
   async getById(id: string): Promise<ExpenseDto> {
@@ -281,7 +221,7 @@ export class ExpensesService {
     const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId: expense.groupId }, select: { userId: true } })).map(
       (member) => member.userId,
     );
-    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((id) => id !== actorUserId), {
+    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((userId) => userId !== actorUserId), {
       type: 'expense_deleted',
       title: 'Expense deleted',
       body: expense.description,
@@ -293,6 +233,276 @@ export class ExpensesService {
     });
 
     return { success: true };
+  }
+
+  async removeRecurring(id: string, actorUserId: string): Promise<{ success: true }> {
+    const recurringExpense = await this.prisma.recurringExpense.findUnique({
+      where: { id },
+      select: { id: true, groupId: true },
+    });
+
+    if (!recurringExpense) {
+      throw new NotFoundException('Recurring expense not found');
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId: recurringExpense.groupId,
+          userId: actorUserId,
+        },
+      },
+      select: { userId: true },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Actor is not a group member');
+    }
+
+    await this.prisma.recurringExpense.update({
+      where: { id },
+      data: { active: false },
+    });
+
+    return { success: true };
+  }
+
+  private validateAmountAndSplits(dto: CreateExpenseDto): void {
+    const totalAmount = BigInt(dto.totalAmountCents);
+    if (totalAmount <= 0n) {
+      throw new BadRequestException('Expense amount must be positive');
+    }
+    if (totalAmount > ExpensesService.MAX_EXPENSE_CENTS) {
+      throw new BadRequestException('Expense amount exceeds maximum allowed');
+    }
+
+    const owedSum = sumMoney(dto.splits.map((split) => split.owedAmountCents));
+    const paidSum = sumMoney(dto.splits.map((split) => split.paidAmountCents));
+    try {
+      assertMoneyEquality(owedSum, totalAmount, 'Total owed sum must equal total amount');
+      assertMoneyEquality(paidSum, totalAmount, 'Total paid sum must equal total amount');
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
+  }
+
+  private async validateExpenseMembers(groupId: string, actorUserId: string, dto: CreateExpenseDto): Promise<void> {
+    const memberIds = new Set<string>([actorUserId, dto.payerId, ...dto.splits.map((split) => split.userId)]);
+    const memberships = await this.prisma.groupMember.findMany({
+      where: {
+        groupId,
+        userId: { in: Array.from(memberIds) },
+      },
+      select: { userId: true },
+    });
+    const memberSet = new Set(memberships.map((member) => member.userId));
+
+    if (!memberSet.has(actorUserId)) {
+      throw new ForbiddenException('Actor is not a group member');
+    }
+
+    if (!memberSet.has(dto.payerId)) {
+      throw new BadRequestException('Payer must be a group member');
+    }
+
+    const invalidSplitUsers = dto.splits.filter((split) => !memberSet.has(split.userId));
+    if (invalidSplitUsers.length > 0) {
+      throw new BadRequestException('All split users must be group members');
+    }
+  }
+
+  private async createExpenseWithTransaction(
+    tx: Prisma.TransactionClient,
+    groupId: string,
+    actorUserId: string,
+    dto: CreateExpenseDto,
+    idempotencyKey: string | null,
+    createdAt?: Date,
+    recurringExpenseId?: string,
+  ) {
+    const totalAmount = BigInt(dto.totalAmountCents);
+
+    const createdExpense = await tx.expense.create({
+      data: {
+        groupId,
+        payerId: dto.payerId,
+        description: dto.description,
+        totalAmountCents: totalAmount,
+        currency: dto.currency,
+        category: dto.category ?? null,
+        idempotencyKey,
+        createdAt,
+      },
+    });
+
+    await tx.split.createMany({
+      data: dto.splits.map((split) => ({
+        expenseId: createdExpense.id,
+        userId: split.userId,
+        owedAmountCents: BigInt(split.owedAmountCents),
+        paidAmountCents: BigInt(split.paidAmountCents),
+      })),
+    });
+
+    const deltas = calculateBalanceDeltas(dto.payerId, dto.splits);
+    for (const delta of deltas) {
+      await this.balancesService.adjustBalance(
+        tx as unknown as Prisma.TransactionClient,
+        groupId,
+        delta.userId,
+        delta.counterpartyUserId,
+        delta.delta,
+      );
+    }
+
+    await tx.activity.create({
+      data: {
+        groupId,
+        actorUserId,
+        type: 'expense_created',
+        entityId: createdExpense.id,
+        metadata: {
+          payerId: dto.payerId,
+          totalAmountCents: totalAmount.toString(),
+          category: dto.category ?? null,
+          currency: dto.currency,
+          recurringExpenseId: recurringExpenseId ?? null,
+        },
+      },
+    });
+
+    return tx.expense.findUniqueOrThrow({
+      where: { id: createdExpense.id },
+      include: { splits: true, receipt: true },
+    });
+  }
+
+  private async materializeDueRecurringExpenses(groupId: string): Promise<void> {
+    const dueTemplates = await this.prisma.recurringExpense.findMany({
+      where: {
+        groupId,
+        active: true,
+        nextOccurrenceAt: { lte: new Date() },
+      },
+      include: { splits: true },
+      orderBy: { nextOccurrenceAt: 'asc' },
+      take: 10,
+    });
+
+    if (dueTemplates.length === 0) {
+      return;
+    }
+
+    for (const template of dueTemplates) {
+      const createdExpenses = await this.prisma.$transaction(async (tx) => {
+        const current = await tx.recurringExpense.findUnique({
+          where: { id: template.id },
+          include: { splits: true },
+        });
+
+        if (!current || !current.active) {
+          return [] as Array<Awaited<ReturnType<ExpensesService['createExpenseWithTransaction']>>>;
+        }
+
+        const now = new Date();
+        const generated: Array<Awaited<ReturnType<ExpensesService['createExpenseWithTransaction']>>> = [];
+        let occurrence = current.nextOccurrenceAt;
+        let count = 0;
+
+        while (occurrence <= now && count < ExpensesService.MAX_RECURRING_CATCH_UP) {
+          const dto: CreateExpenseDto = {
+            payerId: current.payerId,
+            description: current.description,
+            totalAmountCents: current.totalAmountCents.toString(),
+            currency: current.currency as CreateExpenseDto['currency'],
+            category: (current.category ?? undefined) as CreateExpenseDto['category'],
+            splits: current.splits.map((split) => ({
+              userId: split.userId,
+              owedAmountCents: split.owedAmountCents.toString(),
+              paidAmountCents: split.paidAmountCents.toString(),
+            })),
+          };
+
+          const expense = await this.createExpenseWithTransaction(
+            tx,
+            current.groupId,
+            current.createdBy,
+            dto,
+            null,
+            occurrence,
+            current.id,
+          );
+          generated.push(expense);
+          occurrence = this.computeNextOccurrence(current.frequency as RecurringExpenseFrequency, occurrence);
+          count += 1;
+        }
+
+        if (generated.length > 0) {
+          await tx.recurringExpense.update({
+            where: { id: current.id },
+            data: {
+              nextOccurrenceAt: occurrence,
+              lastGeneratedAt: generated[generated.length - 1].createdAt,
+            },
+          });
+        }
+
+        return generated;
+      });
+
+      for (const expense of createdExpenses) {
+        await this.postCreateExpenseSideEffects(groupId, template.createdBy, expense);
+      }
+    }
+  }
+
+  private async postCreateExpenseSideEffects(
+    groupId: string,
+    actorUserId: string,
+    expense: {
+      id: string;
+      groupId: string;
+      payerId: string;
+      description: string;
+      totalAmountCents: bigint;
+      currency: string;
+      category: string | null;
+    },
+  ): Promise<void> {
+    await this.redis.invalidateGroupCache(groupId);
+
+    const notifyMemberIds = (await this.prisma.groupMember.findMany({ where: { groupId }, select: { userId: true } })).map(
+      (member) => member.userId,
+    );
+    await this.notificationsService.sendPushNotification(notifyMemberIds.filter((userId) => userId !== actorUserId), {
+      type: 'expense_created',
+      title: 'New expense added',
+      body: expense.description,
+      data: { groupId, expenseId: expense.id, notificationType: 'expense_created' },
+    });
+    this.realtime.emitToGroup(groupId, 'expense_created', {
+      groupId,
+      expenseId: expense.id,
+      payerId: expense.payerId,
+      totalAmountCents: expense.totalAmountCents.toString(),
+      category: expense.category,
+      currency: expense.currency,
+    });
+    incrementExpenseCreated(groupId);
+  }
+
+  private computeNextOccurrence(frequency: RecurringExpenseFrequency, base: Date): Date {
+    const next = new Date(base);
+    if (frequency === 'daily') {
+      next.setUTCDate(next.getUTCDate() + 1);
+      return next;
+    }
+    if (frequency === 'weekly') {
+      next.setUTCDate(next.getUTCDate() + 7);
+      return next;
+    }
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    return next;
   }
 
   private toExpenseDto(expense: {
@@ -326,6 +536,48 @@ export class ExpensesService {
       createdAt: expense.createdAt.toISOString(),
       splits: expense.splits.map((split) => ({
         id: split.id,
+        userId: split.userId,
+        owedAmountCents: split.owedAmountCents.toString(),
+        paidAmountCents: split.paidAmountCents.toString(),
+      })),
+    };
+  }
+
+  private toRecurringExpenseDto(recurringExpense: {
+    id: string;
+    groupId: string;
+    payerId: string;
+    createdBy: string;
+    description: string;
+    totalAmountCents: bigint;
+    currency: string;
+    category: string | null;
+    frequency: string;
+    nextOccurrenceAt: Date;
+    lastGeneratedAt: Date | null;
+    active: boolean;
+    createdAt: Date;
+    splits: Array<{
+      userId: string;
+      owedAmountCents: bigint;
+      paidAmountCents: bigint;
+    }>;
+  }): RecurringExpenseDto {
+    return {
+      id: recurringExpense.id,
+      groupId: recurringExpense.groupId,
+      payerId: recurringExpense.payerId,
+      createdBy: recurringExpense.createdBy,
+      description: recurringExpense.description,
+      totalAmountCents: recurringExpense.totalAmountCents.toString(),
+      currency: recurringExpense.currency as RecurringExpenseDto['currency'],
+      category: recurringExpense.category as RecurringExpenseDto['category'],
+      frequency: recurringExpense.frequency as RecurringExpenseDto['frequency'],
+      nextOccurrenceAt: recurringExpense.nextOccurrenceAt.toISOString(),
+      lastGeneratedAt: recurringExpense.lastGeneratedAt?.toISOString() ?? null,
+      active: recurringExpense.active,
+      createdAt: recurringExpense.createdAt.toISOString(),
+      splits: recurringExpense.splits.map((split) => ({
         userId: split.userId,
         owedAmountCents: split.owedAmountCents.toString(),
         paidAmountCents: split.paidAmountCents.toString(),

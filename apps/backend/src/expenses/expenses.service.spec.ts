@@ -19,6 +19,9 @@ describe('ExpensesService', () => {
       expense: {
         findUnique: jest.fn().mockResolvedValue(existingExpense),
       },
+      groupMember: {
+        findMany: jest.fn().mockResolvedValue([{ userId: 'payer-1' }]),
+      },
     };
 
     const service = new ExpensesService(prisma, {} as any, {} as any, {} as any, {} as any, {} as any);

@@ -26,6 +26,11 @@ export class ExpensesController {
     return this.expensesService.listByGroup(groupId, Number(cursor), Number(limit));
   }
 
+  @Get('groups/:id/recurring-expenses')
+  listRecurringByGroup(@Param('id') groupId: string) {
+    return this.expensesService.listRecurringByGroup(groupId);
+  }
+
   @Get('expenses/:id')
   getById(@Param('id') id: string) {
     return this.expensesService.getById(id);
@@ -39,5 +44,10 @@ export class ExpensesController {
   @Delete('expenses/:id')
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.expensesService.remove(id, user.sub);
+  }
+
+  @Delete('recurring-expenses/:id')
+  removeRecurring(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.expensesService.removeRecurring(id, user.sub);
   }
 }

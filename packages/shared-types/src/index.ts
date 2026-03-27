@@ -3,6 +3,8 @@ export const EXPENSE_CATEGORIES = ['FOOD', 'TRAVEL', 'UTILITIES', 'GROCERIES', '
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export const EXPENSE_SPLIT_TYPES = ['equal', 'exact', 'percentage'] as const;
 export type ExpenseSplitType = (typeof EXPENSE_SPLIT_TYPES)[number];
+export const RECURRING_EXPENSE_FREQUENCIES = ['daily', 'weekly', 'monthly'] as const;
+export type RecurringExpenseFrequency = (typeof RECURRING_EXPENSE_FREQUENCIES)[number];
 
 export interface AuthUserDto {
   id: string;
@@ -99,12 +101,17 @@ export interface CreateExpenseSplitDto {
   paidAmountCents: string;
 }
 
+export interface RecurringExpenseConfigDto {
+  frequency: RecurringExpenseFrequency;
+}
+
 export interface CreateExpenseRequestDto {
   payerId: string;
   description: string;
   totalAmountCents: string;
   currency: CurrencyCode;
   category?: ExpenseCategory;
+  recurring?: RecurringExpenseConfigDto;
   splits: CreateExpenseSplitDto[];
 }
 
@@ -131,6 +138,23 @@ export interface ExpenseDto {
   receiptFileKey?: string | null;
   createdAt: string;
   splits?: SplitDto[];
+}
+
+export interface RecurringExpenseDto {
+  id: string;
+  groupId: string;
+  payerId: string;
+  createdBy: string;
+  description: string;
+  totalAmountCents: string;
+  currency: CurrencyCode;
+  category?: ExpenseCategory | null;
+  frequency: RecurringExpenseFrequency;
+  nextOccurrenceAt: string;
+  lastGeneratedAt?: string | null;
+  active: boolean;
+  createdAt: string;
+  splits: CreateExpenseSplitDto[];
 }
 
 export interface PaginatedExpensesResponseDto {
