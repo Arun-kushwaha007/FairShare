@@ -6,6 +6,7 @@ import { JwtPayload } from '../auth/types/auth.types';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { RemindSettlementDto } from './dto/remind-settlement.dto';
 import { UpdateGroupDefaultSplitDto } from './dto/update-group-default-split.dto';
 
 @Controller('groups')
@@ -52,5 +53,11 @@ export class GroupsController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   invite(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: InviteMemberDto) {
     return this.groupsService.invite(id, user.sub, dto);
+  }
+
+  @Post(':id/remind-settlement')
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  remindSettlement(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: RemindSettlementDto) {
+    return this.groupsService.remindSettlement(id, user.sub, dto);
   }
 }

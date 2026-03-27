@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { AppConfigService } from '../config/app-config.service';
+import { NotificationType } from '../notifications/notifications.service';
 import { NOTIFICATION_QUEUE, PAYMENT_WEBHOOKS_QUEUE, RECEIPT_PROCESSING_QUEUE } from './jobs.constants';
 
 const MAX_REDIS_RETRIES = 3;
@@ -24,7 +25,7 @@ export class JobsQueueService implements OnModuleDestroy {
   async enqueueNotification(payload: {
     userIds: string[];
     payload: {
-      type: 'expense_created' | 'expense_deleted' | 'settlement_created' | 'group_invite';
+      type: NotificationType;
       title: string;
       body: string;
       data?: Record<string, unknown>;

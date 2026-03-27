@@ -43,6 +43,12 @@ export interface InviteMemberRequestDto {
   email: string;
 }
 
+export interface RemindSettlementRequestDto {
+  payerId: string;
+  receiverId: string;
+  amountCents: string;
+}
+
 export interface GroupMemberDto {
   id: string;
   userId: string;

@@ -9,7 +9,7 @@ const MAX_REDIS_RETRIES = 3;
 const RETRY_DELAY_MS = 250;
 const MAX_RETRY_DELAY_MS = 1000;
 
-export type NotificationType = 'expense_created' | 'expense_deleted' | 'settlement_created' | 'group_invite';
+export type NotificationType = 'expense_created' | 'expense_deleted' | 'settlement_created' | 'settlement_reminder' | 'group_invite';
 
 type NotificationEventPayload = {
   type: NotificationType;

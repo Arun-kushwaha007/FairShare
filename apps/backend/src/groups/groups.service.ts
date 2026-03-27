@@ -1,5 +1,11 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { GroupDefaultSplitDto, GroupDto, GroupMemberSummaryDto, GroupSummaryDto } from '@fairshare/shared-types';
+import {
+  GroupDefaultSplitDto,
+  GroupDto,
+  GroupMemberSummaryDto,
+  GroupSummaryDto,
+  RemindSettlementRequestDto,
+} from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -352,6 +358,44 @@ export class GroupsService {
       groupId,
       userId: user.id,
       email: user.email,
+    });
+
+    return { success: true };
+  }
+
+  async remindSettlement(groupId: string, actorUserId: string, dto: RemindSettlementRequestDto): Promise<{ success: true }> {
+    await this.assertMembership(groupId, actorUserId);
+
+    const memberRecords = await this.prisma.groupMember.findMany({
+      where: {
+        groupId,
+        userId: {
+          in: [actorUserId, dto.payerId, dto.receiverId],
+        },
+      },
+      include: { user: true },
+    });
+
+    const membersById = new Map(memberRecords.map((member) => [member.userId, member]));
+    if (!membersById.has(dto.payerId) || !membersById.has(dto.receiverId) || !membersById.has(actorUserId)) {
+      throw new ForbiddenException('Reminder participants must belong to the group');
+    }
+
+    const amount = (Number(dto.amountCents) / 100).toFixed(2);
+    const receiverName = membersById.get(dto.receiverId)?.user.name ?? 'group member';
+    const actorName = membersById.get(actorUserId)?.user.name ?? 'Someone';
+
+    await this.notificationsService.sendPushNotification([dto.payerId], {
+      type: 'settlement_reminder',
+      title: 'Settlement reminder',
+      body: `${actorName} reminded you to pay ${receiverName} ${amount}`,
+      data: {
+        groupId,
+        payerId: dto.payerId,
+        receiverId: dto.receiverId,
+        amountCents: dto.amountCents,
+        notificationType: 'settlement_reminder',
+      },
     });
 
     return { success: true };
