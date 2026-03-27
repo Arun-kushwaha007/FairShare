@@ -7,12 +7,14 @@ import { groupService } from '../services/group.service';
 jest.mock('../services/group.service', () => ({
   groupService: {
     members: jest.fn(),
+    get: jest.fn(),
   },
 }));
 
 describe('AddExpenseScreen', () => {
   it('shows validation error when no payer is available', async () => {
     (groupService.members as jest.Mock).mockResolvedValueOnce([]);
+    (groupService.get as jest.Mock).mockResolvedValueOnce({ id: 'g1', name: 'Trip', currency: 'USD' });
 
     const { getByText, getByTestId } = render(
       <PaperProvider>

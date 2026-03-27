@@ -12,9 +12,10 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   style?: StyleProp<ViewStyle>;
   loading?: boolean;
+  testID?: string;
 }
 
-export function Button({ children, onPress, variant = 'primary', style, loading }: ButtonProps) {
+export function Button({ children, onPress, variant = 'primary', style, loading, testID }: ButtonProps) {
   const theme = useAppTheme();
   const { colors, shadows } = theme;
   const scale = useSharedValue(1);
@@ -88,6 +89,7 @@ export function Button({ children, onPress, variant = 'primary', style, loading 
       }}
       style={[styles.wrapper, style]}
       disabled={loading}
+      testID={testID}
     >
       {v.gradient ? (
         <LinearGradient

@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, FadeInDown } from 'react-native-reanimated';
-import type { GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, type ExpenseCategory, type GroupMemberSummaryDto } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { groupService } from '../services/group.service';
 import type { GroupDto } from '@fairshare/shared-types';
@@ -22,6 +22,15 @@ import { Avatar } from '../components/ui/Avatar';
 type FormData = {
   description: string;
   amountCents: string;
+};
+
+const categoryLabels: Record<ExpenseCategory, string> = {
+  FOOD: 'Food',
+  TRAVEL: 'Travel',
+  UTILITIES: 'Utilities',
+  GROCERIES: 'Groceries',
+  ENTERTAINMENT: 'Entertainment',
+  OTHER: 'Other',
 };
 
 const STEPS = [
@@ -46,6 +55,7 @@ export function AddExpenseScreen({
   const [group, setGroup] = React.useState<GroupDto | null>(null);
   const [payerId, setPayerId] = React.useState<string>('');
   const [splitType, setSplitType] = React.useState<SplitType>('equal');
+  const [category, setCategory] = React.useState<ExpenseCategory | ''>('');
   const [selectedParticipantIds, setSelectedParticipantIds] = React.useState<string[]>([]);
   const [exactByUser, setExactByUser] = React.useState<Record<string, string>>({});
   const [percentagesByUser, setPercentagesByUser] = React.useState<Record<string, string>>({});
@@ -54,7 +64,7 @@ export function AddExpenseScreen({
   const [currentStep, setCurrentStep] = React.useState(0);
   const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward');
   const toast = useToastStore((state) => state.show);
-  const { colors, typography, isDark } = useAppTheme();
+  const { colors, typography } = useAppTheme();
 
   const watchedDescription = watch('description');
   const watchedAmount = watch('amountCents');
@@ -138,6 +148,7 @@ export function AddExpenseScreen({
         description: values.description,
         totalAmountCents: String(totalAmount),
         currency: group?.currency ?? 'USD',
+        category: category || undefined,
         splits: selectedParticipantIds.map((userId) => ({
           userId,
           owedAmountCents: String(shares[userId] ?? 0),
@@ -148,7 +159,8 @@ export function AddExpenseScreen({
       setSuccessOpen(true);
       setTimeout(() => {
         setSuccessOpen(false);
-        toast('Bet! Split recorded 🤝');
+        setCategory('');
+        toast('Bet! Split recorded');
         navigation.goBack();
       }, 700);
     } catch {
@@ -174,6 +186,7 @@ export function AddExpenseScreen({
                   label="Description"
                   value={value}
                   onChangeText={onChange}
+                  testID="description-input"
                   mode="outlined"
                   outlineStyle={{ borderRadius: 16 }}
                   style={styles.input}
@@ -188,14 +201,47 @@ export function AddExpenseScreen({
                   label="Amount"
                   value={value}
                   onChangeText={onChange}
+                  testID="amount-input"
                   keyboardType="numeric"
                   mode="outlined"
                   outlineStyle={{ borderRadius: 16 }}
                   style={styles.input}
-                  left={<TextInput.Affix text={group?.currency === 'INR' ? '₹' : '$'} />}
+                  left={<TextInput.Affix text={group?.currency === 'INR' ? 'Rs' : '$'} />}
                 />
               )}
             />
+            <View style={styles.categorySection}>
+              <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Category</Text>
+              <View style={styles.categoryGrid}>
+                {EXPENSE_CATEGORIES.map((value) => {
+                  const selected = category === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() => setCategory((current) => (current === value ? '' : value))}
+                      activeOpacity={0.8}
+                    >
+                      <Card
+                        variant={selected ? 'elevated' : 'default'}
+                        style={[
+                          styles.categoryCard,
+                          selected && { borderColor: colors.primary, borderWidth: 1.5 },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.categoryLabel,
+                            { color: selected ? colors.primary : colors.text_primary },
+                          ]}
+                        >
+                          {categoryLabels[value]}
+                        </Text>
+                      </Card>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </Animated.View>
         );
 
@@ -214,7 +260,7 @@ export function AddExpenseScreen({
                       variant={payerId === member.userId ? 'elevated' : 'default'}
                       style={[
                         styles.memberCard,
-                        payerId === member.userId && { borderColor: colors.primary, borderWidth: 1.5 }
+                        payerId === member.userId && { borderColor: colors.primary, borderWidth: 1.5 },
                       ]}
                     >
                       <Avatar name={member.name} size={40} />
@@ -244,9 +290,7 @@ export function AddExpenseScreen({
                       key={member.memberId}
                       onPress={() => {
                         setSelectedParticipantIds((prev) =>
-                          selected
-                            ? prev.filter((id) => id !== member.userId)
-                            : [...prev, member.userId],
+                          selected ? prev.filter((id) => id !== member.userId) : [...prev, member.userId],
                         );
                       }}
                       activeOpacity={0.8}
@@ -255,7 +299,7 @@ export function AddExpenseScreen({
                         variant={selected ? 'elevated' : 'default'}
                         style={[
                           styles.memberCard,
-                          selected && { borderColor: colors.primary, borderWidth: 1.5 }
+                          selected && { borderColor: colors.primary, borderWidth: 1.5 },
                         ]}
                       >
                         <Avatar name={member.name} size={40} />
@@ -300,46 +344,56 @@ export function AddExpenseScreen({
         const shares = totalAmount > 0 ? buildShares(totalAmount) : {};
         return (
           <Animated.View key="step4" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-             <Card variant="elevated" style={styles.reviewCard}>
-                <View style={styles.reviewItem}>
-                  <Text style={[typography.caption, { color: colors.muted }]}>DESCRIPTION</Text>
-                  <Text style={[typography.h3, { color: colors.text_primary }]}>{watchedDescription}</Text>
-                </View>
-                <View style={styles.reviewItem}>
-                  <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
-                  <Text style={[typography.h1, { color: colors.primary }]}>
-                    {group?.currency === 'INR' ? '₹' : '$'}{(totalAmount / 100).toFixed(2)}
+            <Card variant="elevated" style={styles.reviewCard}>
+              <View style={styles.reviewItem}>
+                <Text style={[typography.caption, { color: colors.muted }]}>DESCRIPTION</Text>
+                <Text style={[typography.h3, { color: colors.text_primary }]}>{watchedDescription}</Text>
+              </View>
+              <View style={styles.reviewItem}>
+                <Text style={[typography.caption, { color: colors.muted }]}>CATEGORY</Text>
+                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                  {category ? categoryLabels[category] : 'Uncategorized'}
+                </Text>
+              </View>
+              <View style={styles.reviewItem}>
+                <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
+                <Text style={[typography.h1, { color: colors.primary }]}>
+                  {group?.currency === 'INR' ? 'Rs' : '$'}{(totalAmount / 100).toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.reviewItem}>
+                <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
+                <View style={styles.payerRow}>
+                  <Avatar name={payerMember?.name ?? 'U'} size={24} />
+                  <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                    {payerMember?.name ?? 'Unknown'}
                   </Text>
                 </View>
-                <View style={styles.reviewItem}>
-                  <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
-                  <View style={styles.payerRow}>
-                    <Avatar name={payerMember?.name ?? 'U'} size={24} />
-                    <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
-                      {payerMember?.name ?? 'Unknown'}
-                    </Text>
-                  </View>
-                </View>
+              </View>
 
-                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                <Text style={[typography.caption, { color: colors.muted, marginBottom: spacing.md }]}>SPLITS ({splitType.toUpperCase()})</Text>
-                {selectedParticipantIds.map((userId) => {
-                  const member = members.find((m) => m.userId === userId);
-                  const shareAmount = shares[userId] ?? 0;
-                  return (
-                    <View key={userId} style={styles.splitRow}>
-                      <View style={styles.splitUserCol}>
-                        <Avatar name={member?.name ?? 'U'} size={20} />
-                        <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>{member?.name ?? 'Unknown'}</Text>
-                      </View>
-                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
-                        {group?.currency === 'INR' ? '₹' : '$'}{(shareAmount / 100).toFixed(2)}
+              <Text style={[typography.caption, { color: colors.muted, marginBottom: spacing.md }]}>
+                SPLITS ({splitType.toUpperCase()})
+              </Text>
+              {selectedParticipantIds.map((userId) => {
+                const member = members.find((m) => m.userId === userId);
+                const shareAmount = shares[userId] ?? 0;
+                return (
+                  <View key={userId} style={styles.splitRow}>
+                    <View style={styles.splitUserCol}>
+                      <Avatar name={member?.name ?? 'U'} size={20} />
+                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>
+                        {member?.name ?? 'Unknown'}
                       </Text>
                     </View>
-                  );
-                })}
-             </Card>
+                    <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
+                      {group?.currency === 'INR' ? 'Rs' : '$'}{(shareAmount / 100).toFixed(2)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </Card>
           </Animated.View>
         );
       }
@@ -353,12 +407,12 @@ export function AddExpenseScreen({
       <View style={styles.header}>
         <View style={styles.progressRow}>
           {STEPS.map((_, i) => (
-            <View 
-              key={i} 
+            <View
+              key={i}
               style={[
-                styles.progressDot, 
-                { backgroundColor: i <= currentStep ? colors.primary : colors.border, width: i === currentStep ? 24 : 8 }
-              ]} 
+                styles.progressDot,
+                { backgroundColor: i <= currentStep ? colors.primary : colors.border, width: i === currentStep ? 24 : 8 },
+              ]}
             />
           ))}
         </View>
@@ -369,9 +423,7 @@ export function AddExpenseScreen({
         </View>
       </View>
 
-      <View style={{ flex: 1 }}>
-        {renderStep()}
-      </View>
+      <View style={{ flex: 1 }}>{renderStep()}</View>
 
       <View style={styles.bottomSection}>
         {inlineError ? (
@@ -382,16 +434,18 @@ export function AddExpenseScreen({
         ) : null}
 
         <View style={styles.footer}>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onPress={currentStep === 0 ? () => navigation.goBack() : goBack}
+            testID={currentStep === 0 ? 'cancel-button' : 'back-button'}
             style={{ flex: 1 }}
           >
             {currentStep === 0 ? 'Cancel' : 'Back'}
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onPress={currentStep === STEPS.length - 1 ? onSubmit : goNext}
+            testID={currentStep === STEPS.length - 1 ? 'submit-button' : 'next-button'}
             style={{ flex: 2 }}
           >
             {currentStep === STEPS.length - 1 ? 'Confirm & Create' : 'Next'}
@@ -408,7 +462,7 @@ export function AddExpenseScreen({
               loop={false}
               style={{ width: 140, height: 140 }}
             />
-            <Text style={[typography.h2, { color: colors.text_primary }]}>No cap, success! ✨</Text>
+            <Text style={[typography.h2, { color: colors.text_primary }]}>No cap, success!</Text>
             <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center' }]}>
               The expense has been successfully split.
             </Text>
@@ -446,6 +500,22 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: 'transparent',
+  },
+  categorySection: {
+    gap: spacing.sm,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  categoryCard: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  categoryLabel: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   memberCard: {
     flexDirection: 'row',
