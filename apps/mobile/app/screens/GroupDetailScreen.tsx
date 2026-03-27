@@ -1,8 +1,10 @@
 import React from 'react';
-import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { ExpenseDto, GroupMemberSummaryDto, GroupDto, RecurringExpenseDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
@@ -40,6 +42,7 @@ export function GroupDetailScreen({
   navigation: { navigate: (route: string, params?: any) => void };
 }) {
   const [loading, setLoading] = React.useState(true);
+  const [exporting, setExporting] = React.useState(false);
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
   const [group, setGroup] = React.useState<GroupDto | null>(null);
@@ -199,6 +202,37 @@ export function GroupDetailScreen({
     }
   };
 
+  const handleExportCsv = async () => {
+    try {
+      setExporting(true);
+      const csv = await expenseService.exportCsv(route.params.groupId);
+      const fileName = `fairshare-${route.params.groupId}.csv`;
+      const targetPath = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(targetPath, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(targetPath, {
+          mimeType: 'text/csv',
+          dialogTitle: 'Export expenses CSV',
+          UTI: 'public.comma-separated-values-text',
+        });
+      } else {
+        await Share.share({
+          title: 'FairShare CSV Export',
+          message: csv,
+        });
+      }
+
+      toast('CSV exported');
+    } catch {
+      toast('Failed to export CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) return <SkeletonList rows={5} />;
 
   const renderExpenseSection = (title: string, expenseGroup: ExpenseDto[], delay: number) => {
@@ -271,7 +305,7 @@ export function GroupDetailScreen({
           ) : (
             <Card style={styles.recurringEmptyCard}>
               <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>No recurring bills yet</Text>
-              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
                 Turn on recurring when you add rent, subscriptions, or utilities.
               </Text>
             </Card>
@@ -300,16 +334,24 @@ export function GroupDetailScreen({
           <Button
             variant="primary"
             onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
-            style={{ flex: 1 }}
+            style={styles.actionButton}
           >
             Add Expense
           </Button>
           <Button
             variant="secondary"
             onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}
-            style={{ flex: 1 }}
+            style={styles.actionButton}
           >
             Settle Up
+          </Button>
+          <Button
+            variant="secondary"
+            onPress={() => void handleExportCsv()}
+            loading={exporting}
+            style={styles.actionButton}
+          >
+            Export CSV
           </Button>
         </View>
 
@@ -414,8 +456,13 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
     marginBottom: spacing.xl,
+  },
+  actionButton: {
+    flex: 1,
+    minWidth: 120,
   },
   deleteAction: {
     width: 80,
@@ -452,3 +499,4 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
+

@@ -22,6 +22,12 @@ export const expenseService = {
         params: { cursor, limit },
       })
     ).data,
+  exportCsv: async (groupId: string) =>
+    (
+      await api.get<string>(`/groups/${groupId}/expenses/export.csv`, {
+        responseType: 'text',
+      })
+    ).data,
   listRecurring: async (groupId: string) => (await api.get<RecurringExpenseDto[]>(`/groups/${groupId}/recurring-expenses`)).data,
   get: async (expenseId: string) => (await api.get<ExpenseDto>(`/expenses/${expenseId}`)).data,
   update: async (expenseId: string, payload: UpdateExpenseRequestDto) =>
