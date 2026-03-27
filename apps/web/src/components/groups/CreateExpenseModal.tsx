@@ -10,6 +10,8 @@ import {
   ExpenseSplitType,
   GroupDefaultSplitDto,
   GroupMemberSummaryDto,
+  RECURRING_EXPENSE_FREQUENCIES,
+  RecurringExpenseFrequency,
 } from '@fairshare/shared-types';
 import { Sparkles, X } from 'lucide-react';
 import { createExpenseAction, updateGroupDefaultSplitAction } from '../../lib/actions';
@@ -35,6 +37,12 @@ const categoryLabels: Record<ExpenseCategory, string> = {
   OTHER: 'Other',
 };
 
+const recurringLabels: Record<RecurringExpenseFrequency, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
 export function CreateExpenseModal({
   groupId,
   currency,
@@ -49,6 +57,8 @@ export function CreateExpenseModal({
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory | ''>('');
+  const [recurringEnabled, setRecurringEnabled] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState<RecurringExpenseFrequency>('monthly');
   const [payerId, setPayerId] = useState(defaultPayer);
   const [splitType, setSplitType] = useState<ExpenseSplitType>('equal');
   const [participants, setParticipants] = useState<string[]>(allMemberIds);
@@ -65,6 +75,8 @@ export function CreateExpenseModal({
     }
 
     setPayerId(defaultPayer);
+    setRecurringEnabled(false);
+    setRecurringFrequency('monthly');
 
     const fallbackParticipants = allMemberIds;
     if (!defaultSplitPreference) {
@@ -187,6 +199,7 @@ export function CreateExpenseModal({
         totalAmountCents: String(totalCents),
         currency,
         category: category || undefined,
+        recurring: recurringEnabled ? { frequency: recurringFrequency } : undefined,
         splits,
       });
 
@@ -200,6 +213,8 @@ export function CreateExpenseModal({
       setDescription('');
       setAmount('');
       setCategory('');
+      setRecurringEnabled(false);
+      setRecurringFrequency('monthly');
     } catch (err) {
       setError((err as Error).message || 'Unable to create expense');
     } finally {
@@ -290,6 +305,40 @@ export function CreateExpenseModal({
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 p-4 space-y-3">
+                    <label className="flex items-start justify-between gap-4 cursor-pointer">
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Recurring bill</p>
+                        <p className="text-xs font-medium text-[var(--fs-text-muted)]">Useful for rent, subscriptions, utilities, and any bill that repeats on a fixed cadence.</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={recurringEnabled}
+                        onChange={(event) => setRecurringEnabled(event.target.checked)}
+                        className="mt-1 h-4 w-4 accent-[var(--fs-primary)]"
+                      />
+                    </label>
+                    {recurringEnabled ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        {RECURRING_EXPENSE_FREQUENCIES.map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setRecurringFrequency(value)}
+                            className={[
+                              'rounded-xl border px-3 py-2 text-sm font-bold transition-colors',
+                              recurringFrequency === value
+                                ? 'border-[var(--fs-primary)] bg-[var(--fs-primary)]/10 text-[var(--fs-primary)]'
+                                : 'border-[var(--fs-border)] bg-[var(--fs-card)] text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)]',
+                            ].join(' ')}
+                          >
+                            {recurringLabels[value]}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="space-y-2">
@@ -412,7 +461,7 @@ export function CreateExpenseModal({
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-2 text-[12px] font-semibold text-[var(--fs-text-muted)]">
                       <Sparkles className="w-4 h-4 text-[var(--fs-primary)]" />
-                      <span>Totals auto-balance across participants.</span>
+                      <span>{recurringEnabled ? `This will repeat ${recurringLabels[recurringFrequency].toLowerCase()}.` : 'Totals auto-balance across participants.'}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button

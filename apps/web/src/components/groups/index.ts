@@ -10,3 +10,4 @@ export * from './ExpenseDetailCard';
 export * from './CreateGroupModal';
 export * from './CreateGroupButton';
 export * from './GroupSummaryPanel';
+export * from './RecurringExpenseList';

@@ -7,6 +7,7 @@ import {
   ExpenseDto,
   GroupDto,
   PresignedReceiptUrlResponseDto,
+  RecurringExpenseDto,
   RemindSettlementRequestDto,
   SettlementDto,
   UpdateExpenseRequestDto,
@@ -225,6 +226,46 @@ export async function deleteExpenseAction(expenseId: string) {
 
   if (!response.ok) {
     return { success: false, message: data?.message ?? 'Failed to delete expense' };
+  }
+
+  return { success: true };
+}
+
+export async function listRecurringExpensesAction(groupId: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/recurring-expenses`, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to load recurring expenses' };
+  }
+
+  return { success: true, recurringExpenses: data as RecurringExpenseDto[] };
+}
+
+export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/recurring-expenses/${recurringExpenseId}`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to remove recurring expense' };
   }
 
   return { success: true };

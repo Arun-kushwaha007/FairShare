@@ -1,9 +1,18 @@
-import { AuthUserDto, BalanceDto, ExpenseDto, GroupDto, GroupMemberSummaryDto, GroupSummaryDto, PaginatedExpensesResponseDto } from '@fairshare/shared-types';
+import {
+  AuthUserDto,
+  BalanceDto,
+  ExpenseDto,
+  GroupDto,
+  GroupMemberSummaryDto,
+  GroupSummaryDto,
+  PaginatedExpensesResponseDto,
+  RecurringExpenseDto,
+} from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { DashboardLayout } from '../../../../src/components/layout';
-import { ExpenseTable, GroupActions, GroupSummaryPanel, MemberList } from '../../../../src/components/groups';
+import { ExpenseTable, GroupActions, GroupSummaryPanel, MemberList, RecurringExpenseList } from '../../../../src/components/groups';
 import { backendFetch } from '../../../../src/lib/backend';
 
 interface GroupDetailPageProps {
@@ -16,13 +25,14 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
   const { groupId } = params;
 
   try {
-    const [group, members, expenses, summary, balances, currentUser] = await Promise.all([
+    const [group, members, expenses, summary, balances, currentUser, recurringExpenses] = await Promise.all([
       backendFetch<GroupDto>(`/groups/${groupId}`),
       backendFetch<GroupMemberSummaryDto[]>(`/groups/${groupId}/members`),
       backendFetch<PaginatedExpensesResponseDto>(`/groups/${groupId}/expenses?limit=50`),
       backendFetch<GroupSummaryDto>(`/groups/${groupId}/summary`),
       backendFetch<BalanceDto[]>(`/groups/${groupId}/balances`),
       backendFetch<AuthUserDto>('/users/me'),
+      backendFetch<RecurringExpenseDto[]>(`/groups/${groupId}/recurring-expenses`),
     ]);
 
     const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
@@ -67,6 +77,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 currentUserId={currentUser.id}
                 members={members}
               />
+              <RecurringExpenseList recurringExpenses={recurringExpenses} members={members} currency={group.currency} />
               <ExpenseTable expenses={expenses.items as ExpenseDto[]} members={members} />
             </div>
 
@@ -92,4 +103,3 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     return notFound();
   }
 }
-
