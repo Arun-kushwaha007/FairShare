@@ -8,6 +8,7 @@ import {
   GroupDto,
   PresignedReceiptUrlResponseDto,
   SettlementDto,
+  UpdateExpenseRequestDto,
   UpdateGroupDefaultSplitRequestDto,
 } from '@fairshare/shared-types';
 import { cookies } from 'next/headers';
@@ -58,6 +59,31 @@ export async function createExpenseAction(groupId: string, payload: CreateExpens
     return {
       success: false,
       message: data?.message ?? 'Failed to create expense',
+    };
+  }
+
+  return { success: true, expense: data as ExpenseDto };
+}
+
+export async function updateExpenseAction(expenseId: string, payload: UpdateExpenseRequestDto) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/expenses/${expenseId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      message: data?.message ?? 'Failed to update expense',
     };
   }
 

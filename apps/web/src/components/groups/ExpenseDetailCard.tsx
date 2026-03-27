@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
+import { Pencil } from 'lucide-react';
 import { ExpenseDeleteButton } from './ExpenseDeleteButton';
+import { updateExpenseAction } from '../../lib/actions';
+import { useToast } from '../ui/Toaster';
 
 const ReceiptUploadModal = dynamic(() => import('./ReceiptUploadModal').then((mod) => mod.ReceiptUploadModal), {
   ssr: false,
@@ -21,12 +24,44 @@ const categoryLabels: Record<string, string> = {
 
 export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto; receiptUrl: string | null }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [description, setDescription] = useState(expense.description);
+  const [category, setCategory] = useState<ExpenseCategory | ''>((expense.category as ExpenseCategory | null) ?? '');
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
     style: 'currency',
     currency: expense.currency,
   });
+
+  const saveEdit = async () => {
+    if (!description.trim() || description.trim().length < 2) {
+      toast('Description must be at least 2 characters', 'error');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const result = await updateExpenseAction(expense.id, {
+        description: description.trim(),
+        category: category || null,
+      });
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      toast('Expense updated');
+      setEditing(false);
+      router.refresh();
+    } catch (error) {
+      toast((error as Error).message || 'Failed to update expense', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -49,12 +84,71 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Amount</p>
               <p className="text-2xl font-extrabold text-[var(--fs-primary)]">{amount}</p>
             </div>
-            <ExpenseDeleteButton
-              expenseId={expense.id}
-              onDeleted={() => router.push(`/dashboard/groups/${expense.groupId}`)}
-            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditing((value) => !value)}
+                className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] inline-flex items-center gap-2"
+              >
+                <Pencil className="h-4 w-4" />
+                {editing ? 'Close Edit' : 'Edit'}
+              </button>
+              <ExpenseDeleteButton
+                expenseId={expense.id}
+                onDeleted={() => router.push(`/dashboard/groups/${expense.groupId}`)}
+              />
+            </div>
           </div>
         </div>
+
+        {editing ? (
+          <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/50 p-4 sm:p-5 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Description</label>
+              <input
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Category</label>
+              <select
+                value={category}
+                onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
+                className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+              >
+                <option value="">No category</option>
+                {EXPENSE_CATEGORIES.map((value) => (
+                  <option key={value} value={value}>
+                    {categoryLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDescription(expense.description);
+                  setCategory((expense.category as ExpenseCategory | null) ?? '');
+                  setEditing(false);
+                }}
+                className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-2 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void saveEdit()}
+                disabled={saving}
+                className="btn-royal px-5 py-2 disabled:opacity-60"
+              >
+                {saving ? 'Saving...' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/50 p-4">
