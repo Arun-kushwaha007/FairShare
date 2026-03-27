@@ -4,7 +4,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import type { ExpenseDto, GroupMemberSummaryDto, GroupDto } from '@fairshare/shared-types';
+import type { ExpenseDto, GroupMemberSummaryDto, GroupDto, RecurringExpenseDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
 import { realtimeService } from '../services/realtime.service';
@@ -22,8 +22,15 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { endScreenLoad, startScreenLoad } from '../utils/perf';
 import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 const EMPTY_EXPENSES: ExpenseDto[] = [];
+
+const recurringLabels: Record<RecurringExpenseDto['frequency'], string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
 
 export function GroupDetailScreen({
   route,
@@ -36,34 +43,40 @@ export function GroupDetailScreen({
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
   const [group, setGroup] = React.useState<GroupDto | null>(null);
+  const [recurringExpenses, setRecurringExpenses] = React.useState<RecurringExpenseDto[]>([]);
   const [summary, setSummary] = React.useState<{
     totalExpensesCents: string;
     topSpenderUserId: string | null;
     perUserOwedCents: Record<string, string>;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ExpenseDto | null>(null);
+  const [deleteRecurringTarget, setDeleteRecurringTarget] = React.useState<RecurringExpenseDto | null>(null);
   const expenses = useExpenseStore(
     React.useCallback((state) => state.expensesByGroup[route.params.groupId] ?? EMPTY_EXPENSES, [route.params.groupId])
   );
   const setExpenses = useExpenseStore((state) => state.setExpenses);
   const toast = useToastStore((state) => state.show);
   const currentUserId = useAuthStore((state) => state.user?.id);
-  const { colors, isDark } = useAppTheme();
+  const { colors } = useAppTheme();
+
+  const currencySymbol = group?.currency === 'INR' ? 'Rs' : '$';
 
   const load = React.useCallback(async () => {
     startScreenLoad('GroupDetail');
     try {
-      const [expenseData, balanceData, memberData, groupData] = await Promise.all([
+      const [expenseData, balanceData, memberData, groupData, recurringData] = await Promise.all([
         expenseService.list(route.params.groupId),
         groupService.balances(route.params.groupId),
         groupService.members(route.params.groupId),
         groupService.get(route.params.groupId),
+        expenseService.listRecurring(route.params.groupId),
       ]);
       const summaryData = await groupService.summary(route.params.groupId);
       setExpenses(route.params.groupId, expenseData.items);
       setBalances(balanceData);
       setMembers(memberData);
       setGroup(groupData);
+      setRecurringExpenses(recurringData);
       setSummary({
         totalExpensesCents: summaryData.totalExpensesCents,
         topSpenderUserId: summaryData.topSpenderUserId,
@@ -138,8 +151,6 @@ export function GroupDetailScreen({
     const payer = memberById.get(expense.payerId);
     const participantCount = expense.splits?.length ?? 0;
 
-    const symbol = group?.currency === 'INR' ? 'â‚¹' : '$';
-
     return (
       <Swipeable
         key={expense.id}
@@ -154,7 +165,7 @@ export function GroupDetailScreen({
       >
         <ExpenseCard
           description={expense.description}
-          amount={`${symbol}${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
+          amount={`${currencySymbol}${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
           payerName={payer?.name ?? 'Unknown'}
           payerInitials={getInitials(payer?.name ?? 'U')}
           participantCount={participantCount}
@@ -165,14 +176,37 @@ export function GroupDetailScreen({
     );
   };
 
+  const handleDeleteExpense = async () => {
+    if (!deleteTarget) return;
+    try {
+      await expenseService.remove(deleteTarget.id);
+      setDeleteTarget(null);
+      await load();
+    } catch {
+      toast('Failed to delete expense');
+    }
+  };
+
+  const handleDeleteRecurring = async () => {
+    if (!deleteRecurringTarget) return;
+    try {
+      await expenseService.removeRecurring(deleteRecurringTarget.id);
+      setDeleteRecurringTarget(null);
+      await load();
+      toast('Recurring bill removed');
+    } catch {
+      toast('Failed to remove recurring bill');
+    }
+  };
+
   if (loading) return <SkeletonList rows={5} />;
 
-  const renderExpenseSection = (title: string, expenses: ExpenseDto[], delay: number) => {
-    if (expenses.length === 0) return null;
+  const renderExpenseSection = (title: string, expenseGroup: ExpenseDto[], delay: number) => {
+    if (expenseGroup.length === 0) return null;
     return (
       <Animated.View entering={FadeInDown.duration(400).delay(delay)}>
         <SectionHeader title={title} />
-        {expenses.map(renderExpenseCard)}
+        {expenseGroup.map(renderExpenseCard)}
       </Animated.View>
     );
   };
@@ -184,19 +218,18 @@ export function GroupDetailScreen({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Balance Summary */}
         {summary && group && (
           <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
             <BalanceCard
               title="Total Group Spending"
-              amount={`${group.currency === 'INR' ? 'â‚¹' : '$'}${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
+              amount={`${currencySymbol}${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
               icon="cash-multiple"
             />
             <BalanceCard
               title="Your Personal Balance"
-              amount={`${group.currency === 'INR' ? 'â‚¹' : '$'}${Math.abs(userBalance).toFixed(2)}`}
+              amount={`${currencySymbol}${Math.abs(userBalance).toFixed(2)}`}
               subtitle={
-                userBalance !== 0 
+                userBalance !== 0
                   ? `${userBalance > 0 ? 'You are owed' : 'You owe'} (${((Math.abs(userBalance) * 100) / (Number(summary.totalExpensesCents) / 100 || 1)).toFixed(1)}% of total)`
                   : 'Settled up'
               }
@@ -206,7 +239,45 @@ export function GroupDetailScreen({
           </Animated.View>
         )}
 
-        {/* Members */}
+        <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.recurringSection}>
+          <SectionHeader title="Recurring Bills" />
+          {recurringExpenses.length > 0 ? (
+            <View style={styles.recurringList}>
+              {recurringExpenses.map((item) => {
+                const payer = memberById.get(item.payerId);
+                return (
+                  <Card key={item.id} style={styles.recurringCard}>
+                    <View style={styles.recurringHeaderRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
+                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+                          {recurringLabels[item.frequency]} • Next {new Date(item.nextOccurrenceAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <TouchableOpacity onPress={() => setDeleteRecurringTarget(item)}>
+                        <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.recurringAmount, { color: colors.primary }]}>
+                      {currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}
+                    </Text>
+                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+                      Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants
+                    </Text>
+                  </Card>
+                );
+              })}
+            </View>
+          ) : (
+            <Card style={styles.recurringEmptyCard}>
+              <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>No recurring bills yet</Text>
+              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+                Turn on recurring when you add rent, subscriptions, or utilities.
+              </Text>
+            </Card>
+          )}
+        </Animated.View>
+
         <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.membersSection}>
           <SectionHeader
             title="Members"
@@ -225,17 +296,16 @@ export function GroupDetailScreen({
           </View>
         </Animated.View>
 
-        {/* Action Buttons */}
         <View style={styles.actionRow}>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
             style={{ flex: 1 }}
           >
             Add Expense
           </Button>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}
             style={{ flex: 1 }}
           >
@@ -243,7 +313,6 @@ export function GroupDetailScreen({
           </Button>
         </View>
 
-        {/* Expense History */}
         {renderExpenseSection('Today', groupedExpenses.today, 300)}
         {renderExpenseSection('This Week', groupedExpenses.week, 400)}
         {renderExpenseSection('Older', groupedExpenses.older, 500)}
@@ -257,18 +326,31 @@ export function GroupDetailScreen({
         onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
       />
 
-      {/* Delete Modal */}
       <Modal transparent visible={Boolean(deleteTarget)} animationType="fade">
         <View style={styles.modalOverlay}>
-           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.danger} />
-              <Text style={[styles.modalTitle, { color: colors.text_primary }]}>Delete Expense?</Text>
-              <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>This action cannot be undone.</Text>
-              <View style={styles.modalActions}>
-                  <Button variant="danger" onPress={() => void expenseService.remove(deleteTarget?.id!).then(load)} style={{ flex: 1 }}>Delete</Button>
-                  <Button variant="secondary" onPress={() => setDeleteTarget(null)} style={{ flex: 1 }}>Cancel</Button>
-              </View>
-           </View>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.danger} />
+            <Text style={[styles.modalTitle, { color: colors.text_primary }]}>Delete Expense?</Text>
+            <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>This action cannot be undone.</Text>
+            <View style={styles.modalActions}>
+              <Button variant="danger" onPress={() => void handleDeleteExpense()} style={{ flex: 1 }}>Delete</Button>
+              <Button variant="secondary" onPress={() => setDeleteTarget(null)} style={{ flex: 1 }}>Cancel</Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={Boolean(deleteRecurringTarget)} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <MaterialCommunityIcons name="calendar-remove-outline" size={48} color={colors.danger} />
+            <Text style={[styles.modalTitle, { color: colors.text_primary }]}>Remove Recurring Bill?</Text>
+            <Text style={[styles.modalDesc, { color: colors.text_secondary }]}>Future auto-created expenses will stop, but existing expenses stay in the history.</Text>
+            <View style={styles.modalActions}>
+              <Button variant="danger" onPress={() => void handleDeleteRecurring()} style={{ flex: 1 }}>Remove</Button>
+              <Button variant="secondary" onPress={() => setDeleteRecurringTarget(null)} style={{ flex: 1 }}>Cancel</Button>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
@@ -283,6 +365,37 @@ const styles = StyleSheet.create({
   balanceSection: {
     gap: spacing.md,
     marginBottom: spacing.xl,
+  },
+  recurringSection: {
+    marginBottom: spacing.xl,
+  },
+  recurringList: {
+    gap: spacing.md,
+  },
+  recurringCard: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  recurringEmptyCard: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  recurringHeaderRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  recurringTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  recurringMeta: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  recurringAmount: {
+    fontSize: 20,
+    fontWeight: '800',
   },
   membersSection: {
     marginBottom: spacing.xl,

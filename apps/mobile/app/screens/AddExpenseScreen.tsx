@@ -8,9 +8,11 @@ import * as Haptics from 'expo-haptics';
 import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, FadeInDown } from 'react-native-reanimated';
 import {
   EXPENSE_CATEGORIES,
+  RECURRING_EXPENSE_FREQUENCIES,
   type ExpenseCategory,
   type GroupDefaultSplitDto,
   type GroupMemberSummaryDto,
+  type RecurringExpenseFrequency,
 } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { groupService } from '../services/group.service';
@@ -38,6 +40,12 @@ const categoryLabels: Record<ExpenseCategory, string> = {
   OTHER: 'Other',
 };
 
+const recurringFrequencyLabels: Record<RecurringExpenseFrequency, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
 const STEPS = [
   { title: 'Details', subtitle: 'What was the expense?' },
   { title: 'Payer', subtitle: 'Who paid the bill?' },
@@ -61,6 +69,8 @@ export function AddExpenseScreen({
   const [payerId, setPayerId] = React.useState<string>('');
   const [splitType, setSplitType] = React.useState<SplitType>('equal');
   const [category, setCategory] = React.useState<ExpenseCategory | ''>('');
+  const [recurringEnabled, setRecurringEnabled] = React.useState(false);
+  const [recurringFrequency, setRecurringFrequency] = React.useState<RecurringExpenseFrequency>('monthly');
   const [selectedParticipantIds, setSelectedParticipantIds] = React.useState<string[]>([]);
   const [exactByUser, setExactByUser] = React.useState<Record<string, string>>({});
   const [percentagesByUser, setPercentagesByUser] = React.useState<Record<string, string>>({});
@@ -255,6 +265,7 @@ export function AddExpenseScreen({
         totalAmountCents: String(totalAmount),
         currency: group?.currency ?? 'USD',
         category: category || undefined,
+        recurring: recurringEnabled ? { frequency: recurringFrequency } : undefined,
         splits: selectedParticipantIds.map((userId) => ({
           userId,
           owedAmountCents: String(shares[userId] ?? 0),
@@ -266,6 +277,8 @@ export function AddExpenseScreen({
       setTimeout(() => {
         setSuccessOpen(false);
         setCategory('');
+        setRecurringEnabled(false);
+        setRecurringFrequency('monthly');
         toast('Bet! Split recorded');
         navigation.goBack();
       }, 700);
@@ -347,6 +360,51 @@ export function AddExpenseScreen({
                   );
                 })}
               </View>
+            </View>
+            <View style={styles.recurringSection}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setRecurringEnabled((current) => !current)}
+              >
+                <Card variant="default" style={styles.recurringToggleCard}>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>Recurring bill</Text>
+                    <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Turn this into a repeating template for rent, Wi-Fi, or subscriptions.</Text>
+                  </View>
+                  <MaterialCommunityIcons
+                    name={recurringEnabled ? 'check-circle' : 'checkbox-blank-circle-outline'}
+                    size={24}
+                    color={recurringEnabled ? colors.primary : colors.text_secondary}
+                  />
+                </Card>
+              </TouchableOpacity>
+              {recurringEnabled ? (
+                <View style={styles.recurringOptionsRow}>
+                  {RECURRING_EXPENSE_FREQUENCIES.map((value) => {
+                    const selected = recurringFrequency === value;
+                    return (
+                      <TouchableOpacity
+                        key={value}
+                        onPress={() => setRecurringFrequency(value)}
+                        style={{ flex: 1 }}
+                        activeOpacity={0.85}
+                      >
+                        <Card
+                          variant={selected ? 'elevated' : 'default'}
+                          style={[
+                            styles.recurringOptionCard,
+                            selected && { borderColor: colors.primary, borderWidth: 1.5 },
+                          ]}
+                        >
+                          <Text style={[styles.recurringOptionLabel, { color: selected ? colors.primary : colors.text_primary }]}>
+                            {recurringFrequencyLabels[value]}
+                          </Text>
+                        </Card>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ) : null}
             </View>
           </Animated.View>
         );
@@ -476,6 +534,12 @@ export function AddExpenseScreen({
                 </Text>
               </View>
               <View style={styles.reviewItem}>
+                <Text style={[typography.caption, { color: colors.muted }]}>RECURRING</Text>
+                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                  {recurringEnabled ? recurringFrequencyLabels[recurringFrequency] : 'One-time'}
+                </Text>
+              </View>
+              <View style={styles.reviewItem}>
                 <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
                 <Text style={[typography.h1, { color: colors.primary }]}>
                   {group?.currency === 'INR' ? 'Rs' : '$'}{(totalAmount / 100).toFixed(2)}
@@ -583,7 +647,7 @@ export function AddExpenseScreen({
               style={{ width: 140, height: 140 }}
             />
             <Text style={[typography.h2, { color: colors.text_primary }]}>No cap, success!</Text>
-            <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center' }]}>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center' }]}> 
               The expense has been successfully split.
             </Text>
           </Card>
@@ -634,6 +698,27 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   categoryLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  recurringSection: {
+    gap: spacing.sm,
+  },
+  recurringToggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  recurringOptionsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  recurringOptionCard: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  recurringOptionLabel: {
     fontSize: 13,
     fontWeight: '700',
   },
