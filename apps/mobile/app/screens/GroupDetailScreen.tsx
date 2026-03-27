@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto, type GroupMemberSummaryDto, type GroupDto, type RecurringExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, RECURRING_EXPENSE_FREQUENCIES, type ExpenseCategory, type ExpenseDto, type GroupMemberSummaryDto, type GroupDto, type RecurringExpenseDto, type RecurringExpenseFrequency } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
 import { realtimeService } from '../services/realtime.service';
@@ -52,6 +52,7 @@ export function GroupDetailScreen({
 }) {
   const [loading, setLoading] = React.useState(true);
   const [exporting, setExporting] = React.useState(false);
+  const [savingRecurring, setSavingRecurring] = React.useState(false);
   const [balances, setBalances] = React.useState<Array<{ id: string; amountCents: string; userId: string; counterpartyUserId: string }>>([]);
   const [members, setMembers] = React.useState<GroupMemberSummaryDto[]>([]);
   const [group, setGroup] = React.useState<GroupDto | null>(null);
@@ -63,6 +64,11 @@ export function GroupDetailScreen({
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ExpenseDto | null>(null);
   const [deleteRecurringTarget, setDeleteRecurringTarget] = React.useState<RecurringExpenseDto | null>(null);
+  const [editingRecurring, setEditingRecurring] = React.useState<RecurringExpenseDto | null>(null);
+  const [recurringDescription, setRecurringDescription] = React.useState('');
+  const [recurringAmount, setRecurringAmount] = React.useState('');
+  const [recurringCategory, setRecurringCategory] = React.useState<ExpenseCategory | ''>('');
+  const [recurringFrequency, setRecurringFrequency] = React.useState<RecurringExpenseFrequency>('monthly');
   const [query, setQuery] = React.useState('');
   const [payerFilter, setPayerFilter] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState<ExpenseCategory | ''>('');
@@ -220,6 +226,48 @@ export function GroupDetailScreen({
     setCategoryFilter('');
   };
 
+  const startRecurringEdit = (item: RecurringExpenseDto) => {
+    setEditingRecurring(item);
+    setRecurringDescription(item.description);
+    setRecurringAmount((Number(item.totalAmountCents) / 100).toFixed(2));
+    setRecurringCategory((item.category as ExpenseCategory | null) ?? '');
+    setRecurringFrequency(item.frequency);
+  };
+
+  const closeRecurringEdit = () => {
+    setEditingRecurring(null);
+    setRecurringDescription('');
+    setRecurringAmount('');
+    setRecurringCategory('');
+    setRecurringFrequency('monthly');
+  };
+
+  const handleSaveRecurringEdit = async () => {
+    if (!editingRecurring) return;
+    try {
+      setSavingRecurring(true);
+      const totalCents = Math.round(Number(recurringAmount || 0) * 100);
+      if (!recurringDescription.trim() || totalCents <= 0) {
+        toast('Enter a description and amount greater than zero');
+        return;
+      }
+
+      await expenseService.updateRecurring(editingRecurring.id, {
+        description: recurringDescription.trim(),
+        totalAmountCents: String(totalCents),
+        category: recurringCategory || null,
+        frequency: recurringFrequency,
+      });
+      toast('Recurring bill updated');
+      closeRecurringEdit();
+      await load();
+    } catch {
+      toast('Failed to update recurring bill');
+    } finally {
+      setSavingRecurring(false);
+    }
+  };
+
   const handleDeleteExpense = async () => {
     if (!deleteTarget) return;
     try {
@@ -319,9 +367,7 @@ export function GroupDetailScreen({
             <View style={styles.filterHeaderRow}>
               <View>
                 <Text style={[styles.filterTitle, { color: colors.text_primary }]}>Find expenses fast</Text>
-                <Text style={[styles.filterSubtitle, { color: colors.text_secondary }]}>
-                  Search by description, payer, category, amount, or date.
-                </Text>
+                <Text style={[styles.filterSubtitle, { color: colors.text_secondary }]}>Search by description, payer, category, amount, or date.</Text>
               </View>
               {(query || payerFilter || categoryFilter) ? (
                 <TouchableOpacity onPress={resetFilters}>
@@ -340,26 +386,13 @@ export function GroupDetailScreen({
             />
             <Text style={[styles.filterGroupLabel, { color: colors.text_secondary }]}>Payer</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <TouchableOpacity
-                onPress={() => setPayerFilter('')}
-                style={[
-                  styles.chip,
-                  { borderColor: !payerFilter ? colors.primary : colors.border, backgroundColor: !payerFilter ? `${colors.primary}12` : colors.cardElevated },
-                ]}
-              >
+              <TouchableOpacity onPress={() => setPayerFilter('')} style={[styles.chip, { borderColor: !payerFilter ? colors.primary : colors.border, backgroundColor: !payerFilter ? `${colors.primary}12` : colors.cardElevated }]}>
                 <Text style={[styles.chipText, { color: !payerFilter ? colors.primary : colors.text_primary }]}>All</Text>
               </TouchableOpacity>
               {members.map((member) => {
                 const selected = payerFilter === member.userId;
                 return (
-                  <TouchableOpacity
-                    key={member.memberId}
-                    onPress={() => setPayerFilter(selected ? '' : member.userId)}
-                    style={[
-                      styles.chip,
-                      { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated },
-                    ]}
-                  >
+                  <TouchableOpacity key={member.memberId} onPress={() => setPayerFilter(selected ? '' : member.userId)} style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated }]}>
                     <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{member.name}</Text>
                   </TouchableOpacity>
                 );
@@ -367,34 +400,19 @@ export function GroupDetailScreen({
             </ScrollView>
             <Text style={[styles.filterGroupLabel, { color: colors.text_secondary }]}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              <TouchableOpacity
-                onPress={() => setCategoryFilter('')}
-                style={[
-                  styles.chip,
-                  { borderColor: !categoryFilter ? colors.primary : colors.border, backgroundColor: !categoryFilter ? `${colors.primary}12` : colors.cardElevated },
-                ]}
-              >
+              <TouchableOpacity onPress={() => setCategoryFilter('')} style={[styles.chip, { borderColor: !categoryFilter ? colors.primary : colors.border, backgroundColor: !categoryFilter ? `${colors.primary}12` : colors.cardElevated }]}>
                 <Text style={[styles.chipText, { color: !categoryFilter ? colors.primary : colors.text_primary }]}>All</Text>
               </TouchableOpacity>
               {EXPENSE_CATEGORIES.map((category) => {
                 const selected = categoryFilter === category;
                 return (
-                  <TouchableOpacity
-                    key={category}
-                    onPress={() => setCategoryFilter(selected ? '' : category)}
-                    style={[
-                      styles.chip,
-                      { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated },
-                    ]}
-                  >
+                  <TouchableOpacity key={category} onPress={() => setCategoryFilter(selected ? '' : category)} style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated }]}>
                     <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{categoryLabels[category]}</Text>
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
-            <Text style={[styles.resultCount, { color: colors.text_secondary }]}>
-              Showing {filteredExpenses.length} of {expenses.length} expenses
-            </Text>
+            <Text style={[styles.resultCount, { color: colors.text_secondary }]}>Showing {filteredExpenses.length} of {expenses.length} expenses</Text>
           </Card>
         </Animated.View>
 
@@ -409,20 +427,19 @@ export function GroupDetailScreen({
                     <View style={styles.recurringHeaderRow}>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
-                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
-                          {recurringLabels[item.frequency]} • Next {new Date(item.nextOccurrenceAt).toLocaleDateString()}
-                        </Text>
+                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>{recurringLabels[item.frequency]} • Next {new Date(item.nextOccurrenceAt).toLocaleDateString()}</Text>
                       </View>
-                      <TouchableOpacity onPress={() => setDeleteRecurringTarget(item)}>
-                        <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
-                      </TouchableOpacity>
+                      <View style={styles.recurringActions}>
+                        <TouchableOpacity onPress={() => startRecurringEdit(item)}>
+                          <MaterialCommunityIcons name="pencil-outline" size={22} color={colors.text_primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setDeleteRecurringTarget(item)}>
+                          <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                    <Text style={[styles.recurringAmount, { color: colors.primary }]}>
-                      {currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}
-                    </Text>
-                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
-                      Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants
-                    </Text>
+                    <Text style={[styles.recurringAmount, { color: colors.primary }]}>{currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}</Text>
+                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants</Text>
                   </Card>
                 );
               })}
@@ -430,54 +447,23 @@ export function GroupDetailScreen({
           ) : (
             <Card style={styles.recurringEmptyCard}>
               <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>No recurring bills yet</Text>
-              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
-                Turn on recurring when you add rent, subscriptions, or utilities.
-              </Text>
+              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Turn on recurring when you add rent, subscriptions, or utilities.</Text>
             </Card>
           )}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(400).delay(100)} style={styles.membersSection}>
-          <SectionHeader
-            title="Members"
-            action="View All"
-            onActionPress={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
-          />
+          <SectionHeader title="Members" action="View All" onActionPress={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })} />
           <View style={[styles.membersRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <MemberAvatarStack
-              members={members.map((m) => ({ userId: m.userId, name: m.name, avatarUrl: m.avatarUrl }))}
-              maxVisible={6}
-              size={40}
-            />
-            <Text style={[styles.memberCount, { color: colors.text_secondary }]}>
-              {members.length} members involved
-            </Text>
+            <MemberAvatarStack members={members.map((m) => ({ userId: m.userId, name: m.name, avatarUrl: m.avatarUrl }))} maxVisible={6} size={40} />
+            <Text style={[styles.memberCount, { color: colors.text_secondary }]}>{members.length} members involved</Text>
           </View>
         </Animated.View>
 
         <View style={styles.actionRow}>
-          <Button
-            variant="primary"
-            onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
-            style={styles.actionButton}
-          >
-            Add Expense
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })}
-            style={styles.actionButton}
-          >
-            Settle Up
-          </Button>
-          <Button
-            variant="secondary"
-            onPress={() => void handleExportCsv()}
-            loading={exporting}
-            style={styles.actionButton}
-          >
-            Export CSV
-          </Button>
+          <Button variant="primary" onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })} style={styles.actionButton}>Add Expense</Button>
+          <Button variant="secondary" onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })} style={styles.actionButton}>Settle Up</Button>
+          <Button variant="secondary" onPress={() => void handleExportCsv()} loading={exporting} style={styles.actionButton}>Export CSV</Button>
         </View>
 
         {renderExpenseSection('Today', groupedExpenses.today, 300)}
@@ -485,19 +471,50 @@ export function GroupDetailScreen({
         {renderExpenseSection('Older', groupedExpenses.older, 500)}
 
         {filteredExpenses.length === 0 && (
-          <EmptyState
-            kind="no_expenses"
-            title={expenses.length > 0 ? 'No expenses match these filters' : 'No expenses yet'}
-            description={expenses.length > 0 ? 'Try a different query or reset the filters.' : undefined}
-            actionLabel={expenses.length > 0 ? 'Reset filters' : undefined}
-            onAction={expenses.length > 0 ? resetFilters : undefined}
-          />
+          <EmptyState kind="no_expenses" title={expenses.length > 0 ? 'No expenses match these filters' : 'No expenses yet'} description={expenses.length > 0 ? 'Try a different query or reset the filters.' : undefined} actionLabel={expenses.length > 0 ? 'Reset filters' : undefined} onAction={expenses.length > 0 ? resetFilters : undefined} />
         )}
       </ScrollView>
 
-      <FloatingActionButton
-        onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })}
-      />
+      <FloatingActionButton onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })} />
+
+      <Modal transparent visible={Boolean(editingRecurring)} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <Text style={[styles.modalTitle, { color: colors.text_primary }]}>Edit Recurring Bill</Text>
+            <TextInput mode="outlined" label="Description" value={recurringDescription} onChangeText={setRecurringDescription} style={styles.modalInput} outlineStyle={{ borderRadius: 16 }} />
+            <TextInput mode="outlined" label="Amount" value={recurringAmount} onChangeText={setRecurringAmount} keyboardType="numeric" style={styles.modalInput} outlineStyle={{ borderRadius: 16 }} />
+            <Text style={[styles.filterGroupLabel, { color: colors.text_secondary, alignSelf: 'flex-start' }]}>Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <TouchableOpacity onPress={() => setRecurringCategory('')} style={[styles.chip, { borderColor: !recurringCategory ? colors.primary : colors.border, backgroundColor: !recurringCategory ? `${colors.primary}12` : colors.cardElevated }]}>
+                <Text style={[styles.chipText, { color: !recurringCategory ? colors.primary : colors.text_primary }]}>None</Text>
+              </TouchableOpacity>
+              {EXPENSE_CATEGORIES.map((item) => {
+                const selected = recurringCategory === item;
+                return (
+                  <TouchableOpacity key={item} onPress={() => setRecurringCategory(selected ? '' : item)} style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated }]}>
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{categoryLabels[item]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <Text style={[styles.filterGroupLabel, { color: colors.text_secondary, alignSelf: 'flex-start' }]}>Frequency</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {RECURRING_EXPENSE_FREQUENCIES.map((item) => {
+                const selected = recurringFrequency === item;
+                return (
+                  <TouchableOpacity key={item} onPress={() => setRecurringFrequency(item)} style={[styles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated }]}>
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{recurringLabels[item]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.modalActions}>
+              <Button variant="secondary" onPress={closeRecurringEdit} style={{ flex: 1 }}>Cancel</Button>
+              <Button variant="primary" onPress={() => void handleSaveRecurringEdit()} loading={savingRecurring} style={{ flex: 1 }}>Save</Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal transparent visible={Boolean(deleteTarget)} animationType="fade">
         <View style={styles.modalOverlay}>
@@ -610,6 +627,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     alignItems: 'center',
   },
+  recurringActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   recurringTitle: {
     fontSize: 16,
     fontWeight: '700',
@@ -675,6 +697,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: spacing.md,
+  },
+  modalInput: {
+    width: '100%',
+    backgroundColor: 'transparent',
   },
   modalActions: {
     flexDirection: 'row',

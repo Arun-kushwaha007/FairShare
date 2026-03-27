@@ -5,6 +5,7 @@ import {
   PresignedReceiptUrlResponseDto,
   RecurringExpenseDto,
   UpdateExpenseRequestDto,
+  UpdateRecurringExpenseRequestDto,
 } from '@fairshare/shared-types';
 import { api } from './api';
 import { generateIdempotencyKey } from './idempotency';
@@ -32,6 +33,8 @@ export const expenseService = {
   get: async (expenseId: string) => (await api.get<ExpenseDto>(`/expenses/${expenseId}`)).data,
   update: async (expenseId: string, payload: UpdateExpenseRequestDto) =>
     (await api.patch<ExpenseDto>(`/expenses/${expenseId}`, payload)).data,
+  updateRecurring: async (recurringExpenseId: string, payload: UpdateRecurringExpenseRequestDto) =>
+    (await api.patch<RecurringExpenseDto>(`/recurring-expenses/${recurringExpenseId}`, payload)).data,
   remove: async (expenseId: string) => (await api.delete(`/expenses/${expenseId}`)).data,
   removeRecurring: async (recurringExpenseId: string) => (await api.delete(`/recurring-expenses/${recurringExpenseId}`)).data,
   createReceiptUploadUrl: async (expenseId: string, extension?: string) =>
