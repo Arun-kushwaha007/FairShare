@@ -1,12 +1,12 @@
 import React from 'react';
 import { Modal, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Text } from 'react-native-paper';
+import { Text, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import type { ExpenseDto, GroupMemberSummaryDto, GroupDto, RecurringExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto, type GroupMemberSummaryDto, type GroupDto, type RecurringExpenseDto } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
 import { realtimeService } from '../services/realtime.service';
@@ -34,6 +34,15 @@ const recurringLabels: Record<RecurringExpenseDto['frequency'], string> = {
   monthly: 'Monthly',
 };
 
+const categoryLabels: Record<ExpenseCategory, string> = {
+  FOOD: 'Food',
+  TRAVEL: 'Travel',
+  UTILITIES: 'Utilities',
+  GROCERIES: 'Groceries',
+  ENTERTAINMENT: 'Entertainment',
+  OTHER: 'Other',
+};
+
 export function GroupDetailScreen({
   route,
   navigation,
@@ -54,6 +63,9 @@ export function GroupDetailScreen({
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<ExpenseDto | null>(null);
   const [deleteRecurringTarget, setDeleteRecurringTarget] = React.useState<RecurringExpenseDto | null>(null);
+  const [query, setQuery] = React.useState('');
+  const [payerFilter, setPayerFilter] = React.useState('');
+  const [categoryFilter, setCategoryFilter] = React.useState<ExpenseCategory | ''>('');
   const expenses = useExpenseStore(
     React.useCallback((state) => state.expensesByGroup[route.params.groupId] ?? EMPTY_EXPENSES, [route.params.groupId])
   );
@@ -125,6 +137,29 @@ export function GroupDetailScreen({
     return Number(summary.perUserOwedCents[currentUserId] ?? '0') / 100;
   }, [currentUserId, summary]);
 
+  const filteredExpenses = React.useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return expenses.filter((expense) => {
+      if (payerFilter && expense.payerId !== payerFilter) {
+        return false;
+      }
+      if (categoryFilter && expense.category !== categoryFilter) {
+        return false;
+      }
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const payerName = memberById.get(expense.payerId)?.name ?? expense.payerId;
+      const amount = (Number(expense.totalAmountCents) / 100).toFixed(2);
+      const dateLabel = new Date(expense.createdAt).toLocaleDateString();
+      const categoryLabel = expense.category ? categoryLabels[expense.category as ExpenseCategory] ?? expense.category : '';
+      const haystack = [expense.description, payerName, amount, dateLabel, categoryLabel].join(' ').toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [categoryFilter, expenses, memberById, payerFilter, query]);
+
   const groupedExpenses = React.useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -136,7 +171,7 @@ export function GroupDetailScreen({
       older: [] as ExpenseDto[],
     };
 
-    expenses.forEach((expense) => {
+    filteredExpenses.forEach((expense) => {
       const ts = new Date(expense.createdAt).getTime();
       if (ts >= startOfToday) {
         groups.today.push(expense);
@@ -148,7 +183,7 @@ export function GroupDetailScreen({
     });
 
     return groups;
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   const renderExpenseCard = (expense: ExpenseDto) => {
     const payer = memberById.get(expense.payerId);
@@ -177,6 +212,12 @@ export function GroupDetailScreen({
         />
       </Swipeable>
     );
+  };
+
+  const resetFilters = () => {
+    setQuery('');
+    setPayerFilter('');
+    setCategoryFilter('');
   };
 
   const handleDeleteExpense = async () => {
@@ -273,6 +314,90 @@ export function GroupDetailScreen({
           </Animated.View>
         )}
 
+        <Animated.View entering={FadeInDown.duration(400).delay(60)} style={styles.filterSection}>
+          <Card style={styles.filterCard}>
+            <View style={styles.filterHeaderRow}>
+              <View>
+                <Text style={[styles.filterTitle, { color: colors.text_primary }]}>Find expenses fast</Text>
+                <Text style={[styles.filterSubtitle, { color: colors.text_secondary }]}>
+                  Search by description, payer, category, amount, or date.
+                </Text>
+              </View>
+              {(query || payerFilter || categoryFilter) ? (
+                <TouchableOpacity onPress={resetFilters}>
+                  <Text style={[styles.resetLabel, { color: colors.primary }]}>Reset</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <TextInput
+              mode="outlined"
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search expenses"
+              style={styles.searchInput}
+              outlineStyle={{ borderRadius: 16 }}
+              left={<TextInput.Icon icon="magnify" />}
+            />
+            <Text style={[styles.filterGroupLabel, { color: colors.text_secondary }]}>Payer</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <TouchableOpacity
+                onPress={() => setPayerFilter('')}
+                style={[
+                  styles.chip,
+                  { borderColor: !payerFilter ? colors.primary : colors.border, backgroundColor: !payerFilter ? `${colors.primary}12` : colors.cardElevated },
+                ]}
+              >
+                <Text style={[styles.chipText, { color: !payerFilter ? colors.primary : colors.text_primary }]}>All</Text>
+              </TouchableOpacity>
+              {members.map((member) => {
+                const selected = payerFilter === member.userId;
+                return (
+                  <TouchableOpacity
+                    key={member.memberId}
+                    onPress={() => setPayerFilter(selected ? '' : member.userId)}
+                    style={[
+                      styles.chip,
+                      { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated },
+                    ]}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{member.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <Text style={[styles.filterGroupLabel, { color: colors.text_secondary }]}>Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              <TouchableOpacity
+                onPress={() => setCategoryFilter('')}
+                style={[
+                  styles.chip,
+                  { borderColor: !categoryFilter ? colors.primary : colors.border, backgroundColor: !categoryFilter ? `${colors.primary}12` : colors.cardElevated },
+                ]}
+              >
+                <Text style={[styles.chipText, { color: !categoryFilter ? colors.primary : colors.text_primary }]}>All</Text>
+              </TouchableOpacity>
+              {EXPENSE_CATEGORIES.map((category) => {
+                const selected = categoryFilter === category;
+                return (
+                  <TouchableOpacity
+                    key={category}
+                    onPress={() => setCategoryFilter(selected ? '' : category)}
+                    style={[
+                      styles.chip,
+                      { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? `${colors.primary}12` : colors.cardElevated },
+                    ]}
+                  >
+                    <Text style={[styles.chipText, { color: selected ? colors.primary : colors.text_primary }]}>{categoryLabels[category]}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <Text style={[styles.resultCount, { color: colors.text_secondary }]}>
+              Showing {filteredExpenses.length} of {expenses.length} expenses
+            </Text>
+          </Card>
+        </Animated.View>
+
         <Animated.View entering={FadeInDown.duration(400).delay(80)} style={styles.recurringSection}>
           <SectionHeader title="Recurring Bills" />
           {recurringExpenses.length > 0 ? (
@@ -284,7 +409,7 @@ export function GroupDetailScreen({
                     <View style={styles.recurringHeaderRow}>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
-                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
                           {recurringLabels[item.frequency]} • Next {new Date(item.nextOccurrenceAt).toLocaleDateString()}
                         </Text>
                       </View>
@@ -295,7 +420,7 @@ export function GroupDetailScreen({
                     <Text style={[styles.recurringAmount, { color: colors.primary }]}>
                       {currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}
                     </Text>
-                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>
+                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}> 
                       Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants
                     </Text>
                   </Card>
@@ -359,8 +484,14 @@ export function GroupDetailScreen({
         {renderExpenseSection('This Week', groupedExpenses.week, 400)}
         {renderExpenseSection('Older', groupedExpenses.older, 500)}
 
-        {expenses.length === 0 && (
-          <EmptyState kind="no_expenses" title="No expenses yet" />
+        {filteredExpenses.length === 0 && (
+          <EmptyState
+            kind="no_expenses"
+            title={expenses.length > 0 ? 'No expenses match these filters' : 'No expenses yet'}
+            description={expenses.length > 0 ? 'Try a different query or reset the filters.' : undefined}
+            actionLabel={expenses.length > 0 ? 'Reset filters' : undefined}
+            onAction={expenses.length > 0 ? resetFilters : undefined}
+          />
         )}
       </ScrollView>
 
@@ -407,6 +538,58 @@ const styles = StyleSheet.create({
   balanceSection: {
     gap: spacing.md,
     marginBottom: spacing.xl,
+  },
+  filterSection: {
+    marginBottom: spacing.xl,
+  },
+  filterCard: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  filterHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    alignItems: 'flex-start',
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  filterSubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+  resetLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  searchInput: {
+    backgroundColor: 'transparent',
+  },
+  filterGroupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  chipRow: {
+    gap: spacing.sm,
+    paddingRight: spacing.md,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  resultCount: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   recurringSection: {
     marginBottom: spacing.xl,
@@ -499,4 +682,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-
