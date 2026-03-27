@@ -25,6 +25,6 @@ export const expenseService = {
   update: async (expenseId: string, payload: UpdateExpenseRequestDto) =>
     (await api.patch<ExpenseDto>(`/expenses/${expenseId}`, payload)).data,
   remove: async (expenseId: string) => (await api.delete(`/expenses/${expenseId}`)).data,
-  createReceiptUploadUrl: async (expenseId: string) =>
-    (await api.post<PresignedReceiptUrlResponseDto>(`/expenses/${expenseId}/receipt-url`, {})).data,
+  createReceiptUploadUrl: async (expenseId: string, extension?: string) =>
+    (await api.post<PresignedReceiptUrlResponseDto>(`/expenses/${expenseId}/receipt-url`, extension ? { extension } : {})).data,
 };
