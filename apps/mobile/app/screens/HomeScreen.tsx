@@ -28,6 +28,75 @@ type AttentionItem = {
 
 const isRecurringDue = (item: RecurringExpenseDto) => new Date(item.nextOccurrenceAt).getTime() <= Date.now();
 
+const amountTextForActivity = (activity: ActivityDto): string | undefined => {
+  const raw = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
+  if (typeof raw !== 'string') {
+    return undefined;
+  }
+  return `$${(Number(raw) / 100).toFixed(2)}`;
+};
+
+const iconForActivity = (activity: ActivityDto): keyof typeof MaterialCommunityIcons.glyphMap => {
+  switch (activity.type) {
+    case 'expense_created':
+    case 'expense_updated':
+      return 'receipt';
+    case 'expense_deleted':
+      return 'delete-outline';
+    case 'settlement_created':
+      return 'handshake-outline';
+    case 'settlement_reminder':
+      return 'bell-ring-outline';
+    case 'member_joined':
+    case 'member_invited':
+      return 'account-plus-outline';
+    default:
+      return 'information-outline';
+  }
+};
+
+const titleForActivity = (activity: ActivityDto): string => {
+  switch (activity.type) {
+    case 'expense_created':
+      return 'Expense added';
+    case 'expense_updated':
+      return 'Expense updated';
+    case 'expense_deleted':
+      return 'Expense removed';
+    case 'settlement_created':
+      return 'Settlement completed';
+    case 'settlement_reminder':
+      return 'Reminder sent';
+    case 'member_joined':
+      return 'Member joined';
+    case 'member_invited':
+      return 'Member invited';
+    default:
+      return 'Activity update';
+  }
+};
+
+const subtitleForActivity = (activity: ActivityDto): string => {
+  const amount = amountTextForActivity(activity);
+  switch (activity.type) {
+    case 'settlement_created':
+      return amount ? `${amount} cleared` : 'A balance was cleared';
+    case 'settlement_reminder':
+      return amount ? `${amount} still pending` : 'A pending balance needs follow-up';
+    case 'expense_created':
+    case 'expense_updated':
+      return amount ? `${amount} logged` : 'Ledger updated';
+    case 'expense_deleted':
+      return 'An expense was removed';
+    case 'member_joined':
+      return 'A member joined the group';
+    case 'member_invited':
+      return 'An invite was sent';
+    default:
+      return `${activity.actorUserId} in group`;
+  }
+};
+
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
   const groups = useGroupStore((state) => state.groups);
@@ -206,11 +275,11 @@ export function HomeScreen({ navigation }: { navigation: any }) {
               entering={FadeInDown.duration(400).delay(400 + i * 100)}
             >
               <ActivityItem
-                title={activity.type.replace('_', ' ')}
-                subtitle={`${activity.actorUserId} in group`}
-                amount={activity.metadata?.totalAmountCents ? `$${(Number(activity.metadata.totalAmountCents) / 100).toFixed(2)}` : undefined}
+                title={titleForActivity(activity)}
+                subtitle={subtitleForActivity(activity)}
+                amount={amountTextForActivity(activity)}
                 date={new Date(activity.createdAt).toLocaleDateString()}
-                icon="receipt"
+                icon={iconForActivity(activity)}
               />
             </Animated.View>
           ))
@@ -339,3 +408,4 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 });
+
