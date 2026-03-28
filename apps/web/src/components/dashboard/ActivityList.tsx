@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ActivityDto } from '@fairshare/shared-types';
-import { Clock, Receipt, Users, Plus, Trash2, UserPlus, Milestone, ArrowUpRight } from 'lucide-react';
+import { Clock, Receipt, Users, Plus, Trash2, UserPlus, Milestone, ArrowUpRight, BellRing, ActivitySquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function getIconForType(type: ActivityDto['type']) {
@@ -11,16 +11,61 @@ function getIconForType(type: ActivityDto['type']) {
     case 'expense_updated': return { Icon: Receipt, color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' };
     case 'expense_deleted': return { Icon: Trash2, color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' };
     case 'settlement_created': return { Icon: Milestone, color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' };
+    case 'settlement_reminder': return { Icon: BellRing, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
     case 'member_joined': return { Icon: UserPlus, color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' };
     default: return { Icon: ActivitySquare, color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' };
   }
 }
 
-function labelForType(type: ActivityDto['type']): string {
-  return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+function formatAmount(activity: ActivityDto): string | null {
+  const raw = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
+  if (typeof raw !== 'string') {
+    return null;
+  }
+  return `$${(Number(raw) / 100).toFixed(2)}`;
 }
 
-import { ActivitySquare } from 'lucide-react';
+function labelForActivity(activity: ActivityDto): string {
+  switch (activity.type) {
+    case 'expense_created':
+      return 'Expense added';
+    case 'expense_updated':
+      return 'Expense updated';
+    case 'expense_deleted':
+      return 'Expense removed';
+    case 'settlement_created':
+      return 'Settlement completed';
+    case 'settlement_reminder':
+      return 'Settlement reminder sent';
+    case 'member_joined':
+      return 'Member joined';
+    case 'member_invited':
+      return 'Member invited';
+    default:
+      return 'Activity update';
+  }
+}
+
+function subtitleForActivity(activity: ActivityDto): string {
+  const amount = formatAmount(activity);
+  switch (activity.type) {
+    case 'settlement_created':
+      return amount ? `${amount} marked as settled` : 'A balance was cleared';
+    case 'settlement_reminder':
+      return amount ? `${amount} still pending` : 'A pending balance needs follow-up';
+    case 'expense_created':
+    case 'expense_updated':
+      return amount ? `${amount} logged in the ledger` : 'Ledger updated';
+    case 'expense_deleted':
+      return 'An expense was removed from the ledger';
+    case 'member_joined':
+      return 'Group membership changed';
+    case 'member_invited':
+      return 'Invite sent to a member';
+    default:
+      return 'Protocol signal';
+  }
+}
 
 export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto[]; groupId?: string }) {
   const safeItems = Array.isArray(items) ? items : [];
@@ -43,6 +88,7 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
       <div className="space-y-3 sm:space-y-4">
         {safeItems.map((item, idx) => {
           const { Icon, color } = getIconForType(item.type);
+          const amount = formatAmount(item);
           return (
             <motion.div
               key={item.id}
@@ -55,23 +101,24 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
               <div className={`h-8 w-8 sm:h-10 sm:w-10 shrink-0 flex items-center justify-center rounded-xl border ${color}`}>
                 <Icon size={16} />
               </div>
-              
+
               <div className="flex-grow min-w-0">
                 <p className="text-xs font-black tracking-tight text-white group-hover:text-purple-400 transition-colors truncate">
-                  {labelForType(item.type)}
+                  {labelForActivity(item)}
                 </p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
                     {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <div className="h-0.5 w-0.5 rounded-full bg-zinc-800" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-800">
-                    Protocol Signal
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 truncate">
+                    {subtitleForActivity(item)}
                   </p>
                 </div>
               </div>
 
-              <div className="hidden sm:block">
+              <div className="hidden sm:flex flex-col items-end gap-2">
+                {amount ? <span className="text-[11px] font-black text-white">{amount}</span> : null}
                 <div className="h-8 w-8 rounded-full border border-white/5 flex items-center justify-center text-[8px] font-black text-zinc-700 uppercase">
                   FS
                 </div>
@@ -92,3 +139,4 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
     </div>
   );
 }
+
