@@ -5,13 +5,14 @@ interface GroupCardProps {
   name: string;
   currency: string;
   memberCount: number;
+  overdueRecurringCount?: number;
   balance?: {
     owe: string;
     owed: string;
   };
 }
 
-export function GroupCard({ id, name, currency, memberCount, balance }: GroupCardProps) {
+export function GroupCard({ id, name, currency, memberCount, overdueRecurringCount = 0, balance }: GroupCardProps) {
   return (
     <Link
       href={`/dashboard/groups/${id}`}
@@ -22,16 +23,21 @@ export function GroupCard({ id, name, currency, memberCount, balance }: GroupCar
           <h3 className="text-lg sm:text-xl font-bold text-[var(--fs-text-primary)] group-hover:text-[var(--fs-primary)] transition-colors">
             {name}
           </h3>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--fs-text-secondary)] bg-[var(--fs-background)] px-2.5 py-1 rounded-md border border-[var(--fs-border)]">
               {memberCount} Members
             </span>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--fs-text-secondary)] bg-[var(--fs-background)] px-2.5 py-1 rounded-md border border-[var(--fs-border)]">
               {currency}
             </span>
+            {overdueRecurringCount > 0 ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20 dark:text-amber-400">
+                {overdueRecurringCount} recurring due
+              </span>
+            ) : null}
           </div>
         </div>
-        
+
         {balance && (
           <div className="text-right space-y-2">
             {parseFloat(balance.owed) > 0 && (

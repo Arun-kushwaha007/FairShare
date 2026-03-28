@@ -1,7 +1,11 @@
-import { GroupDto } from '@fairshare/shared-types';
+import { GroupDto, RecurringExpenseDto } from '@fairshare/shared-types';
 import { DashboardLayout } from '../../../src/components/layout';
 import { GroupCard, CreateGroupButton } from '../../../src/components/groups';
 import { backendFetch } from '../../../src/lib/backend';
+
+function isRecurringDue(item: RecurringExpenseDto): boolean {
+  return new Date(item.nextOccurrenceAt).getTime() <= Date.now();
+}
 
 export default async function DashboardGroupsPage() {
   let groups: GroupDto[] = [];
@@ -10,6 +14,19 @@ export default async function DashboardGroupsPage() {
   } catch {
     groups = [];
   }
+
+  const overdueRecurringByGroup = Object.fromEntries(
+    await Promise.all(
+      groups.map(async (group) => {
+        try {
+          const recurring = await backendFetch<RecurringExpenseDto[]>(`/groups/${group.id}/recurring-expenses`);
+          return [group.id, recurring.filter(isRecurringDue).length] as const;
+        } catch {
+          return [group.id, 0] as const;
+        }
+      }),
+    ),
+  );
 
   return (
     <DashboardLayout topbarRight={<CreateGroupButton />}>
@@ -36,6 +53,7 @@ export default async function DashboardGroupsPage() {
               name={group.name}
               currency={group.currency}
               memberCount={group.members?.length ?? 0}
+              overdueRecurringCount={overdueRecurringByGroup[group.id] ?? 0}
             />
           ))}
 
