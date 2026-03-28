@@ -34,6 +34,8 @@ const recurringLabels: Record<RecurringExpenseDto['frequency'], string> = {
   monthly: 'Monthly',
 };
 
+type RecurringSectionKey = 'overdue' | 'today' | 'upcoming';
+
 const categoryLabels: Record<ExpenseCategory, string> = {
   FOOD: 'Food',
   TRAVEL: 'Travel',
@@ -43,14 +45,27 @@ const categoryLabels: Record<ExpenseCategory, string> = {
   OTHER: 'Other',
 };
 
-const getRecurringScheduleLabel = (nextOccurrenceAt: string) => {
+const recurringSectionTitles: Record<RecurringSectionKey, string> = {
+  overdue: 'Overdue',
+  today: 'Due Today',
+  upcoming: 'Upcoming',
+};
+
+const getRecurringSection = (nextOccurrenceAt: string): RecurringSectionKey => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const next = new Date(nextOccurrenceAt);
   const nextDay = new Date(next.getFullYear(), next.getMonth(), next.getDate()).getTime();
 
-  if (nextDay < today) return 'Overdue';
-  if (nextDay === today) return 'Due today';
+  if (nextDay < today) return 'overdue';
+  if (nextDay === today) return 'today';
+  return 'upcoming';
+};
+
+const getRecurringScheduleLabel = (nextOccurrenceAt: string) => {
+  const section = getRecurringSection(nextOccurrenceAt);
+  if (section === 'overdue') return 'Overdue';
+  if (section === 'today') return 'Due today';
   return 'Upcoming';
 };
 
@@ -189,6 +204,22 @@ export function GroupDetailScreen({
       return haystack.includes(normalizedQuery);
     });
   }, [categoryFilter, expenses, memberById, payerFilter, query]);
+
+  const recurringSections = React.useMemo(() => {
+    const grouped: Record<RecurringSectionKey, RecurringExpenseDto[]> = {
+      overdue: [],
+      today: [],
+      upcoming: [],
+    };
+
+    [...recurringExpenses]
+      .sort((a, b) => new Date(a.nextOccurrenceAt).getTime() - new Date(b.nextOccurrenceAt).getTime())
+      .forEach((item) => {
+        grouped[getRecurringSection(item.nextOccurrenceAt)].push(item);
+      });
+
+    return grouped;
+  }, [recurringExpenses]);
 
   const groupedExpenses = React.useMemo(() => {
     const now = new Date();
@@ -456,34 +487,43 @@ export function GroupDetailScreen({
           <SectionHeader title="Recurring Bills" />
           {recurringExpenses.length > 0 ? (
             <View style={styles.recurringList}>
-              {recurringExpenses.map((item) => {
-                const payer = memberById.get(item.payerId);
-                const scheduleLabel = getRecurringScheduleLabel(item.nextOccurrenceAt);
-                const lastGeneratedLabel = formatLastGeneratedLabel(item.lastGeneratedAt);
-                return (
-                  <Card key={item.id} style={styles.recurringCard}>
-                    <View style={styles.recurringHeaderRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
-                        <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>{recurringLabels[item.frequency]} • {scheduleLabel}</Text>
-                      </View>
-                      <View style={styles.recurringActions}>
-                        <TouchableOpacity onPress={() => startRecurringEdit(item)}>
-                          <MaterialCommunityIcons name="pencil-outline" size={22} color={colors.text_primary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setDeleteRecurringTarget(item)}>
-                          <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
-                        </TouchableOpacity>
-                      </View>
+              {(Object.keys(recurringSections) as RecurringSectionKey[]).map((sectionKey) =>
+                recurringSections[sectionKey].length > 0 ? (
+                  <View key={sectionKey} style={styles.recurringSectionGroup}>
+                    <View style={styles.recurringSectionHeader}>
+                      <Text style={[styles.recurringSectionTitle, { color: colors.text_secondary }]}>{recurringSectionTitles[sectionKey]}</Text>
+                      <Text style={[styles.recurringSectionCount, { color: colors.text_secondary }]}>{recurringSections[sectionKey].length}</Text>
                     </View>
-                    <Text style={[styles.recurringAmount, { color: colors.primary }]}>{currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}</Text>
-                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Next {new Date(item.nextOccurrenceAt).toLocaleDateString()} • {lastGeneratedLabel}</Text>
-                    <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants</Text>
-                  </Card>
-                );
-              })}
-            </View>
-          ) : (
+                    {recurringSections[sectionKey].map((item) => {
+                      const payer = memberById.get(item.payerId);
+                      const scheduleLabel = getRecurringScheduleLabel(item.nextOccurrenceAt);
+                      const lastGeneratedLabel = formatLastGeneratedLabel(item.lastGeneratedAt);
+                      return (
+                        <Card key={item.id} style={styles.recurringCard}>
+                          <View style={styles.recurringHeaderRow}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
+                              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>{recurringLabels[item.frequency]} • {scheduleLabel}</Text>
+                            </View>
+                            <View style={styles.recurringActions}>
+                              <TouchableOpacity onPress={() => startRecurringEdit(item)}>
+                                <MaterialCommunityIcons name="pencil-outline" size={22} color={colors.text_primary} />
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => setDeleteRecurringTarget(item)}>
+                                <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                          <Text style={[styles.recurringAmount, { color: colors.primary }]}>{currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}</Text>
+                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Next {new Date(item.nextOccurrenceAt).toLocaleDateString()} • {lastGeneratedLabel}</Text>
+                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants</Text>
+                        </Card>
+                      );
+                    })}
+                  </View>
+                ) : null,
+              )}
+            </View>          ) : (
             <Card style={styles.recurringEmptyCard}>
               <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>No recurring bills yet</Text>
               <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Turn on recurring when you add rent, subscriptions, or utilities.</Text>
@@ -679,7 +719,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   recurringList: {
-    gap: spacing.md,
+    gap: spacing.lg,
+  },
+  recurringSectionGroup: {
+    gap: spacing.sm,
+  },
+  recurringSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  recurringSectionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  recurringSectionCount: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   recurringCard: {
     padding: spacing.lg,
@@ -775,6 +833,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
+
+
 
 
 
