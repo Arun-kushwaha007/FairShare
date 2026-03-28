@@ -3,10 +3,17 @@ import { render, waitFor } from '@testing-library/react-native';
 import { PaperProvider } from 'react-native-paper';
 import { GroupListScreen } from './GroupListScreen';
 import { groupService } from '../services/group.service';
+import { expenseService } from '../services/expense.service';
 
 jest.mock('../services/group.service', () => ({
   groupService: {
     list: jest.fn(),
+  },
+}));
+
+jest.mock('../services/expense.service', () => ({
+  expenseService: {
+    listRecurring: jest.fn(),
   },
 }));
 
@@ -21,6 +28,7 @@ describe('GroupListScreen', () => {
     );
 
     await waitFor(() => expect(getByText('No groups yet')).toBeTruthy());
-    expect(getByText('Create your first group to start splitting expenses')).toBeTruthy();
+    expect(getByText("You haven't joined any groups yet.")).toBeTruthy();
+    expect(expenseService.listRecurring).not.toHaveBeenCalled();
   });
 });

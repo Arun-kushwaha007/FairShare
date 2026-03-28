@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useGroupStore } from '../store/groupStore';
 import { groupService } from '../services/group.service';
+import { expenseService } from '../services/expense.service';
 import { ListItem } from '../components/ui/ListItem';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useToastStore } from '../store/toastStore';
@@ -12,12 +13,16 @@ import { useAppTheme } from '../theme/useAppTheme';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { FloatingActionButton } from '../components/FloatingActionButton';
 import { spacing } from '../theme/spacing';
+import type { RecurringExpenseDto } from '@fairshare/shared-types';
+
+const isRecurringDue = (item: RecurringExpenseDto) => new Date(item.nextOccurrenceAt).getTime() <= Date.now();
 
 export function GroupListScreen({ navigation }: { navigation: any }) {
   const groups = useGroupStore((state) => state.groups);
   const setGroups = useGroupStore((state) => state.setGroups);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [overdueRecurringByGroup, setOverdueRecurringByGroup] = React.useState<Record<string, number>>({});
   const toast = useToastStore((state) => state.show);
   const { colors } = useAppTheme();
 
@@ -25,6 +30,17 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
     try {
       const data = await groupService.list();
       setGroups(data);
+      const recurringEntries = await Promise.all(
+        data.map(async (group) => {
+          try {
+            const recurringExpenses = await expenseService.listRecurring(group.id);
+            return [group.id, recurringExpenses.filter(isRecurringDue).length] as const;
+          } catch {
+            return [group.id, 0] as const;
+          }
+        }),
+      );
+      setOverdueRecurringByGroup(Object.fromEntries(recurringEntries));
     } catch {
       toast('Failed to load groups');
     } finally {
@@ -86,16 +102,21 @@ export function GroupListScreen({ navigation }: { navigation: any }) {
             />
           ) : null
         }
-        renderItem={({ item, index }) => (
-          <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>
-            <ListItem
-              title={item.name}
-              description={item.currency}
-              leftIcon="account-group-outline"
-              onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
-            />
-          </Animated.View>
-        )}
+        renderItem={({ item, index }) => {
+          const overdueCount = overdueRecurringByGroup[item.id] ?? 0;
+          const description = overdueCount > 0 ? `${item.currency} • ${overdueCount} recurring due` : item.currency;
+
+          return (
+            <Animated.View entering={FadeInDown.duration(400).delay(100 + index * 60)}>
+              <ListItem
+                title={item.name}
+                description={description}
+                leftIcon="account-group-outline"
+                onPress={() => navigation.navigate('GroupDetail', { groupId: item.id })}
+              />
+            </Animated.View>
+          );
+        }}
       />
 
       <FloatingActionButton
