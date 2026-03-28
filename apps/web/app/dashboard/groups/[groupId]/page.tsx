@@ -36,6 +36,14 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     ]);
 
     const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
+    const netBalance = Number(summary.perUserOwedCents[currentUser.id] ?? '0') / 100;
+    const balanceLabel = netBalance > 0 ? 'You are owed' : netBalance < 0 ? 'You owe' : 'All settled';
+    const balanceTone =
+      netBalance > 0
+        ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+        : netBalance < 0
+          ? 'text-rose-500 bg-rose-500/10 border-rose-500/20'
+          : 'text-[var(--fs-text-muted)] bg-[var(--fs-background)] border-[var(--fs-border)]';
 
     return (
       <DashboardLayout>
@@ -48,6 +56,10 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
                   Created {new Date(group.createdAt).toLocaleDateString()} - ID {groupId.slice(0, 8)}
                 </p>
+                <div className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] ${balanceTone}`}>
+                  <span>{balanceLabel}</span>
+                  <span>{Math.abs(netBalance).toLocaleString(undefined, { style: 'currency', currency: group.currency })}</span>
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3 w-full sm:w-auto">
                 <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-3 py-2 sm:px-4 sm:py-3 text-right">
