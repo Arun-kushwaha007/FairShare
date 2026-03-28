@@ -11,13 +11,22 @@ import { BalanceCard } from '../components/BalanceCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { groupService } from '../services/group.service';
-import type { ActivityDto } from '@fairshare/shared-types';
+import { expenseService } from '../services/expense.service';
+import type { ActivityDto, RecurringExpenseDto, SimplifySuggestionDto } from '@fairshare/shared-types';
 import { ActivityItem } from '../components/ActivityItem';
 import { useToastStore } from '../store/toastStore';
 import { Image } from 'react-native';
 
 const LOGO_SOURCE = require('../assets/images/logo.png');
 
+type AttentionItem = {
+  groupId: string;
+  groupName: string;
+  settlementCount: number;
+  dueRecurringCount: number;
+};
+
+const isRecurringDue = (item: RecurringExpenseDto) => new Date(item.nextOccurrenceAt).getTime() <= Date.now();
 
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
@@ -25,24 +34,46 @@ export function HomeScreen({ navigation }: { navigation: any }) {
   const { colors, typography } = useAppTheme();
   const [summary, setSummary] = React.useState<{ totalBalanceCents: string } | null>(null);
   const [activities, setActivities] = React.useState<ActivityDto[]>([]);
+  const [attentionItems, setAttentionItems] = React.useState<AttentionItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const toast = useToastStore((state) => state.show);
 
   const loadData = React.useCallback(async () => {
     try {
-      const [summaryData, activityData] = await Promise.all([
+      const [summaryData, activityData, nextAttentionItems] = await Promise.all([
         groupService.userSummary(),
         groupService.userActivity(0, 5),
+        Promise.all(
+          groups.slice(0, 5).map(async (group) => {
+            const [suggestions, recurringExpenses] = await Promise.all([
+              groupService.simplify(group.id).catch(() => [] as SimplifySuggestionDto[]),
+              expenseService.listRecurring(group.id).catch(() => [] as RecurringExpenseDto[]),
+            ]);
+
+            return {
+              groupId: group.id,
+              groupName: group.name,
+              settlementCount: suggestions.length,
+              dueRecurringCount: recurringExpenses.filter(isRecurringDue).length,
+            } satisfies AttentionItem;
+          }),
+        ),
       ]);
       setSummary(summaryData);
       setActivities(activityData.items);
+      setAttentionItems(
+        nextAttentionItems
+          .filter((item) => item.settlementCount > 0 || item.dueRecurringCount > 0)
+          .sort((a, b) => (b.settlementCount + b.dueRecurringCount) - (a.settlementCount + a.dueRecurringCount))
+          .slice(0, 4),
+      );
     } catch (err) {
       console.error(err);
       toast('Failed to sync your vibes');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [groups, toast]);
 
   React.useEffect(() => {
     void loadData();
@@ -60,21 +91,20 @@ export function HomeScreen({ navigation }: { navigation: any }) {
   const balanceIcon = totalBalance >= 0 ? 'trending-up' : 'trending-down';
 
   return (
-    <ScrollView 
+    <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.brandContainer}>
-          <Image 
-            source={LOGO_SOURCE} 
-            style={styles.logo} 
-            resizeMode="contain" 
+          <Image
+            source={LOGO_SOURCE}
+            style={styles.logo}
+            resizeMode="contain"
           />
           <View>
-            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back ✌️</Text>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back</Text>
             <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Bestie'}</Text>
           </View>
         </View>
@@ -83,10 +113,9 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         </TouchableOpacity>
       </View>
 
-      {/* Balance Summary */}
       <Animated.View entering={FadeInDown.duration(400)} style={styles.summarySection}>
         <BalanceCard
-          title="The Bag 💰"
+          title="The Bag"
           amount={`$${Math.abs(totalBalance).toFixed(2)}`}
           subtitle={balanceLabel}
           variant={balanceVariant}
@@ -94,16 +123,15 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         />
       </Animated.View>
 
-      {/* Quick Actions */}
       <SectionHeader title="Fast Moves" />
       <View style={styles.quickActions}>
         {quickActions.map((action, i) => (
-          <Animated.View 
-            key={action.label} 
+          <Animated.View
+            key={action.label}
             entering={FadeInDown.duration(400).delay(100 + i * 100)}
             style={styles.actionItem}
           >
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={action.onPress}
               activeOpacity={0.8}
@@ -117,22 +145,69 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         ))}
       </View>
 
-      {/* Recent Activity */}
-      <SectionHeader 
-        title="Recent Activity ☕" 
-        action="See all" 
-        onActionPress={() => navigation.navigate('Activity')} 
+      {attentionItems.length > 0 ? (
+        <>
+          <SectionHeader title="Needs Attention" />
+          <View style={styles.attentionList}>
+            {attentionItems.map((item, index) => (
+              <Animated.View key={item.groupId} entering={FadeInDown.duration(400).delay(250 + index * 80)}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={[styles.attentionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() =>
+                    item.settlementCount > 0
+                      ? navigation.navigate('SettleUp', { groupId: item.groupId })
+                      : navigation.navigate('GroupDetail', { groupId: item.groupId })
+                  }
+                >
+                  <View style={styles.attentionHeader}>
+                    <View style={styles.attentionTitleRow}>
+                      <View style={[styles.attentionIconBg, { backgroundColor: `${colors.warning}12` }]}>
+                        <MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.warning} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.attentionTitle, { color: colors.text_primary }]}>{item.groupName}</Text>
+                        <Text style={[styles.attentionSubtitle, { color: colors.text_secondary }]}>Tap to jump to the next task</Text>
+                      </View>
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={22} color={colors.text_secondary} />
+                  </View>
+                  <View style={styles.attentionMetaRow}>
+                    {item.settlementCount > 0 ? (
+                      <View style={[styles.metaPill, { backgroundColor: `${colors.success}12` }]}>
+                        <MaterialCommunityIcons name="handshake-outline" size={14} color={colors.success} />
+                        <Text style={[styles.metaPillText, { color: colors.success }]}>{item.settlementCount} settlements</Text>
+                      </View>
+                    ) : null}
+                    {item.dueRecurringCount > 0 ? (
+                      <View style={[styles.metaPill, { backgroundColor: `${colors.warning}12` }]}>
+                        <MaterialCommunityIcons name="calendar-clock-outline" size={14} color={colors.warning} />
+                        <Text style={[styles.metaPillText, { color: colors.warning }]}>{item.dueRecurringCount} recurring due</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      <SectionHeader
+        title="Recent Activity"
+        action="See all"
+        onActionPress={() => navigation.navigate('Activity')}
       />
       <View style={styles.activityList}>
         {activities.length > 0 ? (
           activities.map((activity, i) => (
-            <Animated.View 
-              key={activity.id} 
+            <Animated.View
+              key={activity.id}
               entering={FadeInDown.duration(400).delay(400 + i * 100)}
             >
-              <ActivityItem 
-                title={activity.type.replace('_', ' ')} 
-                subtitle={`${activity.actorUserId} in group`} 
+              <ActivityItem
+                title={activity.type.replace('_', ' ')}
+                subtitle={`${activity.actorUserId} in group`}
                 amount={activity.metadata?.totalAmountCents ? `$${(Number(activity.metadata.totalAmountCents) / 100).toFixed(2)}` : undefined}
                 date={new Date(activity.createdAt).toLocaleDateString()}
                 icon="receipt"
@@ -141,7 +216,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
           ))
         ) : (
           <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center', marginTop: spacing.lg }]}>
-            No tea to spill yet.
+            {loading ? 'Syncing dashboard...' : 'No tea to spill yet.'}
           </Text>
         )}
       </View>
@@ -188,7 +263,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     gap: spacing.sm,
-    // Soft shadow
     shadowColor: 'rgba(0,0,0,0.04)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
@@ -206,6 +280,60 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  attentionList: {
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  attentionCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  attentionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  attentionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  attentionIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attentionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  attentionSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  attentionMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  metaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  metaPillText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   activityList: {
     gap: spacing.sm,
