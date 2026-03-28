@@ -59,6 +59,12 @@ const formatLastGeneratedLabel = (lastGeneratedAt?: string | null) => {
   return `Last generated ${new Date(lastGeneratedAt).toLocaleDateString()}`;
 };
 
+const getBalanceStatus = (value: number) => {
+  if (value > 0) return 'You are owed';
+  if (value < 0) return 'You owe';
+  return 'All settled';
+};
+
 export function GroupDetailScreen({
   route,
   navigation,
@@ -158,6 +164,8 @@ export function GroupDetailScreen({
     if (!currentUserId || !summary) return 0;
     return Number(summary.perUserOwedCents[currentUserId] ?? '0') / 100;
   }, [currentUserId, summary]);
+
+  const balanceStatus = getBalanceStatus(userBalance);
 
   const filteredExpenses = React.useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -357,6 +365,18 @@ export function GroupDetailScreen({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {group ? (
+          <Animated.View entering={FadeInDown.duration(360)} style={styles.heroSection}>
+            <Card style={styles.heroCard}>
+              <Text style={[styles.heroEyebrow, { color: colors.text_secondary }]}>Group</Text>
+              <Text style={[styles.heroTitle, { color: colors.text_primary }]}>{group.name}</Text>
+              <View style={[styles.heroBadge, { borderColor: userBalance > 0 ? colors.success : userBalance < 0 ? colors.danger : colors.border, backgroundColor: userBalance > 0 ? `${colors.success}12` : userBalance < 0 ? `${colors.danger}12` : colors.cardElevated }]}>
+                <Text style={[styles.heroBadgeText, { color: userBalance > 0 ? colors.success : userBalance < 0 ? colors.danger : colors.text_secondary }]}>{balanceStatus} • {currencySymbol}{Math.abs(userBalance).toFixed(2)}</Text>
+              </View>
+            </Card>
+          </Animated.View>
+        ) : null}
+
         {summary && group && (
           <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
             <BalanceCard
@@ -571,6 +591,34 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: 120,
   },
+  heroSection: {
+    marginBottom: spacing.md,
+  },
+  heroCard: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  heroBadge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  heroBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   balanceSection: {
     gap: spacing.md,
     marginBottom: spacing.xl,
@@ -727,4 +775,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
+
+
+
 
