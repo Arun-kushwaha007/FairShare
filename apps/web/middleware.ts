@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authCookies, accessCookieOptions, refreshCookieOptions } from './src/lib/authCookies';
 import { getBackendBaseUrl } from './src/lib/env';
 import { isJwtExpiringSoon } from './src/lib/jwt';
+import { createClient } from './utils/supabase/middleware';
 
 function isProtectedPath(pathname: string): boolean {
   return pathname === '/dashboard' || pathname.startsWith('/dashboard/');
 }
 
 function isAuthPage(pathname: string): boolean {
-  return pathname === '/login' || pathname === '/register';
+  return pathname === '/login' || pathname === '/register' || pathname === '/supabase-test';
 }
 
 function parseCookieValue(setCookieHeader: string | null, cookieName: string): string | null {
@@ -84,12 +85,23 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const accessToken = req.cookies.get(authCookies.accessToken)?.value ?? null;
 
+  // 1. Handle Supabase session refreshing
+  let res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
+  
+  const supabase = createClient(req, res);
+  // This refreshes the session if needed
+  await supabase.auth.getUser();
+
   if (isAuthPage(pathname) && accessToken) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   if (!isProtectedPath(pathname)) {
-    return NextResponse.next();
+    return res;
   }
 
   if (!accessToken) {
@@ -99,20 +111,19 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!isJwtExpiringSoon(accessToken, 60_000)) {
-    return NextResponse.next();
+    return res;
   }
 
   const refreshed = await tryRefreshTokens(req);
   if (!refreshed) {
-    return NextResponse.next();
+    return res;
   }
 
-  const res = NextResponse.next();
   res.cookies.set(authCookies.accessToken, refreshed.accessToken, accessCookieOptions);
   res.cookies.set(authCookies.refreshToken, refreshed.refreshToken, refreshCookieOptions);
   return res;
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/login', '/register', '/supabase-test'],
 };

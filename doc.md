@@ -1,105 +1,448 @@
-# FairShare Project Status
+# FairShare Product Comparison And Practical Roadmap
 
-Last updated: March 15, 2026
+Last updated: March 27, 2026
 
-## Snapshot
-- Monorepo with NestJS API, Expo mobile client, and a Next.js web app managed via Turbo + pnpm.
-- Core expense, settlement, receipt, notification, realtime, and payment primitives are implemented server-side with Prisma/PostgreSQL (Supabase URL) and Redis/BullMQ.
-- Mobile app ships full flows (auth, groups, expenses, settle-up, activity, profile/settings) with offline queueing, push tokens, realtime sockets, and UPI deep-link helper; UI built with React Native Paper + Reanimated.
-- Web app now includes authenticated dashboard: JWT cookie auth, middleware guards, groups, expenses, settlement suggestions, receipt upload, realtime Socket.IO updates, and Playwright e2e coverage.
-- Observability (Sentry, OpenTelemetry, Prometheus metrics) and security hardening (helmet, throttling, CSRF on refresh, JWT + refresh cookies) are wired in backend startup.
+## Purpose
+This document compares the implemented feature set across:
 
-## Project Structure
-- apps/backend — NestJS service exposing REST + WebSocket APIs; background jobs via BullMQ.
-- apps/mobile — Expo Router/React Native client with feature screens and state stores (Zustand).
-- apps/web — Next.js 15 site styled with Tailwind + Framer Motion animations.
-- packages/shared-types — DTOs and response contracts shared across apps.
-- infra/terraform — Terraform skeleton for AWS (ECS, RDS, S3) deployment.
+- `apps/mobile`
+- `apps/web`
+- shared backend capabilities in `apps/backend`
 
-## Backend (apps/backend)
-### Major modules & responsibilities
-- Auth: register/login/google, refresh tokens (httpOnly cookie), CSRF token endpoint.
-- Users: `GET /users/me`, `POST /users/push-token` to register Expo tokens.
-- Groups: CRUD-ish flows (`POST /groups`, `GET /groups`, `GET /groups/:id`, members, invite, per-user/group summaries).
-- Expenses: create/list/update/delete per group; pagination via cursor+limit; detail fetch.
-- Balances: `GET /groups/:id/balances` to expose pairwise balances.
-- Simplify: `GET /groups/:id/simplify` returns settlement suggestions (used by mobile settle-up).
-- Settlements: `POST /groups/:id/settlements` with optional `x-idempotency-key`.
-- Receipts: `POST /expenses/:id/receipt-url` returns presigned S3 upload URL and records receipt key.
-- Activity: user and group feeds with cursor pagination.
-- Payments: `POST /payments/create-intent` (Stripe PaymentIntent) and `POST /payments/webhook` (queues handling); settlements are recorded from successful webhooks.
-- Realtime: Socket.IO gateway with `join_group`/`leave_group` rooms; emits expense/settlement/group-member events per group.
-- Notifications: Expo push delivery via Redis pub/sub + BullMQ retries; invalid tokens are cleaned up.
-- Health/Observability: `/health` checks PostgreSQL + Redis; `/metrics` exposes Prometheus text; OpenTelemetry auto-instrumentation on boot.
+It focuses on four questions:
 
-### Data model (Prisma)
-- Users with JWT/refresh tokens, push tokens, activities.
-- Groups with members (roles), expenses (splits), balances, settlements, receipts, invites, payments, activities.
-- Expenses store cent-precision totals plus per-user splits; receipts are 1:1 with expenses.
-- Settlements & payments support idempotency keys; payments map to Stripe PaymentIntents.
+1. What exists today in mobile vs web
+2. What is missing in each surface
+3. What should be added next without overcomplicating the app
+4. Which practical ideas are validated by the current expense-sharing market
 
-### Integrations & infrastructure
-- PostgreSQL via `SUPABASE_DATABASE_URL`.
-- Redis for queues + pub/sub + throttling state.
-- AWS S3 (AWS SDK v3) for receipt uploads (presigned PUT URLs).
-- Stripe (v18 SDK) for PaymentIntents; webhook signature enforced when `STRIPE_WEBHOOK_SECRET` set.
-- Google OAuth via `passport-google-oauth20` alongside email/password.
-- Expo push notifications via `expo-server-sdk`.
-- Security middleware: helmet, compression, cookie-parser, CSRF on refresh/csrf-token routes, Nest ValidationPipe (whitelist/forbid), global throttling, CORS allowlist.
+## How This Was Reviewed
+The comparison below is based on code currently in the repo, not on marketing copy alone.
 
-### Background jobs (BullMQ)
-- Notification delivery with exponential backoff and invalid-token cleanup.
-- Receipt processing placeholder queue hook (currently enqueues on presign, no downstream worker in repo).
-- Payment webhook handling queued with retries to shield Stripe endpoint.
+Primary implementation references reviewed:
 
-### Testing
-- Unit/integration Jest suites for activity, balances, expenses (service + integration), settlements (service + integration), receipts (service + integration), payments, simplify, users, notifications.
+- `apps/mobile/app/navigation/AppNavigator.tsx`
+- `apps/mobile/app/screens/*`
+- `apps/mobile/app/services/*`
+- `apps/mobile/app/utils/offlineQueue.ts`
+- `apps/web/app/dashboard/**/*`
+- `apps/web/src/components/groups/*`
+- `apps/web/src/lib/actions.ts`
+- `apps/backend/src/**/*`
 
-## Mobile (apps/mobile)
-- Stack: Expo SDK 54, React Native 0.81, React Navigation, React Native Paper, Reanimated, Lottie, Zustand stores, Axios client, Socket.IO client, Expo Notifications, SecureStore, NetInfo.
-- UX flows: onboarding (login/register), group list/detail, members, add expense, expense detail, activity feed, settle-up suggestions, profile, settings, toasts, skeleton placeholders.
-- Offline: SecureStore-backed offline POST queue with automatic flush when connectivity returns; queues group expense creation, settlements, and invites.
-- Networking: Axios client auto-injects bearer token from SecureStore; base URL auto-derives from Expo host or `EXPO_PUBLIC_API_URL`; logs in dev; latency tracked; retry queue marks requests with `x-offline-retry` to avoid loops.
-- Realtime: connects to Socket.IO after auth for group events.
-- Push: registers device tokens and posts to `/users/push-token`.
-- Payments/settle-up UX: uses simplify suggestions; triggers UPI deep links for payers then marks settlement via API (does not yet surface Stripe PaymentIntent flow in-app).
-- Visuals: gradient/neo styling, animations on hero cards/actions, Avatar initials, haptic feedback hooks present.
-- Tests: basic Jest + testing-library specs for login, group list, add expense screens; TypeScript lint via `tsc --noEmit`.
+## Executive Summary
+FairShare already has a solid shared-expense foundation:
 
-## Web (apps/web)
-- Stack: Next.js 15 (app router), Tailwind tokens, Framer Motion accents, Lucide icons, Socket.IO client.
-- Design system: Royal SaaS tokens (light/dark), CSS variables, glass/neo accents, Manrope/Space Grotesk typography, shared spacing/radii/shadows.
-- Auth: /login and /register pages call proxy API routes that set httpOnly JWT + refresh cookies; middleware enforces protected /dashboard routes; auth context + refresh check.
-- Layout: AppLayout/Sidebar/Topbar/DashboardLayout with responsive shell and quick actions.
-- Dashboard: balance summary cards, recent activity list, quick actions, realtime updates.
-- Groups: list and detail pages, member panel with invites, expense ledger, actions panel.
-- Expenses: CreateExpenseModal with equal/exact/percentage split logic (shared with mobile), payer selection, participant guard, server action to POST /groups/:id/expenses.
-- Settlements: /dashboard/groups/[groupId]/settle renders simplify suggestions and confirm flows hitting /groups/:id/settlements.
-- Receipts: per-expense upload modal uses presigned PUT from /expenses/:id/receipt-url with preview.
-- Realtime: Socket.IO client joins group rooms and refreshes on expense/settlement/member events via backend gateway.
-- Tests: Playwright e2e (opt-in with RUN_E2E=true) covers auth → group → expense → settlement lifecycle.
+- auth
+- groups
+- invitations
+- expense creation
+- settlement suggestions
+- activity feeds
+- receipts
+- realtime sync
 
-## Shared Types (packages/shared-types)
-- Zod/TypeScript DTOs for auth payloads, expenses, balances, settlements, receipts, activity feeds, payments, notifications; consumed by backend controllers and mobile client.
+But parity is not complete.
 
-## DevOps & Tooling
-- Scripts: `pnpm dev|dev:backend|dev:mobile|dev:web`, `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm e2e` (Playwright), `pnpm seed`.
-- Docker: backend Dockerfile; `docker-compose.yml` for local Postgres/Redis/S3? (check services before use).
-- Monitoring: Sentry DSN + OTEL hooks; Prometheus metrics endpoint.
-- Infra: Terraform stubs for AWS ECS/RDS/S3; CI assumed via GitHub Actions (see README claim) though pipeline files not present in repo root.
+Current pattern:
 
-## Known Gaps / Risks
-- Web payments UI not implemented; mobile still bypasses Stripe in favor of UPI + manual settlement API.
-- Receipt processing queue lacks worker implementation; uploads are stored but no OCR/parsing pipeline exists.
-- Offline queue can replay POSTs without deduplication beyond backend idempotency keys; ensure idempotency keys are supplied for settlements/payments when adding clients.
-- Expo SDK 54 with React Native 0.81/React 19 stack may emit peer warnings; verify compatibility before release builds.
-- CI configuration for lint/test/e2e is referenced but not included in the repo snapshot.
-- Socket.IO client token is fetched from /api/auth/token; confirm refresh/token lifecycle in production deployments.
+- Mobile is stronger for day-to-day operational use: offline queueing, push notifications, delete flow, quicker group-level overview, UPI-oriented settlement path.
+- Web is stronger for structured data entry and admin-style workflows: category capture, default split preference saving, better receipt preview/upload, cleaner group detail shell.
+- Backend supports more than either client currently exposes, especially around payments, updates, receipts, and shared data primitives.
 
-## Next Steps
-1. Decide on in-app payment path: surface Stripe PaymentIntent client flow or keep UPI-only and disable PaymentIntent endpoint if unused.
-2. Implement receipt-processing worker (OCR or validation) and surface stored receipt previews in clients.
-3. Expand web to surface balances per member, activity filters, and profile/settings parity with mobile.
-4. Add CI pipeline files (GitHub Actions) to run lint/test/build/Playwright; enable RUN_E2E toggles in CI.
-5. Tighten mobile offline/idempotency by attaching idempotency keys and surfacing retry status to users.
-6. Add web performance profiling (React profiler/Next metrics) and cache tuning for large activity/expense lists.
+The next phase should not be "add everything competitors have." It should be:
+
+1. close the obvious mobile/web parity gaps
+2. improve the highest-friction daily actions
+3. add only a few practical features that clearly reduce user effort
+
+## Feature Matrix
+Legend:
+
+- `Yes` = implemented in that client
+- `Partial` = backend exists or UI exists but flow is incomplete
+- `No` = not implemented in that client
+
+| Area | Mobile App | Web App | Notes |
+|---|---|---|---|
+| Register / login | Yes | Yes | Both wired to backend auth |
+| Protected authenticated shell | Yes | Yes | Tabs/stack on mobile, middleware/dashboard on web |
+| Profile view | Yes | Yes | Mobile has menu shell, web has account panel |
+| Appearance theme switch | Yes | Yes | Web settings is mostly appearance only |
+| Group list | Yes | Yes | Present on both |
+| Create group | Yes | Yes | Present on both |
+| Group detail | Yes | Yes | Both implemented, but not the same depth |
+| Group members list | Yes | Yes | Both can fetch/display members |
+| Invite member by email | Yes | Yes | Present on both |
+| Group-level financial summary | Yes | Partial | Mobile shows total spend and personal balance; web detail page does not show personal owed/owes breakdown |
+| Expense list in a group | Yes | Yes | Present on both |
+| Expense detail page | Yes | Yes | Web is richer visually |
+| Create expense | Yes | Yes | Both support equal/exact/percentage splitting |
+| Expense category capture | No | Yes | Backend supports category, web exposes it, mobile does not |
+| Save default split preference | No | Yes | Web can persist default split config; mobile cannot |
+| Update expense | No UI | No UI | Backend supports update, but neither client exposes editing flow |
+| Delete expense | Yes | No | Mobile has swipe-to-delete; web lacks delete action |
+| Receipt attach/upload | Partial | Yes | Web uploads file to S3; mobile only generates presigned URL and preview path |
+| Receipt preview | Partial | Yes | Web better supported; mobile preview depends on manual base URL usage |
+| Activity feed | Yes | Yes | Both implemented |
+| Activity filtering by group | Partial | Yes | Web activity screen supports group context better; mobile can load group activity if navigated with `groupId` |
+| Realtime updates | Yes | Yes | Both use Socket.IO |
+| Offline-safe write queue | Yes | No | Mobile queues create/invite/settlement POSTs |
+| Push notifications | Yes | No | Mobile registers Expo push token; web has no browser notification flow |
+| Settlement suggestions | Yes | Yes | Both use simplify endpoint |
+| Settlement completion | Yes | Yes | Both record settlements |
+| Payment rail UX | Partial | No | Mobile has UPI deep-link helper; backend also has Stripe intent support not exposed cleanly in either client |
+| Payments / Stripe checkout UX | No | No | Backend exists, client product is missing |
+| Search / filter expenses | No | No | Not surfaced |
+| Export data | No | No | Not surfaced |
+| Recurring expenses | No | No | Not surfaced |
+| Read-only sharing | No | No | Not surfaced |
+| Receipt OCR / smart extraction | No | No | Backend has only upload plumbing, no processing worker |
+
+## Where Mobile Is Ahead
+- Offline queueing is implemented and valuable for real-life usage during travel, patchy networks, or in-the-moment entry.
+- Push notification support exists through Expo token registration.
+- Group detail is more operational: total group spending, personal balance, grouped expense history, quick settle/add actions.
+- Expense deletion exists.
+- Settlement flow is more practical for India because it includes UPI deep-linking.
+
+## Where Web Is Ahead
+- Expense creation is more complete because it includes category selection.
+- Web supports saving and resetting default split preferences per group.
+- Receipt handling is materially better because the user can actually choose a file and upload it.
+- The authenticated dashboard is more structured for overview and admin-like usage.
+- Activity presentation and group context are cleaner for desktop review.
+
+## Missing In Web
+These are the strongest parity gaps in the web app:
+
+### 1. No expense delete flow
+Mobile already supports deletion. Web users can inspect expenses but cannot remove mistakes.
+
+Why it matters:
+
+- correcting wrong entries is a core ledger action
+- desktop users often do cleanup/admin work
+
+### 2. No true group financial summary parity
+Web group detail shows totals and members, but not the mobile-style "your balance" summary and owed/owes clarity.
+
+Why it matters:
+
+- users mostly want one answer: "what do I owe?" or "who owes me?"
+- that answer should be visible at group-entry level
+
+### 3. No offline resilience
+This is acceptable for v1 web, but it is still a gap compared with mobile.
+
+Practical stance:
+
+- full offline web is not urgent
+- lightweight draft persistence for forms would be enough
+
+### 4. No payment assist path
+Web can record settlements, but has no payment guidance layer like mobile's UPI flow.
+
+## Missing In Mobile
+These are the strongest parity gaps in the mobile app:
+
+### 1. No category selection when creating an expense
+Backend already supports categories and web already captures them.
+
+Why it matters:
+
+- categories unlock charts, monthly summaries, and smarter receipt handling later
+- this is low complexity and high future value
+
+### 2. No saved default split preferences
+Web lets users save a preferred split setup. Mobile does not.
+
+Why it matters:
+
+- recurring roommate/travel groups often repeat the same participant set
+- this reduces repeated taps during the highest-frequency workflow
+
+### 3. Receipt flow is incomplete
+Mobile can request a presigned URL, but there is no polished file/image picking and upload flow comparable to web.
+
+Why it matters:
+
+- "generate upload URL" is a developer flow, not a product flow
+- users expect to tap, choose image, upload, done
+
+### 4. No expense edit flow
+Backend supports updates, but mobile only supports delete, not edit.
+
+Why it matters:
+
+- many mistakes are small and should be fixed instead of deleted/recreated
+
+## Missing In Both
+These are the most meaningful shared product gaps:
+
+### 1. No practical reminder system
+You can record settlements, but there is no lightweight "remind this person" action tied to an outstanding balance.
+
+### 2. No recurring expenses
+Rent, Wi-Fi, cleaner, subscriptions, and monthly shared bills are common use cases and still manual.
+
+### 3. No export or handoff
+Users cannot export group history, expense CSV, or a simple settlement summary.
+
+### 4. No search/filter layer
+As group history grows, finding an expense becomes tedious.
+
+### 5. No read-only sharing mode
+Sometimes users want to share the ledger with a parent, organizer, finance lead, or roommate who should not edit anything.
+
+### 6. No receipt intelligence
+Uploads are stored, but there is no OCR, no autofill, no validation, and no processing worker.
+
+### 7. Backend payment support is ahead of product UX
+There is Stripe infrastructure, but no clear product decision and no complete client-side payment experience.
+
+## What Should Be Added Next
+The right next features are the ones that reduce repeated user effort, improve trust, and avoid product bloat.
+
+## Recommended Priority Order
+
+### Tier 1: Must Add Soon
+These are high-value and low-to-medium complexity.
+
+#### A. Expense categories on mobile
+Reason:
+
+- backend already supports it
+- web already has it
+- unlocks future charts and summaries
+
+#### B. Expense delete on web
+Reason:
+
+- core ledger correction workflow
+- parity with mobile
+
+#### C. Proper mobile receipt upload
+Reason:
+
+- current flow is incomplete for real users
+- strong trust feature for shared expenses
+
+#### D. Default split preferences on mobile
+Reason:
+
+- repeated-use groups benefit immediately
+- reduces friction in the main action users perform most
+
+#### E. Personal balance summary on web group detail
+Reason:
+
+- makes the desktop experience action-oriented instead of just informational
+
+### Tier 2: Strong Bonus Features
+These should be added after parity fixes.
+
+#### A. Payment reminders
+Keep this lightweight:
+
+- remind one person
+- remind all debtors in a group
+- send push on mobile, email fallback if introduced later
+
+Reason:
+
+- solves follow-through, not math
+- extremely practical
+
+#### B. Recurring expenses
+Keep the first version simple:
+
+- monthly or weekly repeat
+- fixed payer
+- fixed participants
+- editable before posting if needed
+
+Reason:
+
+- useful for rent, subscriptions, utilities
+- competitors already train users to expect this
+
+#### C. CSV export for a group
+Reason:
+
+- useful for trip reconciliation
+- useful for house finance transparency
+- low complexity compared with analytics dashboards
+
+#### D. Search and filters
+Start with:
+
+- description
+- payer
+- category
+- date range
+
+Reason:
+
+- prevents the app from feeling weak as history grows
+
+### Tier 3: Nice To Have, But Only If The Basics Are Done
+
+#### A. Receipt OCR autofill
+Good feature, but only after receipt upload is stable.
+
+Practical scope:
+
+- extract merchant name
+- extract total
+- suggest category
+
+#### B. Read-only guest/share access
+Useful for trips and household coordinators.
+
+#### C. Spending insights by category and member
+Only after category coverage is consistent across mobile and web.
+
+## Features To Avoid Right Now
+These would likely overcomplicate the app relative to current maturity.
+
+### 1. Full budgeting suite
+FairShare is a shared-expense tool, not a full personal finance app.
+
+### 2. Complex in-app wallets
+This adds compliance, reconciliation, and support burden quickly.
+
+### 3. Heavy social features
+Comments, reactions, feeds, badges, and gamification do not solve the main problem.
+
+### 4. Too many split modes
+The app already supports the right base models:
+
+- equal
+- exact
+- percentage
+
+Add complexity only if a concrete user pattern demands it.
+
+## Market Research Notes
+Checked on March 27, 2026 using current public product sources.
+
+### Observed Competitor Patterns
+
+#### Splitwise
+Commonly associated in market positioning with:
+
+- reminders
+- receipt scanning
+- currency conversion
+- connected payment rails
+
+Implication for FairShare:
+
+- reminders and receipts are not "extra" features anymore
+- users increasingly expect the app to help them actually settle, not just calculate
+
+Source:
+
+- https://www.investopedia.com/articles/company-insights/090816/how-splitwise-works-and-makes-money.asp
+
+#### Tricount
+Official use-case pages emphasize:
+
+- offline expense entry
+- receipt capture
+- payment requests/reminders
+
+Implication for FairShare:
+
+- mobile offline support is a real advantage worth preserving
+- reminders are a practical next addition, not feature bloat
+
+Source:
+
+- https://tricount.com/en-us/expense-tracker-use-cases/camps
+
+#### Settle Up
+The current App Store listing highlights:
+
+- CSV export
+- read-only access
+- receipt photos
+- categories
+- recurring transactions
+
+Implication for FairShare:
+
+- export is a practical table-stakes utility
+- recurring expenses are expected for roommate and household use cases
+- categories become more valuable once they are consistent across both clients
+
+Source:
+
+- https://apps.apple.com/us/app/settle-up-group-expenses/id737534985
+
+## Practical Product Recommendations
+If the goal is to solve real user problems without making the app feel bloated, the most defensible additions are:
+
+1. Mobile expense categories
+2. Web expense delete
+3. Proper mobile receipt upload
+4. Mobile default split preferences
+5. Web personal balance summary
+6. Payment reminders
+7. Recurring expenses
+8. CSV export
+9. Search/filter
+
+That list stays close to the product's core promise:
+
+- enter expenses quickly
+- understand who owes what
+- settle with less friction
+- keep proof when needed
+
+## Suggested Rollout Plan
+
+### Phase 1: Parity And Core Trust
+- add mobile categories
+- add web delete expense
+- add proper mobile receipt upload
+- add web personal balance summary
+
+### Phase 2: Repeated-Use Efficiency
+- add mobile default split preferences
+- add recurring expenses
+- add search/filter
+
+### Phase 3: Follow-Through
+- add reminders
+- add CSV export
+- add optional read-only share mode
+
+### Phase 4: Smart Features
+- add receipt OCR/autofill
+- add category insights/charts
+
+## Status Update
+
+- **Done since last update:** added reminders with activity history, grouped recurring bills by urgency, improved dashboard attention queues/activity feed, surfaced balance status badges, created overdue-recurring indicators, and polished recurring due-date grouping across both clients (see commits affecting `apps/web/src/components/groups/*`, `apps/web/app/dashboard/*`, and `apps/mobile/app/screens/*`).
+- **Left on the near horizon:** recurring insights on dashboards, more settlement settlement completion context directly in alerts, and the shared export/search layer still needs polished flows even after the earlier CSV/export work.
+
+## Final Recommendation
+Do not broaden FairShare into a generic fintech app.
+
+The best near-term strategy is:
+
+- close the mobile/web parity gaps
+- improve recurring high-frequency actions
+- add only the market-proven features that reduce user effort
+
+If only five items are chosen next, they should be:
+
+1. mobile categories
+2. web delete expense
+3. proper mobile receipt upload
+4. reminders
+5. recurring expenses
+
+Those five improve correctness, speed, and follow-through without changing the product into something larger than it needs to be.

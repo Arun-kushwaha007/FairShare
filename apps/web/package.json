@@ -11,6 +11,8 @@
     },
     "dependencies": {
         "@fairshare/shared-types": "workspace:*",
+        "@supabase/ssr": "^0.9.0",
+        "@supabase/supabase-js": "^2.100.1",
         "@types/gsap": "^3.0.0",
         "framer-motion": "^12.35.0",
         "gsap": "^3.14.2",
