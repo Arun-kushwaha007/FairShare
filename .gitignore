@@ -31,3 +31,8 @@ skills-lock.json
 *.cer
 *.der
 *.jks
+*.txt
+.turbo
+.turbo/*
+.agent
+.agent/*

@@ -24,7 +24,10 @@ import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: 'apps/backend/.env',
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: 60_000,
