@@ -192,8 +192,9 @@ export function HeroSection() {
 
         {/* CTAs */}
         <motion.div variants={fadeUp} className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
-          <AccentButton href="/login" variant="primary" icon={<ArrowRight size={18} />}>
-            Start Splitting Free
+          <AccentButton href="/waitlist" variant="primary" icon={<ArrowRight size={18} />}>
+            {/* Start Splitting Free */}
+            Join the Waitlist
           </AccentButton>
           <AccentButton href="/features" variant="secondary">
             Explore Features

@@ -99,18 +99,21 @@ export function Navbar() {
           {/* Auth Actions */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-3">
-              <Link
+              {/* <Link
                 href="/login"
                 className="group flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400 transition-colors hover:text-white"
               >
                 <LogIn size={14} className="opacity-60 group-hover:opacity-100" />
                 Sign In
-              </Link>
+              
+              </Link> */}
               <Link
-                href="/register"
-                className="group relative flex h-11 items-center gap-2 overflow-hidden rounded-xl bg-white px-6 text-xs font-black uppercase tracking-widest text-black transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-white/5"
+                // href="/register"
+                href="#"
+                className="disabled:opacity-50 disabled:cursor-not-allowed group relative flex h-11 items-center gap-2 overflow-hidden rounded-xl bg-white px-6 text-xs font-black uppercase tracking-widest text-black transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-white/5"
               >
-                <span>Get Started</span>
+                {/* <span>Get Started</span> */}
+                <span>Coming Soon!</span>
                 <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
