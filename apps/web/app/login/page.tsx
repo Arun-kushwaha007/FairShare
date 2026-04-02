@@ -20,7 +20,9 @@ import { fadeUp, staggerContainer } from '../../components/home/motion-variants'
 import { GlassCard } from '../../components/ui/GlassCard';
 import { AccentButton } from '../../components/ui/AccentButton';
 
-export default function LoginPage() {
+import { Suspense } from 'react';
+
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -208,5 +210,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#030303]" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

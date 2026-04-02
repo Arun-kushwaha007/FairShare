@@ -16,13 +16,13 @@ import { ExpenseTable, GroupActions, GroupSummaryPanel, MemberList, RecurringExp
 import { backendFetch } from '../../../../src/lib/backend';
 
 interface GroupDetailPageProps {
-  params: {
+  params: Promise<{
     groupId: string;
-  };
+  }>;
 }
 
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
-  const { groupId } = params;
+  const { groupId } = await params;
 
   try {
     const [group, members, expenses, summary, balances, currentUser, recurringExpenses] = await Promise.all([

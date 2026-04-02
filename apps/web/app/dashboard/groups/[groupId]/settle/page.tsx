@@ -4,8 +4,8 @@ import { DashboardLayout } from '../../../../../src/components/layout';
 import { SettlementList } from '../../../../../src/components/groups';
 import { backendFetch } from '../../../../../src/lib/backend';
 
-export default async function SettleGroupPage({ params }: { params: { groupId: string } }) {
-  const { groupId } = params;
+export default async function SettleGroupPage({ params }: { params: Promise<{ groupId: string }> }) {
+  const { groupId } = await params;
 
   try {
     const [group, members, suggestions, activity] = await Promise.all([

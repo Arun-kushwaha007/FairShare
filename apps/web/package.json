@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "tsc --noEmit",
+        "build": "next build",
         "start": "next start",
         "lint": "tsc --noEmit",
         "test": "echo \"No tests yet\""

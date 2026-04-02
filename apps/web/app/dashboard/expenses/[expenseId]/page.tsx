@@ -8,14 +8,15 @@ import { backendFetch } from '../../../../src/lib/backend';
 import { getPublicS3BaseUrl } from '../../../../src/lib/env';
 
 interface ExpenseDetailPageProps {
-  params: {
+  params: Promise<{
     expenseId: string;
-  };
+  }>;
 }
 
 export default async function ExpenseDetailPage({ params }: ExpenseDetailPageProps) {
+  const { expenseId } = await params;
   try {
-    const expense = await backendFetch<ExpenseDto>(`/expenses/${params.expenseId}`);
+    const expense = await backendFetch<ExpenseDto>(`/expenses/${expenseId}`);
     const s3BaseUrl = getPublicS3BaseUrl();
     const receiptUrl = expense.receiptFileKey && s3BaseUrl ? `${s3BaseUrl.replace(/\/$/, '')}/${expense.receiptFileKey}` : null;
 

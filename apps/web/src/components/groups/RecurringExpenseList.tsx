@@ -246,7 +246,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-[var(--fs-text-muted)]">
-                  Next run {new Date(item.nextOccurrenceAt).toLocaleDateString()} • Paid by {memberNameById[item.payerId] ?? 'Unknown'} • {item.splits.length} participants
+                  Next run {new Date(item.nextOccurrenceAt).toLocaleDateString()} ï¿½ Paid by {memberNameById[item.payerId] ?? 'Unknown'} ï¿½ {item.splits.length} participants
                 </p>
                 <p className="mt-1 text-[12px] font-medium text-[var(--fs-text-muted)]">
                   {formatGeneratedLabel(item.lastGeneratedAt)}
