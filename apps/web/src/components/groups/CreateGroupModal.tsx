@@ -5,6 +5,7 @@ import { CurrencyCode } from '@fairshare/shared-types';
 import { X, Sparkles } from 'lucide-react';
 import { createGroupAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
+import { useModalFocusTrap } from '../ui/useModalFocusTrap';
 
 type CreateGroupModalProps = {
   open: boolean;
@@ -15,6 +16,7 @@ type CreateGroupModalProps = {
 const currencyOptions: CurrencyCode[] = ['USD', 'EUR', 'INR'];
 
 export function CreateGroupModal({ open, onClose, onCreated }: CreateGroupModalProps) {
+  const modalRef = useModalFocusTrap<HTMLDivElement>(open, onClose);
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
@@ -46,11 +48,25 @@ export function CreateGroupModal({ open, onClose, onCreated }: CreateGroupModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="w-full max-w-lg rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] shadow-[var(--fs-shadow-elevated)] p-6 relative">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-group-title"
+        className="relative w-full max-w-lg rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-6 shadow-[var(--fs-shadow-elevated)]"
+      >
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Groups</p>
-            <h3 className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Create a group</h3>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
+              Groups
+            </p>
+            <h3
+              id="create-group-title"
+              className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]"
+            >
+              Create a group
+            </h3>
             <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
               Mirror the mobile flow: name and currency with strong contrast in both themes.
             </p>
@@ -68,6 +84,7 @@ export function CreateGroupModal({ open, onClose, onCreated }: CreateGroupModalP
           <label className="block">
             <span className="text-sm font-semibold text-[var(--fs-text-primary)]">Group name</span>
             <input
+              data-autofocus="true"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Summer Trip 2026"

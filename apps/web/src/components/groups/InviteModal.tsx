@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Loader2, UserPlus } from 'lucide-react';
 import { useToast } from '../../components/ui/Toaster';
 import { inviteMemberAction } from '../../lib/actions';
+import { useModalFocusTrap } from '../ui/useModalFocusTrap';
 
 interface InviteModalProps {
   groupId: string;
@@ -14,6 +15,7 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModalProps) {
+  const modalRef = useModalFocusTrap<HTMLDivElement>(isOpen, onClose);
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -21,7 +23,7 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedEmail = email.trim().toLowerCase();
-    
+
     if (!trimmedEmail) {
       toast('Please enter an email address', 'error');
       return;
@@ -36,7 +38,7 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
     try {
       setIsSubmitting(true);
       const result = await inviteMemberAction(groupId, trimmedEmail);
-      
+
       if (result.success) {
         toast('Invitation sent successfully!', 'success');
         setEmail('');
@@ -65,6 +67,11 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
           />
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
             <motion.div
+              ref={modalRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="invite-member-title"
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -76,21 +83,35 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
                     <UserPlus className="w-6 h-6 text-[var(--fs-primary)]" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Invite Member</h2>
-                    <p className="text-xs font-bold text-[var(--fs-text-muted)] uppercase tracking-wider mt-0.5">Royal Invitation</p>
+                    <h2
+                      id="invite-member-title"
+                      className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]"
+                    >
+                      Invite Member
+                    </h2>
+                    <p className="text-xs font-bold text-[var(--fs-text-muted)] uppercase tracking-wider mt-0.5">
+                      Royal Invitation
+                    </p>
                   </div>
                 </div>
-                <button onClick={onClose} className="p-2.5 text-[var(--fs-text-muted)] hover:text-[var(--fs-text-primary)] hover:bg-[var(--fs-background)] rounded-xl transition-all" title="Close">
+                <button
+                  onClick={onClose}
+                  className="p-2.5 text-[var(--fs-text-muted)] hover:text-[var(--fs-text-primary)] hover:bg-[var(--fs-background)] rounded-xl transition-all"
+                  title="Close"
+                >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-2.5">
-                  <label className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--fs-text-secondary)] ml-1">Email Address</label>
+                  <label className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--fs-text-secondary)] ml-1">
+                    Email Address
+                  </label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--fs-text-muted)] group-focus-within:text-[var(--fs-primary)] transition-colors" />
                     <input
+                      data-autofocus="true"
                       type="email"
                       placeholder="e.g. friend@example.com"
                       value={email}
@@ -107,7 +128,11 @@ export function InviteModal({ groupId, isOpen, onClose, onSuccess }: InviteModal
                     disabled={isSubmitting}
                     className="btn-royal w-full flex items-center justify-center gap-3"
                   >
-                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
+                    {isSubmitting ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Send Invitation'
+                    )}
                   </button>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--fs-text-muted)] text-center opacity-80">
                     Invitation will be active immediately • Non-users auto-join on signup

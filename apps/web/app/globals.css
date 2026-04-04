@@ -3,20 +3,42 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --fs-content-max-width: 80rem;
+    --fs-section-inline: clamp(1rem, 2vw, 1.5rem);
+    --fs-section-inline-wide: clamp(1.25rem, 3vw, 3rem);
+    --fs-card-surface: color-mix(in srgb, var(--fs-surface) 90%, transparent);
+    --fs-card-surface-strong: color-mix(in srgb, var(--fs-surface) 96%, transparent);
+    --fs-card-border-strong: color-mix(in srgb, var(--fs-border) 78%, white 22%);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--fs-background);
     color: var(--fs-text-primary);
     font-family: var(--fs-font-sans);
     @apply transition-colors duration-300;
   }
+
+  body[data-scroll-lock='true'] {
+    overflow: hidden;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--fs-primary);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
   .marketing-card {
-    background-color: color-mix(in srgb, var(--fs-surface) 82%, transparent);
-    border: 1px solid var(--fs-border);
+    background-color: var(--fs-card-surface);
+    border: 1px solid var(--fs-card-border-strong);
     box-shadow: var(--fs-shadow-soft);
-    @apply rounded-3xl backdrop-blur-xl transition-all duration-300;
+    @apply rounded-3xl backdrop-blur-md transition-all duration-300;
   }
 
   .marketing-card:hover {
@@ -25,10 +47,10 @@
   }
 
   .glass-panel {
-    background-color: var(--fs-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--fs-border);
+    background-color: var(--fs-card-surface-strong);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--fs-card-border-strong);
     box-shadow: var(--fs-shadow-soft);
   }
 
@@ -44,8 +66,12 @@
     @apply -translate-y-1;
   }
 
-  .brutal-accent-border { border: 2px solid var(--fs-border-hard); }
-  .brutal-accent-line { border-left: 4px solid var(--fs-primary); }
+  .brutal-accent-border {
+    border: 2px solid var(--fs-border-hard);
+  }
+  .brutal-accent-line {
+    border-left: 4px solid var(--fs-primary);
+  }
 
   .btn-royal {
     @apply rounded-xl px-7 py-3.5 font-bold transition-all duration-200 active:scale-95;
@@ -62,11 +88,21 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.03] px-7 py-3.5 font-bold text-white transition-all duration-200 hover:border-white/15 hover:bg-white/[0.08] backdrop-blur-xl;
+    @apply inline-flex items-center justify-center rounded-xl border px-7 py-3.5 font-bold text-white transition-all duration-200 backdrop-blur-md;
+    border-color: color-mix(in srgb, var(--fs-border) 82%, white 18%);
+    background-color: color-mix(in srgb, var(--fs-surface) 90%, transparent);
+  }
+
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--fs-surface) 96%, transparent);
+    border-color: color-mix(in srgb, var(--fs-primary) 30%, var(--fs-border) 70%);
   }
 
   .eyebrow-label {
-    @apply inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-purple-500/5 px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.25em] text-purple-400;
+    @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.25em];
+    border: 1px solid color-mix(in srgb, var(--fs-primary) 28%, var(--fs-border) 72%);
+    background-color: color-mix(in srgb, var(--fs-primary) 10%, var(--fs-surface) 90%);
+    color: color-mix(in srgb, white 84%, var(--fs-primary) 16%);
   }
 
   .neo-border {
@@ -107,14 +143,16 @@
   }
 
   .grid-bg {
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
   .glitch-text {
     @apply relative inline-block;
-    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+    text-shadow:
+      0.05em 0 0 rgba(255, 0, 0, 0.75),
       -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
       0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     animation: glitch 1s infinite linear alternate-reverse;
@@ -122,39 +160,52 @@
 
   @keyframes glitch {
     0% {
-      text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        0.05em 0 0 rgba(255, 0, 0, 0.75),
         -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
         0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     }
     14% {
-      text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        0.05em 0 0 rgba(255, 0, 0, 0.75),
         -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
         0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
     }
     15% {
-      text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
         0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
         -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     49% {
-      text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
         0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
         -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     50% {
-      text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
         0.05em 0 0 rgba(0, 255, 0, 0.75),
         0 -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     99% {
-      text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
         0.05em 0 0 rgba(0, 255, 0, 0.75),
         0 -0.05em 0 rgba(0, 0, 255, 0.75);
     }
     100% {
-      text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75),
+      text-shadow:
+        -0.025em 0 0 rgba(255, 0, 0, 0.75),
         -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
         -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
     }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1180px) {
+  .tablet-tight-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 24rem);
   }
 }

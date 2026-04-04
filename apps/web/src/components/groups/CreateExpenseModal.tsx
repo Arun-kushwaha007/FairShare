@@ -17,6 +17,7 @@ import { Sparkles, X } from 'lucide-react';
 import { createExpenseAction, updateGroupDefaultSplitAction } from '../../lib/actions';
 import { equalShares, exactShares, percentageShares, sumShares } from '../../lib/split';
 import { useToast } from '../ui/Toaster';
+import { useModalFocusTrap } from '../ui/useModalFocusTrap';
 
 type CreateExpenseModalProps = {
   groupId: string;
@@ -52,13 +53,15 @@ export function CreateExpenseModal({
   onClose,
   onCreated,
 }: CreateExpenseModalProps) {
+  const modalRef = useModalFocusTrap<HTMLDivElement>(open, onClose);
   const allMemberIds = useMemo(() => members.map((member) => member.userId), [members]);
   const defaultPayer = members[0]?.userId ?? '';
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory | ''>('');
   const [recurringEnabled, setRecurringEnabled] = useState(false);
-  const [recurringFrequency, setRecurringFrequency] = useState<RecurringExpenseFrequency>('monthly');
+  const [recurringFrequency, setRecurringFrequency] =
+    useState<RecurringExpenseFrequency>('monthly');
   const [payerId, setPayerId] = useState(defaultPayer);
   const [splitType, setSplitType] = useState<ExpenseSplitType>('equal');
   const [participants, setParticipants] = useState<string[]>(allMemberIds);
@@ -87,8 +90,11 @@ export function CreateExpenseModal({
       return;
     }
 
-    const preferredParticipants = defaultSplitPreference.participantUserIds.filter((userId) => allMemberIds.includes(userId));
-    const nextParticipants = preferredParticipants.length > 0 ? preferredParticipants : fallbackParticipants;
+    const preferredParticipants = defaultSplitPreference.participantUserIds.filter((userId) =>
+      allMemberIds.includes(userId),
+    );
+    const nextParticipants =
+      preferredParticipants.length > 0 ? preferredParticipants : fallbackParticipants;
     const nextExact: Record<string, string> = {};
     const nextPercentages: Record<string, string> = {};
 
@@ -114,7 +120,13 @@ export function CreateExpenseModal({
   }, [payerId, participants]);
 
   const participantOptions = useMemo(
-    () => members.map((member) => ({ id: member.userId, name: member.name, email: member.email, role: member.role })),
+    () =>
+      members.map((member) => ({
+        id: member.userId,
+        name: member.name,
+        email: member.email,
+        role: member.role,
+      })),
     [members],
   );
 
@@ -123,10 +135,15 @@ export function CreateExpenseModal({
       return;
     }
 
-    setParticipants((current) => (current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId]));
+    setParticipants((current) =>
+      current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId],
+    );
   };
 
-  const buildDefaultSplitPreference = (nextSplitType: ExpenseSplitType, nextParticipants: string[]): GroupDefaultSplitDto => ({
+  const buildDefaultSplitPreference = (
+    nextSplitType: ExpenseSplitType,
+    nextParticipants: string[],
+  ): GroupDefaultSplitDto => ({
     splitType: nextSplitType,
     participantUserIds: Array.from(new Set(nextParticipants)),
     exactAmountsCentsByUser: nextSplitType === 'exact' ? exactByUser : undefined,
@@ -136,7 +153,9 @@ export function CreateExpenseModal({
   const saveDefaultSplit = async (nextPreference: GroupDefaultSplitDto) => {
     try {
       setSavingDefault(true);
-      const result = await updateGroupDefaultSplitAction(groupId, { defaultSplitPreference: nextPreference });
+      const result = await updateGroupDefaultSplitAction(groupId, {
+        defaultSplitPreference: nextPreference,
+      });
       if (!result.success) {
         throw new Error(result.message);
       }
@@ -235,6 +254,11 @@ export function CreateExpenseModal({
           />
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
             <motion.div
+              ref={modalRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-expense-title"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -242,19 +266,35 @@ export function CreateExpenseModal({
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Expense</p>
-                  <h3 className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Record new expense</h3>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
+                    Expense
+                  </p>
+                  <h3
+                    id="create-expense-title"
+                    className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]"
+                  >
+                    Record new expense
+                  </h3>
                 </div>
-                <button onClick={onClose} className="p-2 rounded-lg bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors">
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors"
+                >
                   <X className="w-5 h-5 text-[var(--fs-text-muted)]" />
                 </button>
               </div>
 
-              <form className="grid gap-6 px-6 py-6 md:grid-cols-[2fr_1.2fr]" onSubmit={handleSubmit}>
+              <form
+                className="grid gap-6 px-6 py-6 md:grid-cols-[2fr_1.2fr]"
+                onSubmit={handleSubmit}
+              >
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Description</label>
+                    <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                      Description
+                    </label>
                     <input
+                      data-autofocus="true"
                       className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                       placeholder="Team dinner, rideshare..."
                       value={description}
@@ -265,7 +305,9 @@ export function CreateExpenseModal({
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Amount ({currency})</label>
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Amount ({currency})
+                      </label>
                       <input
                         className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         type="number"
@@ -277,7 +319,9 @@ export function CreateExpenseModal({
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Payer</label>
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Payer
+                      </label>
                       <select
                         className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         value={payerId}
@@ -291,11 +335,15 @@ export function CreateExpenseModal({
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Category</label>
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Category
+                      </label>
                       <select
                         className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         value={category}
-                        onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
+                        onChange={(event) =>
+                          setCategory(event.target.value as ExpenseCategory | '')
+                        }
                       >
                         <option value="">No category</option>
                         {EXPENSE_CATEGORIES.map((value) => (
@@ -310,8 +358,13 @@ export function CreateExpenseModal({
                   <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 p-4 space-y-3">
                     <label className="flex items-start justify-between gap-4 cursor-pointer">
                       <div>
-                        <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Recurring bill</p>
-                        <p className="text-xs font-medium text-[var(--fs-text-muted)]">Useful for rent, subscriptions, utilities, and any bill that repeats on a fixed cadence.</p>
+                        <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                          Recurring bill
+                        </p>
+                        <p className="text-xs font-medium text-[var(--fs-text-muted)]">
+                          Useful for rent, subscriptions, utilities, and any bill that repeats on a
+                          fixed cadence.
+                        </p>
                       </div>
                       <input
                         type="checkbox"
@@ -342,7 +395,9 @@ export function CreateExpenseModal({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Participants</label>
+                    <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                      Participants
+                    </label>
                     <div className="grid gap-2 max-h-44 overflow-y-auto pr-1">
                       {participantOptions.map((member) => (
                         <label
@@ -371,10 +426,14 @@ export function CreateExpenseModal({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
-                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">Split type</label>
+                      <label className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Split type
+                      </label>
                       <button
                         type="button"
-                        onClick={() => saveDefaultSplit(buildDefaultSplitPreference(splitType, participants))}
+                        onClick={() =>
+                          saveDefaultSplit(buildDefaultSplitPreference(splitType, participants))
+                        }
                         disabled={savingDefault || participants.length === 0}
                         className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] disabled:opacity-60"
                       >
@@ -410,10 +469,14 @@ export function CreateExpenseModal({
 
                   {splitType === 'exact' ? (
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Exact amounts (cents)</p>
+                      <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Exact amounts (cents)
+                      </p>
                       <div className="grid gap-2 max-h-40 overflow-y-auto pr-1">
                         {participants.map((id) => {
-                          const member = participantOptions.find((participant) => participant.id === id);
+                          const member = participantOptions.find(
+                            (participant) => participant.id === id,
+                          );
                           return (
                             <input
                               key={id}
@@ -422,7 +485,9 @@ export function CreateExpenseModal({
                               className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                               placeholder={`Amount for ${member?.name ?? id}`}
                               value={exactByUser[id] ?? ''}
-                              onChange={(event) => setExactByUser({ ...exactByUser, [id]: event.target.value })}
+                              onChange={(event) =>
+                                setExactByUser({ ...exactByUser, [id]: event.target.value })
+                              }
                             />
                           );
                         })}
@@ -432,21 +497,35 @@ export function CreateExpenseModal({
 
                   {splitType === 'percentage' ? (
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Percentages</p>
+                      <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                        Percentages
+                      </p>
                       <div className="grid gap-2 max-h-40 overflow-y-auto pr-1">
                         {participants.map((id) => {
-                          const member = participantOptions.find((participant) => participant.id === id);
+                          const member = participantOptions.find(
+                            (participant) => participant.id === id,
+                          );
                           return (
-                            <div key={id} className="flex items-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2">
+                            <div
+                              key={id}
+                              className="flex items-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2"
+                            >
                               <input
                                 type="number"
                                 min="0"
                                 max="100"
                                 className="w-20 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-background)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                                 value={percentagesByUser[id] ?? ''}
-                                onChange={(event) => setPercentagesByUser({ ...percentagesByUser, [id]: event.target.value })}
+                                onChange={(event) =>
+                                  setPercentagesByUser({
+                                    ...percentagesByUser,
+                                    [id]: event.target.value,
+                                  })
+                                }
                               />
-                              <span className="text-sm font-semibold text-[var(--fs-text-muted)]">{member?.name ?? id}</span>
+                              <span className="text-sm font-semibold text-[var(--fs-text-muted)]">
+                                {member?.name ?? id}
+                              </span>
                             </div>
                           );
                         })}
@@ -455,13 +534,19 @@ export function CreateExpenseModal({
                   ) : null}
 
                   {error ? (
-                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600">{error}</div>
+                    <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-600">
+                      {error}
+                    </div>
                   ) : null}
 
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-2 text-[12px] font-semibold text-[var(--fs-text-muted)]">
                       <Sparkles className="w-4 h-4 text-[var(--fs-primary)]" />
-                      <span>{recurringEnabled ? `This will repeat ${recurringLabels[recurringFrequency].toLowerCase()}.` : 'Totals auto-balance across participants.'}</span>
+                      <span>
+                        {recurringEnabled
+                          ? `This will repeat ${recurringLabels[recurringFrequency].toLowerCase()}.`
+                          : 'Totals auto-balance across participants.'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button

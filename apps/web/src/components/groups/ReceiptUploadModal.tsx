@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { FileUp, X } from 'lucide-react';
 import { createReceiptUrlAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
+import { useModalFocusTrap } from '../ui/useModalFocusTrap';
 
 type ReceiptUploadModalProps = {
   expenseId: string;
@@ -13,7 +14,13 @@ type ReceiptUploadModalProps = {
   onUploaded?: () => void;
 };
 
-export function ReceiptUploadModal({ expenseId, open, onClose, onUploaded }: ReceiptUploadModalProps) {
+export function ReceiptUploadModal({
+  expenseId,
+  open,
+  onClose,
+  onUploaded,
+}: ReceiptUploadModalProps) {
+  const modalRef = useModalFocusTrap<HTMLDivElement>(open, onClose);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -87,6 +94,11 @@ export function ReceiptUploadModal({ expenseId, open, onClose, onUploaded }: Rec
           />
           <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
             <motion.div
+              ref={modalRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="receipt-upload-title"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -94,10 +106,20 @@ export function ReceiptUploadModal({ expenseId, open, onClose, onUploaded }: Rec
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Receipt</p>
-                  <h3 className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">Upload proof</h3>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
+                    Receipt
+                  </p>
+                  <h3
+                    id="receipt-upload-title"
+                    className="text-xl font-extrabold tracking-tight text-[var(--fs-text-primary)]"
+                  >
+                    Upload proof
+                  </h3>
                 </div>
-                <button onClick={onClose} className="p-2 rounded-lg bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors">
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors"
+                >
                   <X className="w-5 h-5 text-[var(--fs-text-muted)]" />
                 </button>
               </div>
@@ -106,8 +128,12 @@ export function ReceiptUploadModal({ expenseId, open, onClose, onUploaded }: Rec
                 <label className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[var(--fs-border)] bg-[var(--fs-background)]/50 px-4 py-8 cursor-pointer hover:border-[var(--fs-primary)] transition-colors">
                   <FileUp className="w-8 h-8 text-[var(--fs-primary)]" />
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-[var(--fs-text-primary)]">Choose an image or PDF</p>
-                    <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">PNG, JPG, or PDF up to 5MB</p>
+                    <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
+                      Choose an image or PDF
+                    </p>
+                    <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">
+                      PNG, JPG, or PDF up to 5MB
+                    </p>
                   </div>
                   <input
                     type="file"
@@ -119,8 +145,14 @@ export function ReceiptUploadModal({ expenseId, open, onClose, onUploaded }: Rec
 
                 {previewUrl ? (
                   <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3">
-                    <p className="text-xs font-semibold text-[var(--fs-text-muted)] mb-2">Preview</p>
-                    <img src={previewUrl} alt="Receipt preview" className="max-h-72 w-full object-contain rounded-xl" />
+                    <p className="text-xs font-semibold text-[var(--fs-text-muted)] mb-2">
+                      Preview
+                    </p>
+                    <img
+                      src={previewUrl}
+                      alt="Receipt preview"
+                      className="max-h-72 w-full object-contain rounded-xl"
+                    />
                   </div>
                 ) : null}
 
