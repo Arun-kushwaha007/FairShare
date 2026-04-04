@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ActivityDto, RecurringExpenseDto, SimplifySuggestionDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDashboardDto } from '@fairshare/shared-types';
 import {
   ArrowUpRight,
   CreditCard,
@@ -17,14 +17,6 @@ import { GlassCard } from '../../components/ui/GlassCard';
 
 type Group = { id: string; name: string; currency: string };
 
-type AttentionItem = {
-  groupId: string;
-  groupName: string;
-  currency: string;
-  settlementCount: number;
-  dueRecurringCount: number;
-};
-
 function formatMoney(cents: string | null, currency: string | null): string {
   if (!cents || !currency) {
     return '$0.00';
@@ -34,41 +26,16 @@ function formatMoney(cents: string | null, currency: string | null): string {
   return amount.toLocaleString(undefined, { style: 'currency', currency });
 }
 
-function isRecurringDue(nextOccurrenceAt: string): boolean {
-  return new Date(nextOccurrenceAt).getTime() <= Date.now();
-}
-
 export default async function DashboardPage() {
-  const [groups, recentActivityData, summary] = await Promise.all([
-    backendFetch<Group[]>('/groups'),
+  const [dashboard, recentActivityData] = await Promise.all([
+    backendFetch<GroupDashboardDto>('/groups/dashboard'),
     backendFetch<{ items: ActivityDto[] }>('/activity'),
-    backendFetch<{ totalBalanceCents: string }>('/groups/summary'),
   ]);
 
-  const attentionCandidates = await Promise.all(
-    groups.slice(0, 6).map(async (group) => {
-      const [suggestions, recurringExpenses] = await Promise.all([
-        backendFetch<SimplifySuggestionDto[]>(`/groups/${group.id}/simplify`).catch(() => []),
-        backendFetch<RecurringExpenseDto[]>(`/groups/${group.id}/recurring-expenses`).catch(() => []),
-      ]);
-
-      return {
-        groupId: group.id,
-        groupName: group.name,
-        currency: group.currency,
-        settlementCount: suggestions.length,
-        dueRecurringCount: recurringExpenses.filter((item) => isRecurringDue(item.nextOccurrenceAt)).length,
-      } satisfies AttentionItem;
-    }),
-  );
-
-  const attentionItems = attentionCandidates
-    .filter((item) => item.settlementCount > 0 || item.dueRecurringCount > 0)
-    .sort((a, b) => (b.settlementCount + b.dueRecurringCount) - (a.settlementCount + a.dueRecurringCount))
-    .slice(0, 4);
-
+  const groups: Group[] = dashboard.groups;
+  const attentionItems = dashboard.attentionItems.slice(0, 4);
   const recentActivity = recentActivityData.items || [];
-  const totalBalanceCents = summary.totalBalanceCents;
+  const totalBalanceCents = dashboard.totalBalanceCents;
   const isPositive = Number(totalBalanceCents) >= 0;
 
   return (
@@ -85,7 +52,7 @@ export default async function DashboardPage() {
           />
           <SummaryCard
             title="Active Crews"
-            value={groups.length.toString()}
+            value={dashboard.activeGroupCount.toString()}
             icon="users"
             change="Live"
             trend="neutral"
@@ -113,8 +80,12 @@ export default async function DashboardPage() {
           <GlassCard className="p-5 sm:p-6 border-white/5 bg-white/[0.01]">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
-                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Needs Attention</p>
-                <h2 className="mt-1 text-xl font-black italic tracking-tight text-white uppercase">Resolve the next blockers</h2>
+                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
+                  Needs Attention
+                </p>
+                <h2 className="mt-1 text-xl font-black italic tracking-tight text-white uppercase">
+                  Resolve the next blockers
+                </h2>
               </div>
               <div className="h-10 w-10 rounded-2xl border border-amber-500/20 bg-amber-500/10 flex items-center justify-center text-amber-400">
                 <AlertTriangle size={18} />
@@ -122,11 +93,18 @@ export default async function DashboardPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {attentionItems.map((item) => (
-                <div key={item.groupId} className="rounded-2xl border border-white/5 bg-white/5 p-4">
+                <div
+                  key={item.groupId}
+                  className="rounded-2xl border border-white/5 bg-white/5 p-4"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-black tracking-tight text-white uppercase">{item.groupName}</p>
-                      <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">{item.currency}</p>
+                      <p className="text-sm font-black tracking-tight text-white uppercase">
+                        {item.groupName}
+                      </p>
+                      <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                        {item.currency} · {item.memberCount} members
+                      </p>
                     </div>
                     <Link
                       href={`/dashboard/groups/${item.groupId}`}
@@ -154,6 +132,9 @@ export default async function DashboardPage() {
                         {item.dueRecurringCount} due recurring
                       </Link>
                     ) : null}
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-300">
+                      {formatMoney(item.netBalanceCents, item.currency)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -176,8 +157,12 @@ export default async function DashboardPage() {
             <GlassCard className="p-5 sm:p-8 border-white/5 bg-white/[0.01]">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-sm font-black italic tracking-tight text-white uppercase">Crews & Nodes</h2>
-                  <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">Distributed spending groups</p>
+                  <h2 className="text-sm font-black italic tracking-tight text-white uppercase">
+                    Crews & Nodes
+                  </h2>
+                  <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">
+                    Distributed spending groups
+                  </p>
                 </div>
                 <button
                   title="Create New Crew"
@@ -189,22 +174,35 @@ export default async function DashboardPage() {
 
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 {groups.map((group) => (
-                  <Link href={`/dashboard/groups/${group.id}`} key={group.id} className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group">
+                  <Link
+                    href={`/dashboard/groups/${group.id}`}
+                    key={group.id}
+                    className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-500 group-hover:text-purple-400 transition-colors">
                         <CreditCard size={14} />
                       </div>
-                      <span className="text-xs font-black tracking-tight text-white uppercase">{group.name}</span>
+                      <span className="text-xs font-black tracking-tight text-white uppercase">
+                        {group.name}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{group.currency}</span>
-                      <ArrowUpRight size={12} className="text-zinc-800 group-hover:text-purple-500 transition-colors" />
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        {group.currency}
+                      </span>
+                      <ArrowUpRight
+                        size={12}
+                        className="text-zinc-800 group-hover:text-purple-500 transition-colors"
+                      />
                     </div>
                   </Link>
                 ))}
                 {groups.length === 0 && (
                   <div className="col-span-full py-12 text-center rounded-2xl border border-dashed border-white/5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700">NO_ACTIVE_GROUPS_LOCATED</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700">
+                      NO_ACTIVE_GROUPS_LOCATED
+                    </p>
                   </div>
                 )}
               </div>
