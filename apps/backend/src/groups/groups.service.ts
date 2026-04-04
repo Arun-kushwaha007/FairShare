@@ -1,6 +1,13 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ActivityDto,
+  GroupDashboardDto,
+  GroupDashboardItemDto,
   GroupDefaultSplitDto,
   GroupDto,
   GroupMemberSummaryDto,
@@ -83,7 +90,10 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
-      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
+      defaultSplitPreference: this.parseDefaultSplitPreference(
+        group.defaultSplitType,
+        group.defaultSplitConfig,
+      ),
     }));
   }
 
@@ -110,7 +120,10 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
-      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
+      defaultSplitPreference: this.parseDefaultSplitPreference(
+        group.defaultSplitType,
+        group.defaultSplitConfig,
+      ),
       members: group.members.map((member) => ({
         id: member.id,
         userId: member.userId,
@@ -174,7 +187,8 @@ export class GroupsService {
     let largestExpense: bigint | null = null;
     expenses.forEach((expense) => {
       totalExpenses += expense.totalAmountCents;
-      perUserSpent[expense.payerId] = (perUserSpent[expense.payerId] ?? 0n) + expense.totalAmountCents;
+      perUserSpent[expense.payerId] =
+        (perUserSpent[expense.payerId] ?? 0n) + expense.totalAmountCents;
       if (largestExpense === null || expense.totalAmountCents > largestExpense) {
         largestExpense = expense.totalAmountCents;
       }
@@ -187,7 +201,8 @@ export class GroupsService {
 
     balances.forEach((balance) => {
       if (balance.amountCents < 0n) {
-        perUserOwed[balance.userId] = (perUserOwed[balance.userId] ?? 0n) + balance.amountCents * -1n;
+        perUserOwed[balance.userId] =
+          (perUserOwed[balance.userId] ?? 0n) + balance.amountCents * -1n;
       }
     });
 
@@ -196,8 +211,12 @@ export class GroupsService {
     const response: GroupSummaryDto = {
       totalExpensesCents: totalExpenses.toString(),
       totalSettledCents: totalSettled.toString(),
-      perUserSpentCents: Object.fromEntries(Object.entries(perUserSpent).map(([k, v]) => [k, v.toString()])),
-      perUserOwedCents: Object.fromEntries(Object.entries(perUserOwed).map(([k, v]) => [k, v.toString()])),
+      perUserSpentCents: Object.fromEntries(
+        Object.entries(perUserSpent).map(([k, v]) => [k, v.toString()]),
+      ),
+      perUserOwedCents: Object.fromEntries(
+        Object.entries(perUserOwed).map(([k, v]) => [k, v.toString()]),
+      ),
       largestExpenseCents: largestExpense !== null ? String(largestExpense) : null,
       lastExpenseCents: expenses.length > 0 ? expenses[0].totalAmountCents.toString() : null,
       topSpenderUserId: topSpenderEntry?.[0] ?? null,
@@ -220,7 +239,133 @@ export class GroupsService {
     };
   }
 
-  async updateDefaultSplit(groupId: string, actorUserId: string, dto: UpdateGroupDefaultSplitDto): Promise<GroupDto> {
+  async getDashboard(userId: string): Promise<GroupDashboardDto> {
+    const groups = await this.prisma.group.findMany({
+      where: {
+        members: {
+          some: {
+            userId,
+          },
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            members: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const groupIds = groups.map((group) => group.id);
+    if (groupIds.length === 0) {
+      return {
+        totalBalanceCents: '0',
+        activeGroupCount: 0,
+        groups: [],
+        attentionItems: [],
+      };
+    }
+
+    const [userBalances, groupBalances, recurringExpenses] = await Promise.all([
+      this.prisma.balance.findMany({
+        where: {
+          userId,
+          groupId: { in: groupIds },
+        },
+        select: {
+          groupId: true,
+          amountCents: true,
+        },
+      }),
+      this.prisma.balance.findMany({
+        where: {
+          groupId: { in: groupIds },
+        },
+        select: {
+          groupId: true,
+          userId: true,
+          amountCents: true,
+        },
+      }),
+      this.prisma.recurringExpense.findMany({
+        where: {
+          groupId: { in: groupIds },
+          active: true,
+        },
+        select: {
+          groupId: true,
+          nextOccurrenceAt: true,
+        },
+      }),
+    ]);
+
+    const totalBalanceCents = userBalances.reduce((sum, balance) => sum + balance.amountCents, 0n);
+
+    const netBalanceByGroup = new Map<string, bigint>();
+    for (const balance of userBalances) {
+      netBalanceByGroup.set(
+        balance.groupId,
+        (netBalanceByGroup.get(balance.groupId) ?? 0n) + balance.amountCents,
+      );
+    }
+
+    const dueRecurringByGroup = new Map<string, number>();
+    for (const recurringExpense of recurringExpenses) {
+      if (recurringExpense.nextOccurrenceAt.getTime() <= Date.now()) {
+        dueRecurringByGroup.set(
+          recurringExpense.groupId,
+          (dueRecurringByGroup.get(recurringExpense.groupId) ?? 0) + 1,
+        );
+      }
+    }
+
+    const netBalanceGraph = new Map<string, Map<string, bigint>>();
+    for (const balance of groupBalances) {
+      const groupNet = netBalanceGraph.get(balance.groupId) ?? new Map<string, bigint>();
+      groupNet.set(balance.userId, (groupNet.get(balance.userId) ?? 0n) + balance.amountCents);
+      netBalanceGraph.set(balance.groupId, groupNet);
+    }
+
+    const attentionItems: GroupDashboardItemDto[] = groups
+      .map((group) => {
+        const positions = netBalanceGraph.get(group.id) ?? new Map<string, bigint>();
+        const settlementCount = this.countSimplifiedSettlements(positions);
+        const dueRecurringCount = dueRecurringByGroup.get(group.id) ?? 0;
+        const pendingActionCount = settlementCount + dueRecurringCount;
+
+        return {
+          groupId: group.id,
+          groupName: group.name,
+          currency: group.currency as GroupDashboardItemDto['currency'],
+          memberCount: group._count.members,
+          netBalanceCents: (netBalanceByGroup.get(group.id) ?? 0n).toString(),
+          settlementCount,
+          dueRecurringCount,
+          pendingActionCount,
+        };
+      })
+      .filter((item) => item.pendingActionCount > 0)
+      .sort((left, right) => right.pendingActionCount - left.pendingActionCount);
+
+    return {
+      totalBalanceCents: totalBalanceCents.toString(),
+      activeGroupCount: groups.length,
+      groups: groups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        currency: group.currency as GroupDashboardDto['groups'][number]['currency'],
+      })),
+      attentionItems,
+    };
+  }
+
+  async updateDefaultSplit(
+    groupId: string,
+    actorUserId: string,
+    dto: UpdateGroupDefaultSplitDto,
+  ): Promise<GroupDto> {
     await this.assertMembership(groupId, actorUserId);
 
     let normalizedPreference: GroupDefaultSplitDto | null = null;
@@ -276,7 +421,10 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
-      defaultSplitPreference: this.parseDefaultSplitPreference(group.defaultSplitType, group.defaultSplitConfig),
+      defaultSplitPreference: this.parseDefaultSplitPreference(
+        group.defaultSplitType,
+        group.defaultSplitConfig,
+      ),
       members: group.members.map((member) => ({
         id: member.id,
         userId: member.userId,
@@ -287,7 +435,11 @@ export class GroupsService {
     };
   }
 
-  async invite(groupId: string, actorUserId: string, dto: InviteMemberDto): Promise<{ success: true }> {
+  async invite(
+    groupId: string,
+    actorUserId: string,
+    dto: InviteMemberDto,
+  ): Promise<{ success: true }> {
     await this.assertMembership(groupId, actorUserId);
     const email = dto.email.toLowerCase();
 
@@ -364,7 +516,11 @@ export class GroupsService {
     return { success: true };
   }
 
-  async remindSettlement(groupId: string, actorUserId: string, dto: RemindSettlementRequestDto): Promise<{ success: true; activity: ActivityDto }> {
+  async remindSettlement(
+    groupId: string,
+    actorUserId: string,
+    dto: RemindSettlementRequestDto,
+  ): Promise<{ success: true; activity: ActivityDto }> {
     await this.assertMembership(groupId, actorUserId);
 
     const memberRecords = await this.prisma.groupMember.findMany({
@@ -378,7 +534,11 @@ export class GroupsService {
     });
 
     const membersById = new Map(memberRecords.map((member) => [member.userId, member]));
-    if (!membersById.has(dto.payerId) || !membersById.has(dto.receiverId) || !membersById.has(actorUserId)) {
+    if (
+      !membersById.has(dto.payerId) ||
+      !membersById.has(dto.receiverId) ||
+      !membersById.has(actorUserId)
+    ) {
       throw new ForbiddenException('Reminder participants must belong to the group');
     }
 
@@ -465,7 +625,10 @@ export class GroupsService {
     });
   }
 
-  private parseDefaultSplitPreference(splitType: string | null, splitConfig: string | null): GroupDefaultSplitDto | null {
+  private parseDefaultSplitPreference(
+    splitType: string | null,
+    splitConfig: string | null,
+  ): GroupDefaultSplitDto | null {
     if (!splitType || !splitConfig) {
       return null;
     }
@@ -483,11 +646,15 @@ export class GroupsService {
           ? config.participantUserIds.filter((value): value is string => typeof value === 'string')
           : [],
         exactAmountsCentsByUser:
-          config.exactAmountsCentsByUser && typeof config.exactAmountsCentsByUser === 'object' && !Array.isArray(config.exactAmountsCentsByUser)
+          config.exactAmountsCentsByUser &&
+          typeof config.exactAmountsCentsByUser === 'object' &&
+          !Array.isArray(config.exactAmountsCentsByUser)
             ? (config.exactAmountsCentsByUser as Record<string, string>)
             : undefined,
         percentagesByUser:
-          config.percentagesByUser && typeof config.percentagesByUser === 'object' && !Array.isArray(config.percentagesByUser)
+          config.percentagesByUser &&
+          typeof config.percentagesByUser === 'object' &&
+          !Array.isArray(config.percentagesByUser)
             ? (config.percentagesByUser as Record<string, string>)
             : undefined,
       };
@@ -510,6 +677,46 @@ export class GroupsService {
       throw new ForbiddenException('Actor is not a group member');
     }
   }
+
+  private countSimplifiedSettlements(positions: Map<string, bigint>): number {
+    const creditors: Array<{ userId: string; amount: bigint }> = [];
+    const debtors: Array<{ userId: string; amount: bigint }> = [];
+
+    for (const [userId, amount] of positions.entries()) {
+      if (amount > 0n) {
+        creditors.push({ userId, amount });
+      } else if (amount < 0n) {
+        debtors.push({ userId, amount: -amount });
+      }
+    }
+
+    creditors.sort((a, b) => Number(b.amount - a.amount));
+    debtors.sort((a, b) => Number(b.amount - a.amount));
+
+    let settlementCount = 0;
+    let debtorIndex = 0;
+    let creditorIndex = 0;
+
+    while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+      const debtor = debtors[debtorIndex];
+      const creditor = creditors[creditorIndex];
+      const amount = debtor.amount < creditor.amount ? debtor.amount : creditor.amount;
+
+      if (amount > 0n) {
+        settlementCount += 1;
+      }
+
+      debtor.amount -= amount;
+      creditor.amount -= amount;
+
+      if (debtor.amount === 0n) {
+        debtorIndex += 1;
+      }
+      if (creditor.amount === 0n) {
+        creditorIndex += 1;
+      }
+    }
+
+    return settlementCount;
+  }
 }
-
-

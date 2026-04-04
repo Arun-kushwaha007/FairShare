@@ -29,6 +29,11 @@ export class GroupsController {
     return this.groupsService.getUserSummary(user.sub);
   }
 
+  @Get('dashboard')
+  getDashboard(@CurrentUser() user: JwtPayload) {
+    return this.groupsService.getDashboard(user.sub);
+  }
+
   @Get(':id')
   getById(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.groupsService.getById(id, user.sub);
@@ -45,7 +50,11 @@ export class GroupsController {
   }
 
   @Patch(':id/default-split')
-  updateDefaultSplit(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: UpdateGroupDefaultSplitDto) {
+  updateDefaultSplit(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateGroupDefaultSplitDto,
+  ) {
     return this.groupsService.updateDefaultSplit(id, user.sub, dto);
   }
 
@@ -57,7 +66,11 @@ export class GroupsController {
 
   @Post(':id/remind-settlement')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
-  remindSettlement(@Param('id') id: string, @CurrentUser() user: JwtPayload, @Body() dto: RemindSettlementDto) {
+  remindSettlement(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: RemindSettlementDto,
+  ) {
     return this.groupsService.remindSettlement(id, user.sub, dto);
   }
 }

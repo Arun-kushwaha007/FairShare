@@ -1,5 +1,12 @@
 export type CurrencyCode = 'USD' | 'EUR' | 'INR';
-export const EXPENSE_CATEGORIES = ['FOOD', 'TRAVEL', 'UTILITIES', 'GROCERIES', 'ENTERTAINMENT', 'OTHER'] as const;
+export const EXPENSE_CATEGORIES = [
+  'FOOD',
+  'TRAVEL',
+  'UTILITIES',
+  'GROCERIES',
+  'ENTERTAINMENT',
+  'OTHER',
+] as const;
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export const EXPENSE_SPLIT_TYPES = ['equal', 'exact', 'percentage'] as const;
 export type ExpenseSplitType = (typeof EXPENSE_SPLIT_TYPES)[number];
@@ -81,6 +88,28 @@ export interface GroupSummaryDto {
   largestExpenseCents: string | null;
   lastExpenseCents: string | null;
   topSpenderUserId: string | null;
+}
+
+export interface GroupDashboardItemDto {
+  groupId: string;
+  groupName: string;
+  currency: CurrencyCode;
+  memberCount: number;
+  netBalanceCents: string;
+  settlementCount: number;
+  dueRecurringCount: number;
+  pendingActionCount: number;
+}
+
+export interface GroupDashboardDto {
+  totalBalanceCents: string;
+  activeGroupCount: number;
+  groups: Array<{
+    id: string;
+    name: string;
+    currency: CurrencyCode;
+  }>;
+  attentionItems: GroupDashboardItemDto[];
 }
 
 export interface GroupDefaultSplitDto {
@@ -249,5 +278,3 @@ export interface CreatePaymentIntentResponseDto {
   clientSecret: string;
   paymentIntentId: string;
 }
-
-
