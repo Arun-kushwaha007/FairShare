@@ -5,6 +5,7 @@ import * as Sentry from 'sentry-expo';
 import { ApiError } from '../types/api-error';
 import { offlineQueue } from '../utils/offlineQueue';
 import { trackApiLatency } from '../utils/perf';
+import { generateIdempotencyKey } from './idempotency';
 
 type ExpoConstantsDevHostShape = {
   manifest2?: {
@@ -28,13 +29,66 @@ function readIdempotencyHeader(headers: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+function buildQueueableRequest(
+  method: string,
+  url: string,
+  data: unknown,
+  idempotencyKey?: string,
+): {
+  method: 'POST' | 'PATCH' | 'DELETE';
+  url: string;
+  data?: unknown;
+  headers?: Record<string, string>;
+} | null {
+  const normalizedMethod = method.toUpperCase();
+
+  if (
+    normalizedMethod === 'POST' &&
+    ((url.includes('/groups/') && url.includes('/expenses')) ||
+      url.includes('/settlements') ||
+      url.includes('/invite'))
+  ) {
+    return {
+      method: 'POST',
+      url,
+      data,
+      headers: { 'x-idempotency-key': idempotencyKey ?? generateIdempotencyKey('mutation') },
+    };
+  }
+
+  if (
+    normalizedMethod === 'PATCH' &&
+    (url.includes('/expenses/') || url.includes('/recurring-expenses/'))
+  ) {
+    return {
+      method: 'PATCH',
+      url,
+      data,
+    };
+  }
+
+  if (
+    normalizedMethod === 'DELETE' &&
+    (url.includes('/expenses/') || url.includes('/recurring-expenses/'))
+  ) {
+    return {
+      method: 'DELETE',
+      url,
+      headers: idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined,
+    };
+  }
+
+  return null;
+}
+
 function resolveApiBaseUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
   const constants = Constants as unknown as ExpoConstantsDevHostShape;
-  const hostUri = constants.manifest2?.extra?.expoClient?.hostUri ?? constants.manifest?.debuggerHost;
+  const hostUri =
+    constants.manifest2?.extra?.expoClient?.hostUri ?? constants.manifest?.debuggerHost;
   const host = hostUri?.split(':')[0];
 
   if (host && !host.endsWith('.exp.direct')) {
@@ -90,7 +144,8 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (response) => {
-    const startTs = (response.config as typeof response.config & { metadata?: { startTs: number } }).metadata?.startTs;
+    const startTs = (response.config as typeof response.config & { metadata?: { startTs: number } })
+      .metadata?.startTs;
     if (startTs) {
       trackApiLatency(response.config.url, response.config.method, Date.now() - startTs);
     }
@@ -100,7 +155,8 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const startTs = (error?.config as { metadata?: { startTs: number } } | undefined)?.metadata?.startTs;
+    const startTs = (error?.config as { metadata?: { startTs: number } } | undefined)?.metadata
+      ?.startTs;
     if (startTs) {
       trackApiLatency(error?.config?.url, error?.config?.method, Date.now() - startTs);
     }
@@ -108,13 +164,7 @@ api.interceptors.response.use(
     const method = String(error?.config?.method ?? '').toUpperCase();
     const url = String(error?.config?.url ?? '');
     const retryMarked = error?.config?.headers?.['x-offline-retry'] === '1';
-    const shouldQueue =
-      !retryMarked &&
-      method === 'POST' &&
-      (url.includes('/groups/') && url.includes('/expenses') ||
-        url.includes('/settlements') ||
-        url.includes('/invite')) &&
-      !error?.response;
+    const shouldQueue = !retryMarked && !error?.response;
 
     if (shouldQueue) {
       let data: unknown = error?.config?.data;
@@ -127,13 +177,13 @@ api.interceptors.response.use(
         }
       }
 
-      void offlineQueue.enqueue({
-        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        method: 'POST',
-        url,
-        data,
-        headers: idempotencyKey ? { 'x-idempotency-key': idempotencyKey } : undefined,
-      });
+      const queuedRequest = buildQueueableRequest(method, url, data, idempotencyKey);
+      if (queuedRequest) {
+        void offlineQueue.enqueue({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          ...queuedRequest,
+        });
+      }
     }
 
     const wrapped: ApiError = {
@@ -141,7 +191,7 @@ api.interceptors.response.use(
       message:
         (error?.response?.data?.message as string | undefined) ??
         (typeof error?.message === 'string' ? error.message : 'Request failed') +
-          (shouldQueue ? ' (queued for retry)' : ''),
+          (shouldQueue ? ' (queued for retry when supported)' : ''),
       context: {
         status: error?.response?.status,
         url: error?.config?.url,

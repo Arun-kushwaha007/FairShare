@@ -1,17 +1,28 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as SecureStore from 'expo-secure-store';
 
-type OfflineRequest = {
+type OfflineMethod = 'POST' | 'PATCH' | 'DELETE';
+
+export type OfflineRequest = {
   id: string;
-  method: 'POST';
+  method: OfflineMethod;
   url: string;
-  data: unknown;
+  data?: unknown;
   headers?: Record<string, string>;
 };
 
 type OfflineRequestExecutor = (request: OfflineRequest) => Promise<void>;
 
 const STORAGE_KEY = 'fairshare_offline_queue';
+
+function getIdempotencyKey(request: OfflineRequest): string | undefined {
+  const value = request.headers?.['x-idempotency-key'];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function getQueueIdentity(request: OfflineRequest): string {
+  return getIdempotencyKey(request) ?? `${request.method}:${request.url}`;
+}
 
 class OfflineQueue {
   private initialized = false;
@@ -22,9 +33,21 @@ class OfflineQueue {
     this.requestExecutor = executor;
   }
 
-  async enqueue(req: OfflineRequest): Promise<void> {
+  async enqueue(request: OfflineRequest): Promise<void> {
     const queue = await this.readQueue();
-    queue.push(req);
+    const identity = getQueueIdentity(request);
+    const existingIndex = queue.findIndex((item) => getQueueIdentity(item) === identity);
+
+    if (existingIndex >= 0) {
+      queue[existingIndex] = {
+        ...queue[existingIndex],
+        ...request,
+        id: queue[existingIndex].id,
+      };
+    } else {
+      queue.push(request);
+    }
+
     await this.writeQueue(queue);
   }
 
