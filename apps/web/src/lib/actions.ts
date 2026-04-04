@@ -37,7 +37,9 @@ export async function inviteMemberAction(groupId: string, email: string) {
   if (!response.ok) {
     return {
       success: false,
-      message: Array.isArray(data.message) ? data.message[0] : data.message || 'Failed to invite member',
+      message: Array.isArray(data.message)
+        ? data.message[0]
+        : data.message || 'Failed to invite member',
     };
   }
 
@@ -94,7 +96,10 @@ export async function updateExpenseAction(expenseId: string, payload: UpdateExpe
   return { success: true, expense: data as ExpenseDto };
 }
 
-export async function updateRecurringExpenseAction(recurringExpenseId: string, payload: UpdateRecurringExpenseRequestDto) {
+export async function updateRecurringExpenseAction(
+  recurringExpenseId: string,
+  payload: UpdateRecurringExpenseRequestDto,
+) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
 
   const response = await fetch(`${getBackendBaseUrl()}/recurring-expenses/${recurringExpenseId}`, {
@@ -119,7 +124,10 @@ export async function updateRecurringExpenseAction(recurringExpenseId: string, p
   return { success: true, recurringExpense: data as RecurringExpenseDto };
 }
 
-export async function updateGroupDefaultSplitAction(groupId: string, payload: UpdateGroupDefaultSplitRequestDto) {
+export async function updateGroupDefaultSplitAction(
+  groupId: string,
+  payload: UpdateGroupDefaultSplitRequestDto,
+) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
 
   const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/default-split`, {
@@ -278,6 +286,26 @@ export async function exportExpensesCsvAction(groupId: string) {
   return { success: true, csv: data };
 }
 
+export async function exportBalancesCsvAction(groupId: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/balances/export.csv`, {
+    method: 'GET',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.text().catch(() => '');
+
+  if (!response.ok) {
+    return { success: false, message: data || 'Failed to export balances CSV' };
+  }
+
+  return { success: true, csv: data };
+}
+
 export async function listRecurringExpensesAction(groupId: string) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
 
@@ -317,7 +345,3 @@ export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
 
   return { success: true };
 }
-
-
-
-
