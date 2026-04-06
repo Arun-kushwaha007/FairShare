@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as crypto from 'crypto';
 import { SettlementDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
 import { BalancesService } from '../balances/balances.service';
@@ -29,8 +30,12 @@ export class SettlementsService {
       throw new BadRequestException('Settlement amount must be positive');
     }
 
-    if (idempotencyKey) {
-      const existingByKey = await this.prisma.settlement.findUnique({ where: { idempotencyKey } });
+    // Hardening: generate a derived idempotency key if none provided
+    // to prevent duplicates within the same minute on the same group/pair/amount
+    const effectiveIdempotencyKey = idempotencyKey || this.generateFallbackIdempotencyKey(groupId, dto, amount);
+
+    if (effectiveIdempotencyKey) {
+      const existingByKey = await this.prisma.settlement.findUnique({ where: { idempotencyKey: effectiveIdempotencyKey } });
       if (existingByKey) {
         return {
           id: existingByKey.id,
@@ -60,22 +65,6 @@ export class SettlementsService {
       throw new BadRequestException('Payer and receiver must be group members');
     }
 
-    const duplicate = await this.prisma.settlement.findFirst({
-      where: {
-        groupId,
-        payerId: dto.payerId,
-        receiverId: dto.receiverId,
-        amountCents: amount,
-        createdAt: {
-          gte: new Date(Date.now() - 60_000),
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (duplicate) {
-      throw new BadRequestException('Duplicate settlement detected');
-    }
-
     let settlement;
     try {
       settlement = await this.prisma.$transaction(async (tx) => {
@@ -85,7 +74,7 @@ export class SettlementsService {
             payerId: dto.payerId,
             receiverId: dto.receiverId,
             amountCents: amount,
-            idempotencyKey: idempotencyKey ?? null,
+            idempotencyKey: effectiveIdempotencyKey ?? null,
           },
         });
 
@@ -121,8 +110,8 @@ export class SettlementsService {
         return created;
       });
     } catch (error) {
-      if (idempotencyKey && this.isUniqueConstraintError(error)) {
-        const existing = await this.prisma.settlement.findUnique({ where: { idempotencyKey } });
+      if (effectiveIdempotencyKey && this.isUniqueConstraintError(error)) {
+        const existing = await this.prisma.settlement.findUnique({ where: { idempotencyKey: effectiveIdempotencyKey } });
         if (existing) {
           return {
             id: existing.id,
@@ -167,6 +156,12 @@ export class SettlementsService {
       amountCents: settlement.amountCents.toString(),
       createdAt: settlement.createdAt.toISOString(),
     };
+  }
+
+  private generateFallbackIdempotencyKey(groupId: string, dto: CreateSettlementDto, amount: bigint): string {
+    const minute = Math.floor(Date.now() / 60_000);
+    const data = `${groupId}:${dto.payerId}:${dto.receiverId}:${amount.toString()}:${minute}`;
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   private isUniqueConstraintError(error: unknown): boolean {
