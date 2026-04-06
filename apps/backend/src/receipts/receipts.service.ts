@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PresignedReceiptUrlResponseDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
@@ -13,21 +13,11 @@ const RECEIPT_MIME_TYPES: Record<ReceiptExtension, string> = {
   webp: 'image/webp',
 };
 
-@Injectable()
-export class ReceiptsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly s3: S3Service,
-    private readonly jobsQueue: JobsQueueService,
-  ) {}
-
-  async createUploadUrl(expenseId: string, dto: CreateReceiptUrlDto): Promise<PresignedReceiptUrlResponseDto> {
-    const expense = await this.prisma.expense.findUnique({ where: { id: expenseId } });
-    if (!expense) {
-      throw new NotFoundException('Expense not found');
+    const extension = (dto.extension ?? 'jpg').toLowerCase() as ReceiptExtension;
+    if (!RECEIPT_MIME_TYPES[extension]) {
+      throw new BadRequestException(`Unsupported file extension: ${extension}`);
     }
 
-    const extension = dto.extension ?? 'jpg';
     const fileKey = `receipts/${expense.groupId}/${expenseId}/${randomUUID()}.${extension}`;
 
     const receipt = await this.prisma.receipt.upsert({
