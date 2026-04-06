@@ -10,6 +10,10 @@ const ReceiptUploadModal = dynamic(() => import('./ReceiptUploadModal').then((mo
   ssr: false,
 });
 
+const CreateExpenseModal = dynamic(() => import('./CreateExpenseModal').then((mod) => mod.CreateExpenseModal), {
+  ssr: false,
+});
+
 const categoryLabels: Record<string, string> = {
   FOOD: 'Food',
   TRAVEL: 'Travel',
@@ -22,13 +26,16 @@ const categoryLabels: Record<string, string> = {
 export function ExpenseRow({ 
   expense, 
   payerName, 
+  members = [],
   isGuest = false,
 }: { 
   expense: ExpenseDto; 
   payerName?: string;
+  members?: any[];
   isGuest?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openReceipt, setOpenReceipt] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
 
   const formattedAmount = useMemo(() => {
     const amount = Number(expense.totalAmountCents) / 100;
@@ -71,9 +78,15 @@ export function ExpenseRow({
             <div className="flex items-center justify-end gap-2">
               <button
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
-                onClick={() => setOpen(true)}
+                onClick={() => setOpenReceipt(true)}
               >
                 {expense.receiptFileKey ? 'Replace receipt' : 'Upload receipt'}
+              </button>
+              <button
+                className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+                onClick={() => setOpenEdit(true)}
+              >
+                Edit
               </button>
               <ExpenseDeleteButton expenseId={expense.id} compact />
             </div>
@@ -81,7 +94,19 @@ export function ExpenseRow({
         </td>
       </tr>
 
-      <ReceiptUploadModal expenseId={expense.id} open={open} onClose={() => setOpen(false)} onUploaded={() => setOpen(false)} />
+      <ReceiptUploadModal expenseId={expense.id} open={openReceipt} onClose={() => setOpenReceipt(false)} onUploaded={() => setOpenReceipt(false)} />
+      <CreateExpenseModal 
+        groupId={expense.groupId} 
+        currency={expense.currency} 
+        members={members as any} 
+        expense={expense}
+        open={openEdit} 
+        onClose={() => setOpenEdit(false)} 
+        onCreated={() => {
+          setOpenEdit(false);
+          window.location.reload(); // Refresh to show changes
+        }} 
+      />
     </>
   );
 }

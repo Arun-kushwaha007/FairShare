@@ -125,6 +125,8 @@ export interface GroupDto {
   currency: CurrencyCode;
   createdBy: string;
   createdAt: string;
+  shareEnabled: boolean;
+  shareToken?: string | null;
   defaultSplitPreference?: GroupDefaultSplitDto | null;
   members?: GroupMemberDto[];
 }

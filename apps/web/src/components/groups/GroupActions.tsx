@@ -113,9 +113,9 @@ export function GroupActions({
     <>
       <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-4 shadow-[var(--fs-shadow-soft)] sm:p-6">
         <h3 className="mb-4 text-lg font-bold text-[var(--fs-text-primary)]">Actions</h3>
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-1">
           <button
-            className="btn-royal inline-flex w-full items-center justify-center gap-2"
+            className="btn-royal inline-flex w-full items-center justify-center gap-2 sm:col-span-2 md:col-span-1"
             onClick={() => setOpen(true)}
           >
             <PlusCircle className="h-4 w-4" />

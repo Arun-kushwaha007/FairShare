@@ -51,7 +51,7 @@ export function GroupSummaryPanel({
         </p>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 p-4">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Your balance</p>
           <p className={`mt-2 text-xl font-extrabold ${netBalanceCents > 0 ? 'text-emerald-600' : netBalanceCents < 0 ? 'text-rose-600' : 'text-[var(--fs-text-primary)]'}`}>

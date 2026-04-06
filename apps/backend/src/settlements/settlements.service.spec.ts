@@ -88,4 +88,33 @@ describe('SettlementsService', () => {
       service.create('group-1', 'payer-1', { payerId: 'payer-1', receiverId: 'receiver-1', amountCents: '0' }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('generates a fallback idempotency key and prevents duplicates in the same minute', async () => {
+    const prisma: any = {
+      settlement: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'existing-1',
+          groupId: 'g1',
+          payerId: 'u1',
+          receiverId: 'u2',
+          amountCents: 5000n,
+          createdAt: new Date(),
+        }),
+      },
+      groupMember: {
+        findMany: jest.fn().mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]),
+      },
+    };
+    const service = new SettlementsService(prisma, {} as any, {} as any, {} as any, {} as any);
+
+    // This should hit the findUnique with the fallback key and return existing
+    const result = await service.create('g1', 'u1', {
+      payerId: 'u1',
+      receiverId: 'u2',
+      amountCents: '5000',
+    });
+
+    expect(result.id).toBe('existing-1');
+    expect(prisma.settlement.findUnique).toHaveBeenCalled();
+  });
 });

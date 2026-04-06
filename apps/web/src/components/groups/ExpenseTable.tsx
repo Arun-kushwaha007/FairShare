@@ -150,8 +150,8 @@ export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTabl
             <tr className="bg-[var(--fs-background)]/40 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
               <th className="px-6 py-3 border-b border-[var(--fs-border)]">Description</th>
               <th className="px-6 py-3 border-b border-[var(--fs-border)] text-right">Amount</th>
-              <th className="px-6 py-3 border-b border-[var(--fs-border)] text-right">Date</th>
-              <th className="px-6 py-3 border-b border-[var(--fs-border)] text-right">Receipt</th>
+              <th className="hidden sm:table-cell px-6 py-3 border-b border-[var(--fs-border)] text-right">Recorded</th>
+              <th className="hidden sm:table-cell px-6 py-3 border-b border-[var(--fs-border)] text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--fs-border)]">
@@ -160,6 +160,7 @@ export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTabl
                 key={expense.id} 
                 expense={expense} 
                 payerName={memberNameById[expense.payerId]} 
+                members={members}
                 isGuest={isGuest}
               />
             ))}

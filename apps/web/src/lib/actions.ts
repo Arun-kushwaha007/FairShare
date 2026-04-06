@@ -179,6 +179,7 @@ export async function createSettlementAction(groupId: string, payload: CreateSet
   return { success: true, settlement: data as SettlementDto };
 }
 
+
 export async function remindSettlementAction(groupId: string, payload: RemindSettlementRequestDto) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
 
@@ -246,26 +247,6 @@ export async function createGroupAction(payload: CreateGroupRequestDto) {
   }
 
   return { success: true, group: data as GroupDto };
-}
-
-export async function deleteExpenseAction(expenseId: string) {
-  const token = (await cookies()).get(authCookies.accessToken)?.value;
-
-  const response = await fetch(`${getBackendBaseUrl()}/expenses/${expenseId}`, {
-    method: 'DELETE',
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    cache: 'no-store',
-  });
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    return { success: false, message: data?.message ?? 'Failed to delete expense' };
-  }
-
-  return { success: true };
 }
 
 export async function exportExpensesCsvAction(groupId: string) {

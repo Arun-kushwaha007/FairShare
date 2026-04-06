@@ -39,8 +39,24 @@ export function ReceiptUploadModal({
     if (!selected) {
       setFile(null);
       setPreviewUrl(null);
+      setError('');
       return;
     }
+
+    // Validation: 5MB limit
+    if (selected.size > 5 * 1024 * 1024) {
+      setError('File is too large. Maximum size is 5MB.');
+      return;
+    }
+
+    // Validation: Type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(selected.type)) {
+      setError('Unsupported file type. Please upload JPG, PNG, WebP or PDF.');
+      return;
+    }
+
+    setError('');
     setFile(selected);
     const url = URL.createObjectURL(selected);
     setPreviewUrl(url);
@@ -118,6 +134,8 @@ export function ReceiptUploadModal({
                 </div>
                 <button
                   onClick={onClose}
+                  aria-label="Close upload modal"
+                  title="Close upload modal"
                   className="p-2 rounded-lg bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors"
                 >
                   <X className="w-5 h-5 text-[var(--fs-text-muted)]" />
