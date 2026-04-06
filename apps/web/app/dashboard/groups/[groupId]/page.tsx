@@ -102,6 +102,8 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                   groupId={groupId}
                   currency={group.currency}
                   members={members}
+                  shareEnabled={group.shareEnabled}
+                  shareToken={group.shareToken}
                   defaultSplitPreference={group.defaultSplitPreference}
                 />
               </Suspense>

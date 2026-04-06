@@ -8,6 +8,7 @@ import { ExpenseRow } from './ExpenseRow';
 interface ExpenseTableProps {
   expenses: ExpenseDto[];
   members: GroupMemberSummaryDto[];
+  isGuest?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -19,7 +20,7 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
-export function ExpenseTable({ expenses, members }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTableProps) {
   const [query, setQuery] = useState('');
   const [payerId, setPayerId] = useState('');
   const [category, setCategory] = useState('');
@@ -155,7 +156,12 @@ export function ExpenseTable({ expenses, members }: ExpenseTableProps) {
           </thead>
           <tbody className="divide-y divide-[var(--fs-border)]">
             {filteredExpenses.map((expense) => (
-              <ExpenseRow key={expense.id} expense={expense} payerName={memberNameById[expense.payerId]} />
+              <ExpenseRow 
+                key={expense.id} 
+                expense={expense} 
+                payerName={memberNameById[expense.payerId]} 
+                isGuest={isGuest}
+              />
             ))}
             {filteredExpenses.length === 0 && (
               <tr>

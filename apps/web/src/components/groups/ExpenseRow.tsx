@@ -19,7 +19,15 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
-export function ExpenseRow({ expense, payerName }: { expense: ExpenseDto; payerName?: string }) {
+export function ExpenseRow({ 
+  expense, 
+  payerName, 
+  isGuest = false,
+}: { 
+  expense: ExpenseDto; 
+  payerName?: string;
+  isGuest?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   const formattedAmount = useMemo(() => {
@@ -32,9 +40,13 @@ export function ExpenseRow({ expense, payerName }: { expense: ExpenseDto; payerN
       <tr className="hover:bg-[var(--fs-background)]/50 transition-colors group">
         <td className="px-3 py-3 sm:px-6 sm:py-4 text-base font-semibold text-[var(--fs-text-primary)]">
           <div className="space-y-1">
-            <Link href={`/dashboard/expenses/${expense.id}`} className="hover:text-[var(--fs-primary)] transition-colors">
-              {expense.description}
-            </Link>
+            {isGuest ? (
+              <span className="text-[var(--fs-text-primary)]">{expense.description}</span>
+            ) : (
+              <Link href={`/dashboard/expenses/${expense.id}`} className="hover:text-[var(--fs-primary)] transition-colors">
+                {expense.description}
+              </Link>
+            )}
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--fs-text-muted)]">
               <span>{payerName ? `Paid by ${payerName}` : `Payer ${expense.payerId.slice(0, 6)}`}</span>
               {expense.category ? (
@@ -55,15 +67,17 @@ export function ExpenseRow({ expense, payerName }: { expense: ExpenseDto; payerN
           {new Date(expense.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
         </td>
         <td className="hidden sm:table-cell px-3 py-3 sm:px-6 sm:py-4 text-right">
-          <div className="flex items-center justify-end gap-2">
-            <button
-              className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
-              onClick={() => setOpen(true)}
-            >
-              {expense.receiptFileKey ? 'Replace receipt' : 'Upload receipt'}
-            </button>
-            <ExpenseDeleteButton expenseId={expense.id} compact />
-          </div>
+          {!isGuest && (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-3 py-2 text-xs font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] transition-colors"
+                onClick={() => setOpen(true)}
+              >
+                {expense.receiptFileKey ? 'Replace receipt' : 'Upload receipt'}
+              </button>
+              <ExpenseDeleteButton expenseId={expense.id} compact />
+            </div>
+          )}
         </td>
       </tr>
 

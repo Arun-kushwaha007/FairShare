@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import {
   ActivityDto,
   GroupDashboardDto,
@@ -68,6 +69,8 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      shareEnabled: group.shareEnabled,
+      shareToken: group.shareToken,
       defaultSplitPreference: null,
     };
   }
@@ -90,6 +93,8 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      shareEnabled: group.shareEnabled,
+      shareToken: group.shareToken,
       defaultSplitPreference: this.parseDefaultSplitPreference(
         group.defaultSplitType,
         group.defaultSplitConfig,
@@ -358,6 +363,80 @@ export class GroupsService {
         currency: group.currency as GroupDashboardDto['groups'][number]['currency'],
       })),
       attentionItems,
+    };
+  }
+  
+  async toggleShare(groupId: string, actorUserId: string, enabled: boolean): Promise<GroupDto> {
+    await this.assertMembership(groupId, actorUserId);
+    
+    let shareToken = null;
+    if (enabled) {
+      const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+      shareToken = group?.shareToken ?? randomBytes(16).toString('hex');
+    }
+    
+    const updated = await this.prisma.group.update({
+      where: { id: groupId },
+      data: {
+        shareEnabled: enabled,
+        shareToken: enabled ? shareToken : null,
+      },
+      include: { members: true },
+    });
+    
+    await this.redis.invalidateGroupCache(groupId);
+    
+    return {
+      id: updated.id,
+      name: updated.name,
+      currency: updated.currency as 'USD' | 'EUR' | 'INR',
+      createdBy: updated.createdBy,
+      createdAt: updated.createdAt.toISOString(),
+      shareEnabled: updated.shareEnabled,
+      shareToken: updated.shareToken,
+      defaultSplitPreference: this.parseDefaultSplitPreference(
+        updated.defaultSplitType,
+        updated.defaultSplitConfig,
+      ),
+      members: updated.members.map((member) => ({
+        id: member.id,
+        userId: member.userId,
+        groupId: member.groupId,
+        role: member.role,
+        joinedAt: member.joinedAt.toISOString(),
+      })),
+    };
+  }
+
+  async getGroupByShareToken(token: string): Promise<GroupDto> {
+    const group = await this.prisma.group.findUnique({
+      where: { shareToken: token },
+      include: { members: true },
+    });
+    
+    if (!group || !group.shareEnabled) {
+      throw new NotFoundException('Shared group not found');
+    }
+    
+    return {
+      id: group.id,
+      name: group.name,
+      currency: group.currency as 'USD' | 'EUR' | 'INR',
+      createdBy: group.createdBy,
+      createdAt: group.createdAt.toISOString(),
+      shareEnabled: group.shareEnabled,
+      shareToken: group.shareToken,
+      defaultSplitPreference: this.parseDefaultSplitPreference(
+        group.defaultSplitType,
+        group.defaultSplitConfig,
+      ),
+      members: group.members.map((member) => ({
+        id: member.id,
+        userId: member.userId,
+        groupId: member.groupId,
+        role: member.role,
+        joinedAt: member.joinedAt.toISOString(),
+      })),
     };
   }
 

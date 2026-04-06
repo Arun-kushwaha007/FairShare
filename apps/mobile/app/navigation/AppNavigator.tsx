@@ -18,11 +18,13 @@ import { ActivityScreen } from '../screens/ActivityScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { CreateGroupScreen } from '../screens/CreateGroupScreen';
+import { GuestGroupDetailScreen } from '../screens/GuestGroupDetailScreen';
 import { GlobalToast } from '../components/ui/GlobalToast';
 
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  GuestGroupDetail: { token: string };
 };
 
 export type MainTabParamList = {
@@ -41,6 +43,7 @@ export type RootStackParamList = {
   SettleUp: { groupId: string };
   CreateGroup: undefined;
   Settings: undefined;
+  GuestGroupDetail: { token: string };
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -129,6 +132,7 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="GuestGroupDetail" component={GuestGroupDetailScreen} />
     </AuthStack.Navigator>
   );
 }

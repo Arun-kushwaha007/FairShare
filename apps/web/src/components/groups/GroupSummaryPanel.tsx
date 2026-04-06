@@ -19,16 +19,19 @@ export function GroupSummaryPanel({
   balances,
   currentUserId,
   members,
+  isGuest = false,
 }: {
   currency: string;
   summary: GroupSummaryDto;
   balances: BalanceDto[];
-  currentUserId: string;
+  currentUserId?: string;
   members: GroupMemberSummaryDto[];
+  isGuest?: boolean;
 }) {
-  const netBalanceCents = getNetBalanceCents(balances, currentUserId);
-  const balanceLabel =
-    netBalanceCents > 0
+  const netBalanceCents = isGuest || !currentUserId ? 0 : getNetBalanceCents(balances, currentUserId);
+  const balanceLabel = isGuest 
+    ? 'Viewing as guest'
+    : netBalanceCents > 0
       ? 'You are owed'
       : netBalanceCents < 0
         ? 'You owe'

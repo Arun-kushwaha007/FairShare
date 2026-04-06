@@ -64,6 +64,8 @@ model Group {
   currency           String
   defaultSplitType   String?
   defaultSplitConfig String?
+  shareToken         String?           @unique
+  shareEnabled       Boolean           @default(false)
   createdAt          DateTime          @default(now())
   creator            User              @relation("group_creator", fields: [createdBy], references: [id])
   members            GroupMember[]
@@ -76,6 +78,7 @@ model Group {
   invites            GroupInvite[]
 
   @@index([createdBy])
+  @@index([shareToken])
   @@map("groups")
 }
 

@@ -73,4 +73,13 @@ export class GroupsController {
   ) {
     return this.groupsService.remindSettlement(id, user.sub, dto);
   }
+
+  @Patch(':id/share')
+  toggleShare(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body('enabled') enabled: boolean,
+  ) {
+    return this.groupsService.toggleShare(id, user.sub, enabled);
+  }
 }

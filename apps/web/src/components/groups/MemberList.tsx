@@ -12,9 +12,10 @@ const InviteModal = dynamic(() => import('./InviteModal').then((mod) => mod.Invi
 interface MemberListProps {
   groupId: string;
   members: GroupMemberSummaryDto[];
+  isGuest?: boolean;
 }
 
-export function MemberList({ groupId, members }: MemberListProps) {
+export function MemberList({ groupId, members, isGuest = false }: MemberListProps) {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const router = useRouter();
 
@@ -28,14 +29,16 @@ export function MemberList({ groupId, members }: MemberListProps) {
               {members.length} people collaborating in this group.
             </p>
           </div>
-          <button
-            onClick={() => setIsInviteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--fs-primary)] px-4 py-2 text-sm font-bold text-white shadow-[var(--fs-shadow-soft)] transition-all hover:-translate-y-[1px] active:translate-y-0"
-            title="Invite Member"
-          >
-            <UserPlus className="w-4 h-4" />
-            Invite
-          </button>
+          {!isGuest && (
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--fs-primary)] px-4 py-2 text-sm font-bold text-white shadow-[var(--fs-shadow-soft)] transition-all hover:-translate-y-[1px] active:translate-y-0"
+              title="Invite Member"
+            >
+              <UserPlus className="w-4 h-4" />
+              Invite
+            </button>
+          )}
         </div>
         
         <div className="space-y-3">

@@ -49,4 +49,19 @@ export const groupService = {
         params: { cursor, limit },
       })
     ).data,
+  
+  // Guest methods
+  getGuest: async (token: string) => (await api.get<GroupDto>(`/guest/groups/${token}`)).data,
+  guestExpenses: async (token: string, limit = 50) => 
+    (await api.get(`/guest/groups/${token}/expenses`, { params: { limit } })).data,
+  guestSummary: async (token: string) => 
+    (await api.get<GroupSummaryDto>(`/guest/groups/${token}/summary`)).data,
+  guestActivity: async (token: string, cursor = 0, limit = 20) =>
+    (
+      await api.get<ActivityDto[]>(`/guest/groups/${token}/activity`, {
+        params: { cursor, limit },
+      })
+    ).data,
+  guestMembers: async (token: string) =>
+    (await api.get<GroupMemberSummaryDto[]>(`/guest/groups/${token}/members`)).data,
 };

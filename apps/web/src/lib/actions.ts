@@ -154,11 +154,13 @@ export async function updateGroupDefaultSplitAction(
 
 export async function createSettlementAction(groupId: string, payload: CreateSettlementRequestDto) {
   const token = (await cookies()).get(authCookies.accessToken)?.value;
+  const idempotencyKey = crypto.randomUUID();
 
   const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/settlements`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'x-idempotency-key': idempotencyKey,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(payload),
@@ -344,4 +346,26 @@ export async function deleteRecurringExpenseAction(recurringExpenseId: string) {
   }
 
   return { success: true };
+}
+
+export async function toggleGroupShareAction(groupId: string, enabled: boolean) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}/share`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ enabled }),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to toggle group share' };
+  }
+
+  return { success: true, group: data as GroupDto };
 }

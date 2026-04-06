@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrencyCode, GroupDefaultSplitDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import Link from 'next/link';
-import { Download, PlusCircle, Scale, Wallet } from 'lucide-react';
+import { Download, PlusCircle, Scale, Share2, Wallet } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { exportBalancesCsvAction, exportExpensesCsvAction } from '../../lib/actions';
+import { exportBalancesCsvAction, exportExpensesCsvAction, toggleGroupShareAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
 
 const CreateExpenseModal = dynamic(
@@ -18,6 +18,8 @@ type GroupActionsProps = {
   groupId: string;
   currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
+  shareEnabled: boolean;
+  shareToken?: string | null;
   defaultSplitPreference?: GroupDefaultSplitDto | null;
 };
 
@@ -25,11 +27,14 @@ export function GroupActions({
   groupId,
   currency,
   members,
+  shareEnabled,
+  shareToken,
   defaultSplitPreference,
 }: GroupActionsProps) {
   const [open, setOpen] = useState(false);
   const [exportingExpenses, setExportingExpenses] = useState(false);
   const [exportingBalances, setExportingBalances] = useState(false);
+  const [togglingShare, setTogglingShare] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -81,6 +86,29 @@ export function GroupActions({
     }
   };
 
+  const handleToggleShare = async () => {
+    try {
+      setTogglingShare(true);
+      const result = await toggleGroupShareAction(groupId, !shareEnabled);
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      toast(shareEnabled ? 'Sharing disabled' : 'Sharing enabled');
+      router.refresh();
+    } catch (error) {
+      toast((error as Error).message || 'Failed to toggle sharing', 'error');
+    } finally {
+      setTogglingShare(false);
+    }
+  };
+
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/share/${shareToken}` : '';
+
+  const copyShareUrl = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast('Share URL copied to clipboard');
+  };
+
   return (
     <>
       <div className="rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-4 shadow-[var(--fs-shadow-soft)] sm:p-6">
@@ -118,6 +146,39 @@ export function GroupActions({
             <Scale className="h-4 w-4 text-[var(--fs-primary)]" />
             {exportingBalances ? 'Exporting...' : 'Export balances CSV'}
           </button>
+          <button
+            type="button"
+            onClick={() => void handleToggleShare()}
+            disabled={togglingShare}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-bold text-[var(--fs-text-primary)] hover:border-[var(--fs-primary)] disabled:opacity-60"
+          >
+            <Share2 className="h-4 w-4 text-[var(--fs-primary)]" />
+            {togglingShare ? 'Thinking...' : shareEnabled ? 'Disable public link' : 'Enable public link'}
+          </button>
+          
+          {shareEnabled && shareToken && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-2 px-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                <input 
+                  readOnly 
+                  aria-label="Group share link"
+                  title="Group share link"
+                  className="bg-transparent border-none text-[11px] font-mono text-[var(--fs-text-primary)] flex-1 focus:outline-none" 
+                  value={shareUrl}
+                />
+                <button 
+                  onClick={copyShareUrl}
+                  className="text-[10px] font-bold uppercase text-indigo-400 hover:text-indigo-300"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="px-1 text-[10px] font-medium text-[var(--fs-text-muted)] italic">
+                Anyone with this link can view group expenses and balances.
+              </p>
+            </div>
+          )}
+
           <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-medium text-[var(--fs-text-muted)]">
             Invite teammates from the member panel to keep your ledger accurate.
           </div>
