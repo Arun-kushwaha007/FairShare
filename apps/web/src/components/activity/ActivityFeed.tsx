@@ -50,8 +50,8 @@ function labelFor(activity: ActivityDto): string {
     case 'settlement_reminder': {
       const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : '';
       const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : '';
-      const payer = typeof activity.metadata?.payerName === 'string' ? activity.metadata.payerName : payerId.slice(0, 8);
-      const receiver = typeof activity.metadata?.receiverName === 'string' ? activity.metadata.receiverName : receiverId.slice(0, 8);
+      const payer = typeof activity.metadata?.payerName === 'string' ? activity.metadata.payerName : (payerId ? payerId.slice(0, 8) : 'someone');
+      const receiver = typeof activity.metadata?.receiverName === 'string' ? activity.metadata.receiverName : (receiverId ? receiverId.slice(0, 8) : 'someone');
       return `${actor} reminded ${payer} to pay ${receiver}`;
     }
     case 'member_joined':
