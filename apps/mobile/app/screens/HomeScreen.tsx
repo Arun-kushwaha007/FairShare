@@ -12,7 +12,7 @@ import { SectionHeader } from '../components/SectionHeader';
 import { Avatar } from '../components/ui/Avatar';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
-import type { ActivityDto, RecurringExpenseDto, SimplifySuggestionDto } from '@fairshare/shared-types';
+import { formatCurrencyFromCents, type ActivityDto, type RecurringExpenseDto, type SimplifySuggestionDto } from '@fairshare/shared-types';
 import { ActivityItem } from '../components/ActivityItem';
 import { useToastStore } from '../store/toastStore';
 import { Image } from 'react-native';
@@ -33,7 +33,10 @@ const amountTextForActivity = (activity: ActivityDto): string | undefined => {
   if (typeof raw !== 'string') {
     return undefined;
   }
-  return `$${(Number(raw) / 100).toFixed(2)}`;
+  const currency = activity.metadata?.currency;
+  return currency === 'USD' || currency === 'EUR' || currency === 'INR'
+    ? formatCurrencyFromCents(raw, currency)
+    : formatCurrencyFromCents(raw, 'USD');
 };
 
 const iconForActivity = (activity: ActivityDto): keyof typeof MaterialCommunityIcons.glyphMap => {
@@ -93,7 +96,7 @@ const subtitleForActivity = (activity: ActivityDto): string => {
     case 'member_invited':
       return 'An invite was sent';
     default:
-      return `${activity.actorUserId} in group`;
+      return `${activity.actorName ?? activity.actorUserId} in ${activity.groupName ?? 'group'}`;
   }
 };
 
@@ -185,7 +188,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
       <Animated.View entering={FadeInDown.duration(400)} style={styles.summarySection}>
         <BalanceCard
           title="The Bag"
-          amount={`$${Math.abs(totalBalance).toFixed(2)}`}
+          amount={formatCurrencyFromCents(Math.round(Math.abs(totalBalance) * 100), 'USD')}
           subtitle={balanceLabel}
           variant={balanceVariant}
           icon={balanceIcon}
@@ -408,4 +411,3 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 });
-

@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAppTheme } from '../theme/useAppTheme';
 import { spacing } from '../theme/spacing';
 import { groupService } from '../services/group.service';
-import type { ActivityDto, ExpenseDto, GroupDto, GroupMemberSummaryDto, GroupSummaryDto } from '@fairshare/shared-types';
+import { formatCurrencyFromCents, type ActivityDto, type ExpenseDto, type GroupDto, type GroupMemberSummaryDto, type GroupSummaryDto } from '@fairshare/shared-types';
 import { ActivityItem } from '../components/ActivityItem';
 import { ExpenseCard } from '../components/ExpenseCard';
 import { SectionHeader } from '../components/SectionHeader';
@@ -38,7 +38,7 @@ export function GuestGroupDetailScreen({ route, navigation }: { route: any; navi
       setSummary(summaryData);
       setExpenses(expensesData.items);
       setMembers(membersData);
-      setActivities(activityData);
+      setActivities(activityData.items);
     } catch (err) {
       console.error(err);
       toast('Failed to load shared group');
@@ -60,10 +60,6 @@ export function GuestGroupDetailScreen({ route, navigation }: { route: any; navi
       </View>
     );
   }
-
-  const formatCurrency = (amount: number | string) => {
-    return `$${(Number(amount) / 100).toFixed(2)}`;
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -92,7 +88,7 @@ export function GuestGroupDetailScreen({ route, navigation }: { route: any; navi
           <Surface style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }, shadows.soft]}>
             <Text style={[styles.statLabel, { color: colors.text_secondary }]}>TOTAL SPEND</Text>
             <Text style={[styles.statValue, { color: colors.text_primary }]}>
-              {formatCurrency(summary?.totalSettledCents ?? 0)}
+              {formatCurrencyFromCents(summary?.totalExpensesCents ?? 0, group.currency)}
             </Text>
           </Surface>
           <Surface style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }, shadows.soft]}>
@@ -131,7 +127,7 @@ export function GuestGroupDetailScreen({ route, navigation }: { route: any; navi
               <Animated.View key={expense.id} entering={FadeInDown.delay(300 + i * 50)}>
                 <ExpenseCard
                   description={expense.description}
-                  amount={formatCurrency(expense.totalAmountCents)}
+                  amount={formatCurrencyFromCents(expense.totalAmountCents, expense.currency)}
                   payerName={payer?.name ?? 'Unknown'}
                   payerInitials={(payer?.name ?? 'U').charAt(0)}
                   participantCount={expense.splits?.length ?? 0}
@@ -151,12 +147,12 @@ export function GuestGroupDetailScreen({ route, navigation }: { route: any; navi
         <View style={styles.listContainer}>
           {activities.map((activity, i) => (
             <Animated.View key={activity.id} entering={FadeInDown.delay(500 + i * 50)}>
-              <ActivityItem
-                title={activity.type.replace(/_/g, ' ')}
-                subtitle={`Recorded by member ${activity.actorUserId.slice(0, 4)}`}
-                date={new Date(activity.createdAt).toLocaleDateString()}
-                icon="history"
-              />
+                <ActivityItem
+                  title={activity.type.replace(/_/g, ' ')}
+                  subtitle={`Recorded by ${activity.actorName ?? 'a member'}${activity.groupName ? ` in ${activity.groupName}` : ''}`}
+                  date={new Date(activity.createdAt).toLocaleDateString()}
+                  icon="history"
+                />
             </Animated.View>
           ))}
         </View>

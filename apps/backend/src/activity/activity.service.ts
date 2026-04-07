@@ -7,6 +7,66 @@ import { PrismaService } from '../common/prisma.service';
 export class ActivityService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private enrichMetadata(metadata: Record<string, unknown>, userNamesById: Record<string, string>): Record<string, unknown> {
+    const payerId = typeof metadata.payerId === 'string' ? metadata.payerId : null;
+    const receiverId = typeof metadata.receiverId === 'string' ? metadata.receiverId : null;
+
+    return {
+      ...metadata,
+      ...(payerId && userNamesById[payerId] ? { payerName: userNamesById[payerId] } : {}),
+      ...(receiverId && userNamesById[receiverId] ? { receiverName: userNamesById[receiverId] } : {}),
+    };
+  }
+
+  private async mapActivities(events: Array<{
+    id: string;
+    groupId: string;
+    actorUserId: string;
+    type: ActivityType;
+    entityId: string;
+    metadata: Prisma.JsonValue;
+    createdAt: Date;
+    actor?: { name: string | null } | null;
+    group?: { name: string | null } | null;
+  }>): Promise<ActivityDto[]> {
+    const userIds = new Set<string>();
+
+    events.forEach((event) => {
+      userIds.add(event.actorUserId);
+      const metadata = event.metadata as Record<string, unknown>;
+      if (typeof metadata.payerId === 'string') {
+        userIds.add(metadata.payerId);
+      }
+      if (typeof metadata.receiverId === 'string') {
+        userIds.add(metadata.receiverId);
+      }
+    });
+
+    const users = userIds.size
+      ? await this.prisma.user.findMany({
+          where: { id: { in: [...userIds] } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const userNamesById = Object.fromEntries(users.map((user) => [user.id, user.name]));
+
+    return events.map((event) => {
+      const metadata = event.metadata as Record<string, unknown>;
+
+      return {
+        id: event.id,
+        groupId: event.groupId,
+        actorUserId: event.actorUserId,
+        actorName: userNamesById[event.actorUserId] ?? event.actor?.name ?? undefined,
+        groupName: event.group?.name ?? undefined,
+        type: event.type,
+        entityId: event.entityId,
+        metadata: this.enrichMetadata(metadata, userNamesById),
+        createdAt: event.createdAt.toISOString(),
+      };
+    });
+  }
+
   async log(params: {
     groupId: string;
     actorUserId: string;
@@ -18,7 +78,7 @@ export class ActivityService {
       data: {
         groupId: params.groupId,
         actorUserId: params.actorUserId,
-        type: params.type,
+        type: params.type as never,
         entityId: params.entityId,
         metadata: (params.metadata ?? {}) as Prisma.InputJsonValue,
       },
@@ -38,17 +98,13 @@ export class ActivityService {
       orderBy: { createdAt: 'desc' },
       skip: safeCursor,
       take: safeLimit,
+      include: {
+        actor: { select: { name: true } },
+        group: { select: { name: true } },
+      },
     });
 
-    const items = events.map((event) => ({
-      id: event.id,
-      groupId: event.groupId,
-      actorUserId: event.actorUserId,
-      type: event.type,
-      entityId: event.entityId,
-      metadata: event.metadata as Record<string, unknown>,
-      createdAt: event.createdAt.toISOString(),
-    }));
+    const items = await this.mapActivities(events);
 
     return {
       items,
@@ -75,17 +131,13 @@ export class ActivityService {
       orderBy: { createdAt: 'desc' },
       skip: safeCursor,
       take: safeLimit,
+      include: {
+        actor: { select: { name: true } },
+        group: { select: { name: true } },
+      },
     });
 
-    const items = events.map((event) => ({
-      id: event.id,
-      groupId: event.groupId,
-      actorUserId: event.actorUserId,
-      type: event.type,
-      entityId: event.entityId,
-      metadata: event.metadata as Record<string, unknown>,
-      createdAt: event.createdAt.toISOString(),
-    }));
+    const items = await this.mapActivities(events);
 
     return {
       items,

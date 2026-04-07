@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ActivityDto, GroupDashboardDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDashboardDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import {
   ArrowUpRight,
   CreditCard,
@@ -22,8 +22,11 @@ function formatMoney(cents: string | null, currency: string | null): string {
     return '$0.00';
   }
 
-  const amount = Number(cents) / 100;
-  return amount.toLocaleString(undefined, { style: 'currency', currency });
+  if (currency === 'USD' || currency === 'EUR' || currency === 'INR') {
+    return formatCurrencyFromCents(cents, currency);
+  }
+
+  return formatCurrencyFromCents(cents, 'USD');
 }
 
 export default async function DashboardPage() {

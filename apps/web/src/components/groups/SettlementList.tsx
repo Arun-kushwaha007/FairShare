@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ActivityDto, SimplifySuggestionDto } from '@fairshare/shared-types';
+import { ActivityDto, CurrencyCode, SimplifySuggestionDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { BellRing, CheckCircle2, Clock3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSettlementAction, remindSettlementAction } from '../../lib/actions';
@@ -39,8 +39,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
   const { toast } = useToast();
   const router = useRouter();
 
-  const formatAmount = (cents: string) =>
-    (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency });
+  const formatAmount = (cents: string) => formatCurrencyFromCents(cents, currency as CurrencyCode);
 
   const labelForUser = (userId: string) => memberLookup[userId]?.name ?? userId;
 
@@ -219,7 +218,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
               return (
                 <div key={event.id} className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3">
                   <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
-                    {labelForUser(event.actorUserId)} reminded {labelForUser(payerId)} to pay {labelForUser(receiverId)}
+                    {(event.actorName ?? labelForUser(event.actorUserId))} reminded {labelForUser(payerId)} to pay {labelForUser(receiverId)}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-medium text-[var(--fs-text-muted)]">
                     <span>{formatAmount(amountCents)}</span>
@@ -264,7 +263,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
                 <p className="text-[11px] font-medium text-[var(--fs-text-muted)]">{formatAmount(item.amountCents)}</p>
                 {latestReminder ? (
                   <p className="mt-1 text-[11px] font-medium text-[var(--fs-text-muted)]">
-                    Last reminded {timeAgo(latestReminder.createdAt)} by {labelForUser(latestReminder.actorUserId)}
+                    Last reminded {timeAgo(latestReminder.createdAt)} by {latestReminder.actorName ?? labelForUser(latestReminder.actorUserId)}
                   </p>
                 ) : null}
               </div>
@@ -298,4 +297,3 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
     </div>
   );
 }
-

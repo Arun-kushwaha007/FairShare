@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import {
   EXPENSE_CATEGORIES,
   RECURRING_EXPENSE_FREQUENCIES,
+  formatCurrencyFromCents,
+  type CurrencyCode,
   RecurringExpenseDto,
   GroupMemberSummaryDto,
   type ExpenseCategory,
@@ -275,7 +277,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="font-medium text-[var(--fs-text-muted)]">Amount</span>
               <span className="text-lg font-extrabold text-[var(--fs-primary)]">
-                {(Number(item.totalAmountCents) / 100).toLocaleString(undefined, { style: 'currency', currency })}
+                {formatCurrencyFromCents(item.totalAmountCents, currency as CurrencyCode)}
               </span>
             </div>
           </>

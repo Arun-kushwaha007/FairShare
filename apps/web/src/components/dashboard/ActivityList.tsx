@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ActivityDto } from '@fairshare/shared-types';
+import { ActivityDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { Clock, Receipt, Users, Plus, Trash2, UserPlus, Milestone, ArrowUpRight, BellRing, ActivitySquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -22,7 +22,10 @@ function formatAmount(activity: ActivityDto): string | null {
   if (typeof raw !== 'string') {
     return null;
   }
-  return `$${(Number(raw) / 100).toFixed(2)}`;
+  const currency = activity.metadata?.currency;
+  return currency === 'USD' || currency === 'EUR' || currency === 'INR'
+    ? formatCurrencyFromCents(raw, currency)
+    : formatCurrencyFromCents(raw, 'USD');
 }
 
 function labelForActivity(activity: ActivityDto): string {
@@ -139,4 +142,3 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
     </div>
   );
 }
-

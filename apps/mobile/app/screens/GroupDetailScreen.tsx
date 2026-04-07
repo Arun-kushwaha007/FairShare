@@ -6,7 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { EXPENSE_CATEGORIES, RECURRING_EXPENSE_FREQUENCIES, type ExpenseCategory, type ExpenseDto, type GroupMemberSummaryDto, type GroupDto, type RecurringExpenseDto, type RecurringExpenseFrequency } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, RECURRING_EXPENSE_FREQUENCIES, formatCurrencyFromCents, type CurrencyCode, type ExpenseCategory, type ExpenseDto, type GroupMemberSummaryDto, type GroupDto, type RecurringExpenseDto, type RecurringExpenseFrequency } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { expenseService } from '../services/expense.service';
 import { realtimeService } from '../services/realtime.service';
@@ -117,7 +117,7 @@ export function GroupDetailScreen({
   const currentUserId = useAuthStore((state) => state.user?.id);
   const { colors } = useAppTheme();
 
-  const currencySymbol = group?.currency === 'INR' ? 'Rs' : '$';
+  const groupCurrency = (group?.currency ?? 'USD') as CurrencyCode;
 
   const load = React.useCallback(async () => {
     startScreenLoad('GroupDetail');
@@ -264,7 +264,7 @@ export function GroupDetailScreen({
       >
         <ExpenseCard
           description={expense.description}
-          amount={`${currencySymbol}${(Number(expense.totalAmountCents) / 100).toFixed(2)}`}
+          amount={formatCurrencyFromCents(expense.totalAmountCents, expense.currency)}
           payerName={payer?.name ?? 'Unknown'}
           payerInitials={getInitials(payer?.name ?? 'U')}
           participantCount={participantCount}
@@ -402,7 +402,7 @@ export function GroupDetailScreen({
               <Text style={[styles.heroEyebrow, { color: colors.text_secondary }]}>Group</Text>
               <Text style={[styles.heroTitle, { color: colors.text_primary }]}>{group.name}</Text>
               <View style={[styles.heroBadge, { borderColor: userBalance > 0 ? colors.success : userBalance < 0 ? colors.danger : colors.border, backgroundColor: userBalance > 0 ? `${colors.success}12` : userBalance < 0 ? `${colors.danger}12` : colors.cardElevated }]}>
-                <Text style={[styles.heroBadgeText, { color: userBalance > 0 ? colors.success : userBalance < 0 ? colors.danger : colors.text_secondary }]}>{balanceStatus} • {currencySymbol}{Math.abs(userBalance).toFixed(2)}</Text>
+                <Text style={[styles.heroBadgeText, { color: userBalance > 0 ? colors.success : userBalance < 0 ? colors.danger : colors.text_secondary }]}>{balanceStatus} â€¢ {formatCurrencyFromCents(Math.round(Math.abs(userBalance) * 100), groupCurrency)}</Text>
               </View>
             </Card>
           </Animated.View>
@@ -412,12 +412,12 @@ export function GroupDetailScreen({
           <Animated.View entering={FadeInDown.duration(400)} style={styles.balanceSection}>
             <BalanceCard
               title="Total Group Spending"
-              amount={`${currencySymbol}${(Number(summary.totalExpensesCents) / 100).toFixed(2)}`}
+              amount={formatCurrencyFromCents(summary.totalExpensesCents, groupCurrency)}
               icon="cash-multiple"
             />
             <BalanceCard
               title="Your Personal Balance"
-              amount={`${currencySymbol}${Math.abs(userBalance).toFixed(2)}`}
+              amount={formatCurrencyFromCents(Math.round(Math.abs(userBalance) * 100), groupCurrency)}
               subtitle={
                 userBalance !== 0
                   ? `${userBalance > 0 ? 'You are owed' : 'You owe'} (${((Math.abs(userBalance) * 100) / (Number(summary.totalExpensesCents) / 100 || 1)).toFixed(1)}% of total)`
@@ -503,7 +503,7 @@ export function GroupDetailScreen({
                           <View style={styles.recurringHeaderRow}>
                             <View style={{ flex: 1 }}>
                               <Text style={[styles.recurringTitle, { color: colors.text_primary }]}>{item.description}</Text>
-                              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>{recurringLabels[item.frequency]} • {scheduleLabel}</Text>
+                              <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>{recurringLabels[item.frequency]} â€¢ {scheduleLabel}</Text>
                             </View>
                             <View style={styles.recurringActions}>
                               <TouchableOpacity onPress={() => startRecurringEdit(item)}>
@@ -514,9 +514,9 @@ export function GroupDetailScreen({
                               </TouchableOpacity>
                             </View>
                           </View>
-                          <Text style={[styles.recurringAmount, { color: colors.primary }]}>{currencySymbol}{(Number(item.totalAmountCents) / 100).toFixed(2)}</Text>
-                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Next {new Date(item.nextOccurrenceAt).toLocaleDateString()} • {lastGeneratedLabel}</Text>
-                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Paid by {payer?.name ?? 'Unknown'} • {item.splits.length} participants</Text>
+                          <Text style={[styles.recurringAmount, { color: colors.primary }]}>{formatCurrencyFromCents(item.totalAmountCents, item.currency)}</Text>
+                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Next {new Date(item.nextOccurrenceAt).toLocaleDateString()} â€¢ {lastGeneratedLabel}</Text>
+                          <Text style={[styles.recurringMeta, { color: colors.text_secondary }]}>Paid by {payer?.name ?? 'Unknown'} â€¢ {item.splits.length} participants</Text>
                         </Card>
                       );
                     })}

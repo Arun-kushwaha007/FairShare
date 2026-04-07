@@ -1,4 +1,39 @@
 export type CurrencyCode = 'USD' | 'EUR' | 'INR';
+const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+  USD: '$',
+  EUR: '€',
+  INR: '₹',
+};
+
+function normalizeCentsInput(amountCents: bigint | number | string): string {
+  if (typeof amountCents === 'bigint') {
+    return amountCents.toString();
+  }
+
+  if (typeof amountCents === 'number') {
+    if (!Number.isInteger(amountCents)) {
+      throw new Error('Currency formatter expects whole cents.');
+    }
+    return String(amountCents);
+  }
+
+  return amountCents.trim();
+}
+
+export function formatCurrencyFromCents(amountCents: bigint | number | string, currency: CurrencyCode = 'USD'): string {
+  const normalized = normalizeCentsInput(amountCents);
+  const negative = normalized.startsWith('-');
+  const digits = negative ? normalized.slice(1) : normalized;
+  const safeDigits = digits.replace(/^0+(?=\d)/, '') || '0';
+  const padded = safeDigits.padStart(3, '0');
+  const whole = padded.slice(0, -2);
+  const fraction = padded.slice(-2);
+  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const symbol = CURRENCY_SYMBOLS[currency];
+
+  return `${negative ? '-' : ''}${symbol}${groupedWhole}.${fraction}`;
+}
+
 export const EXPENSE_CATEGORIES = [
   'FOOD',
   'TRAVEL',
@@ -256,6 +291,8 @@ export interface ActivityDto {
   id: string;
   groupId: string;
   actorUserId: string;
+  actorName?: string;
+  groupName?: string;
   type: ActivityType;
   entityId: string;
   metadata: Record<string, unknown>;

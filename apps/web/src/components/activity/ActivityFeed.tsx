@@ -2,7 +2,7 @@
 
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityDto, GroupDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { ActivitySquare, BadgeCheck, BellRing, Clock3, Mail, Receipt, RefreshCw, UsersRound } from 'lucide-react';
 import { useToast } from '../ui/Toaster';
 
@@ -28,8 +28,8 @@ const accentByType: Record<ActivityDto['type'], string> = {
   member_invited: '#EC4899',
 };
 
-function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): string {
-  const actor = userNameMap[activity.actorUserId] ?? activity.actorUserId.slice(0, 8);
+function labelFor(activity: ActivityDto): string {
+  const actor = activity.actorName ?? activity.actorUserId.slice(0, 8);
   switch (activity.type) {
     case 'expense_created':
       return `${actor} created an expense`;
@@ -42,8 +42,8 @@ function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): s
     case 'settlement_reminder': {
       const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : '';
       const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : '';
-      const payer = userNameMap[payerId] ?? payerId.slice(0, 8);
-      const receiver = userNameMap[receiverId] ?? receiverId.slice(0, 8);
+      const payer = typeof activity.metadata?.payerName === 'string' ? activity.metadata.payerName : payerId.slice(0, 8);
+      const receiver = typeof activity.metadata?.receiverName === 'string' ? activity.metadata.receiverName : receiverId.slice(0, 8);
       return `${actor} reminded ${payer} to pay ${receiver}`;
     }
     case 'member_joined':
@@ -57,9 +57,11 @@ function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): s
 
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
-  if (!cents) return null;
-  const currency = typeof activity.metadata?.currency === 'string' ? activity.metadata.currency : 'USD';
-  return (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency });
+  if (typeof cents !== 'string') return null;
+  const currency = activity.metadata?.currency;
+  return currency === 'USD' || currency === 'EUR' || currency === 'INR'
+    ? formatCurrencyFromCents(cents, currency)
+    : formatCurrencyFromCents(cents, 'USD');
 }
 
 function timeAgo(iso: string): string {
@@ -78,12 +80,10 @@ export function ActivityFeed({
   groups,
   initialItems,
   initialCursor,
-  userNameMap = {},
 }: {
   groups: GroupDto[];
   initialItems: ActivityDto[];
   initialCursor: number | null;
-  userNameMap?: Record<string, string>;
 }) {
   const { toast } = useToast();
   const [items, setItems] = useState<ActivityDto[]>(initialItems);
@@ -199,7 +199,7 @@ export function ActivityFeed({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--fs-text-primary)] truncate">
-                    {labelFor(item, userNameMap)}
+                    {labelFor(item)}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-[var(--fs-text-muted)]">
                     <span className="flex items-center gap-1">
@@ -208,7 +208,7 @@ export function ActivityFeed({
                     </span>
                     {item.groupId ? (
                       <span className="px-2 py-0.5 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-card)]">
-                        Group {item.groupId.slice(0, 6)}
+                        {item.groupName ?? `Group ${item.groupId.slice(0, 6)}`}
                       </span>
                     ) : null}
                   </div>

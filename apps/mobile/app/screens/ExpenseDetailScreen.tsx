@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from
 import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, formatCurrencyFromCents, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { useToastStore } from '../store/toastStore';
@@ -156,10 +156,7 @@ export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: s
     return null;
   }
 
-  const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
-    style: 'currency',
-    currency: expense.currency,
-  });
+  const amount = formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.container}>
@@ -351,4 +348,3 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
 });
-

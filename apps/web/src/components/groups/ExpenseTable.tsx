@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ExpenseDto, EXPENSE_CATEGORIES, GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { ExpenseDto, EXPENSE_CATEGORIES, GroupMemberSummaryDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { glassPanel } from '../layout/layoutStyles';
 import { ExpenseRow } from './ExpenseRow';
 
@@ -9,6 +9,7 @@ interface ExpenseTableProps {
   expenses: ExpenseDto[];
   members: GroupMemberSummaryDto[];
   isGuest?: boolean;
+  totalRecordsLabel?: string;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -20,7 +21,7 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
-export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, members, isGuest = false, totalRecordsLabel }: ExpenseTableProps) {
   const [query, setQuery] = useState('');
   const [payerId, setPayerId] = useState('');
   const [category, setCategory] = useState('');
@@ -53,7 +54,7 @@ export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTabl
         return true;
       }
 
-      const amount = (Number(expense.totalAmountCents) / 100).toFixed(2);
+      const amount = formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
       const dateLabel = new Date(expense.createdAt).toLocaleDateString();
       const haystack = [
         expense.description,
@@ -77,6 +78,10 @@ export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTabl
     setEndDate('');
   };
 
+  const recordLabel = totalRecordsLabel ?? String(expenses.length);
+  const recordSummary =
+    filteredExpenses.length === expenses.length ? `Records: ${recordLabel}` : `Showing ${filteredExpenses.length} of ${recordLabel} records`;
+
   return (
     <div className={`${glassPanel} overflow-hidden`}>
       <div className="p-4 sm:p-6 border-b border-[var(--fs-border)] bg-[var(--fs-background)]/40 flex flex-col gap-4 sm:gap-5">
@@ -86,7 +91,7 @@ export function ExpenseTable({ expenses, members, isGuest = false }: ExpenseTabl
             <p className="text-[12px] font-medium text-[var(--fs-text-muted)]">Search the ledger by description, payer, amount, date, or category.</p>
           </div>
           <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
-            {filteredExpenses.length}/{expenses.length} records
+            {recordSummary}
           </span>
         </div>
 

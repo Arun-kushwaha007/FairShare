@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, formatCurrencyFromCents, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
 import { Pencil } from 'lucide-react';
 import { ExpenseDeleteButton } from './ExpenseDeleteButton';
@@ -31,10 +31,7 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
   const router = useRouter();
   const { toast } = useToast();
 
-  const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
-    style: 'currency',
-    currency: expense.currency,
-  });
+  const amount = formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
 
   const saveEdit = async () => {
     if (!description.trim() || description.trim().length < 2) {

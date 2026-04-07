@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ExpenseDto } from '@fairshare/shared-types';
+import { ExpenseDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
 import { ExpenseDeleteButton } from './ExpenseDeleteButton';
 
@@ -38,8 +38,7 @@ export function ExpenseRow({
   const [openEdit, setOpenEdit] = useState(false);
 
   const formattedAmount = useMemo(() => {
-    const amount = Number(expense.totalAmountCents) / 100;
-    return amount.toLocaleString(undefined, { style: 'currency', currency: expense.currency });
+    return formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
   }, [expense.currency, expense.totalAmountCents]);
 
   return (
