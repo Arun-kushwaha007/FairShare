@@ -18,7 +18,7 @@ import { useToast } from '../ui/Toaster';
 type RecurringExpenseListProps = {
   recurringExpenses: RecurringExpenseDto[];
   members: GroupMemberSummaryDto[];
-  currency: string;
+  currency: CurrencyCode;
   onChanged?: () => void;
 };
 
@@ -208,6 +208,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 placeholder="Amount"
               />
               <select
+                title="Category"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={category}
                 onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
@@ -220,6 +221,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 ))}
               </select>
               <select
+                title="Frequency"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value as RecurringExpenseFrequency)}
@@ -288,7 +290,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="font-medium text-[var(--fs-text-muted)]">Amount</span>
               <span className="text-lg font-extrabold text-[var(--fs-primary)]">
-                {formatCurrencyFromCents(item.totalAmountCents, currency as CurrencyCode)}
+                {formatCurrencyFromCents(item.totalAmountCents, currency)}
               </span>
             </div>
           </>

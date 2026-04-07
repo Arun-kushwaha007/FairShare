@@ -24,7 +24,11 @@ function normalizeCentsInput(amountCents: bigint | number | string): string {
     return String(amountCents);
   }
 
-  return amountCents.trim();
+  const trimmed = amountCents.trim();
+  if (!/^-?\d+$/.test(trimmed)) {
+    throw new Error('Currency formatter expects an integer-cent string.');
+  }
+  return trimmed;
 }
 
 /**

@@ -78,7 +78,7 @@ export class ActivityService {
       data: {
         groupId: params.groupId,
         actorUserId: params.actorUserId,
-        type: params.type as never,
+        type: params.type as Prisma.ActivityType,
         entityId: params.entityId,
         metadata: (params.metadata ?? {}) as Prisma.InputJsonValue,
       },
