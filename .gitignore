@@ -36,3 +36,14 @@ skills-lock.json
 .turbo/*
 .agent
 .agent/*
+full_build.log
+backend_build.log
+backend_build2.log
+backend_build3.log
+web_build.log
+mobile_build.log
+lint.log
+.log
+.log*
+/infra/terraform/.turbo
+/infra/terraform/.terraform

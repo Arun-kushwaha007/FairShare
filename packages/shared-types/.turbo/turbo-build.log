@@ -1,3 +1,0 @@
-
-> @fairshare/shared-types@1.0.0 build /home/jailuser/git/packages/shared-types
-> tsc -p tsconfig.json

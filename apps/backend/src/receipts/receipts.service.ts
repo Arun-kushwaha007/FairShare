@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PresignedReceiptUrlResponseDto } from '@fairshare/shared-types';
 import { PrismaService } from '../common/prisma.service';
@@ -12,6 +12,27 @@ const RECEIPT_MIME_TYPES: Record<ReceiptExtension, string> = {
   png: 'image/png',
   webp: 'image/webp',
 };
+
+@Injectable()
+export class ReceiptsService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jobsQueue: JobsQueueService,
+    private readonly s3: S3Service,
+  ) {}
+
+  async createUploadUrl(
+    expenseId: string,
+    dto: CreateReceiptUrlDto,
+  ): Promise<PresignedReceiptUrlResponseDto> {
+    const expense = await this.prisma.expense.findUnique({
+      where: { id: expenseId },
+      select: { groupId: true },
+    });
+
+    if (!expense) {
+      throw new NotFoundException('Expense not found');
+    }
 
     const extension = (dto.extension ?? 'jpg').toLowerCase() as ReceiptExtension;
     if (!RECEIPT_MIME_TYPES[extension]) {

@@ -1,6 +1,0 @@
-
-> web@1.0.0 build /home/jailuser/git/apps/web
-> next build
-
-sh: 1: next: not found
- ELIFECYCLE  Command failed.

@@ -71,11 +71,10 @@ function labelFor(activity: ActivityDto): string {
  */
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
-  if (typeof cents !== 'string') return null;
+  if (cents == null) return null;
   const currency = activity.metadata?.currency;
-  return currency === 'USD' || currency === 'EUR' || currency === 'INR'
-    ? formatCurrencyFromCents(cents, currency)
-    : formatCurrencyFromCents(cents, 'USD');
+  const currencyOrDefault = currency === 'USD' || currency === 'EUR' || currency === 'INR' ? currency : 'USD';
+  return formatCurrencyFromCents(cents as string | number, currencyOrDefault);
 }
 
 /**

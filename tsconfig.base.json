@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -15,7 +15,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "sourceMap": true,
-    "ignoreDeprecations": "6.0"
+    "sourceMap": true
   }
 }

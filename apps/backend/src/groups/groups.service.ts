@@ -125,6 +125,8 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      shareEnabled: group.shareEnabled,
+      shareToken: group.shareToken,
       defaultSplitPreference: this.parseDefaultSplitPreference(
         group.defaultSplitType,
         group.defaultSplitConfig,
@@ -500,6 +502,8 @@ export class GroupsService {
       currency: group.currency as 'USD' | 'EUR' | 'INR',
       createdBy: group.createdBy,
       createdAt: group.createdAt.toISOString(),
+      shareEnabled: group.shareEnabled,
+      shareToken: group.shareToken,
       defaultSplitPreference: this.parseDefaultSplitPreference(
         group.defaultSplitType,
         group.defaultSplitConfig,
