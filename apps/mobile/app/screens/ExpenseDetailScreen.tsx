@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from
 import { ActivityIndicator, Text, TextInput } from 'react-native-paper';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, formatCurrencyFromCents, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
 import { expenseService } from '../services/expense.service';
 import { SkeletonList } from '../components/ui/SkeletonList';
 import { useToastStore } from '../store/toastStore';
@@ -30,6 +30,12 @@ function getReceiptUrl(fileKey?: string | null): string | null {
   return `${base.replace(/\/$/, '')}/${fileKey}`;
 }
 
+/**
+ * Infers a file extension for an image asset from its filename or MIME type.
+ *
+ * @param asset - The ImagePicker asset to inspect (may include `fileName` and `mimeType`)
+ * @returns The inferred file extension in lowercase (e.g., `png`, `heic`, `jpg`), or `undefined` if no information is available
+ */
 function inferExtension(asset: ImagePicker.ImagePickerAsset): string | undefined {
   const fileName = asset.fileName ?? '';
   const fileExtension = fileName.includes('.') ? fileName.split('.').pop() : undefined;
@@ -43,6 +49,15 @@ function inferExtension(asset: ImagePicker.ImagePickerAsset): string | undefined
   return 'jpg';
 }
 
+/**
+ * Render the expense detail screen allowing viewing, editing, and receipt upload for a single expense.
+ *
+ * Fetches and displays an expense by `route.params.expenseId`, provides inline editing of description and category,
+ * and supports attaching or replacing a receipt image with size and permission checks.
+ *
+ * @param route - Navigation route object whose `params.expenseId` is the ID of the expense to display
+ * @returns A React element that renders the expense detail screen
+ */
 export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: string } } }) {
   const [loading, setLoading] = React.useState(true);
   const [expense, setExpense] = React.useState<ExpenseDto | null>(null);
@@ -156,10 +171,7 @@ export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: s
     return null;
   }
 
-  const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
-    style: 'currency',
-    currency: expense.currency,
-  });
+  const amount = formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.container}>
@@ -351,4 +363,3 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
 });
-

@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import {
   EXPENSE_CATEGORIES,
   RECURRING_EXPENSE_FREQUENCIES,
+  formatCurrencyFromCents,
+  type CurrencyCode,
   RecurringExpenseDto,
   GroupMemberSummaryDto,
   type ExpenseCategory,
@@ -16,7 +18,7 @@ import { useToast } from '../ui/Toaster';
 type RecurringExpenseListProps = {
   recurringExpenses: RecurringExpenseDto[];
   members: GroupMemberSummaryDto[];
-  currency: string;
+  currency: CurrencyCode;
   onChanged?: () => void;
 };
 
@@ -79,6 +81,15 @@ function formatGeneratedLabel(lastGeneratedAt?: string | null): string {
   return `Last generated ${new Date(lastGeneratedAt).toLocaleDateString()}`;
 }
 
+/**
+ * Render the recurring bills list with sections (overdue, today, upcoming), per-item status, and controls to edit or remove recurring expenses.
+ *
+ * @param recurringExpenses - Array of recurring expense records to display
+ * @param members - Group member summaries used to resolve payer names
+ * @param currency - Currency code used to format amounts
+ * @param onChanged - Optional callback invoked after a successful update or removal
+ * @returns A React element rendering the recurring expenses UI
+ */
 export function RecurringExpenseList({ recurringExpenses, members, currency, onChanged }: RecurringExpenseListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -195,6 +206,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 placeholder="Amount"
               />
               <select
+                title="Category"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={category}
                 onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
@@ -207,6 +219,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 ))}
               </select>
               <select
+                title="Frequency"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value as RecurringExpenseFrequency)}
@@ -275,7 +288,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="font-medium text-[var(--fs-text-muted)]">Amount</span>
               <span className="text-lg font-extrabold text-[var(--fs-primary)]">
-                {(Number(item.totalAmountCents) / 100).toLocaleString(undefined, { style: 'currency', currency })}
+                {formatCurrencyFromCents(item.totalAmountCents, currency)}
               </span>
             </div>
           </>

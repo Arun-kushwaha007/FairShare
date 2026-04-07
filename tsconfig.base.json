@@ -15,10 +15,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@fairshare/shared-types": ["packages/shared-types/src/index.ts"]
-    }
+    "sourceMap": true
   }
 }

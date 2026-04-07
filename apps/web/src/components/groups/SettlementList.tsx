@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ActivityDto, SimplifySuggestionDto } from '@fairshare/shared-types';
+import { ActivityDto, CurrencyCode, SimplifySuggestionDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { BellRing, CheckCircle2, Clock3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSettlementAction, remindSettlementAction } from '../../lib/actions';
@@ -17,6 +17,16 @@ type SettlementListProps = {
 
 const suggestionKey = (fromUserId: string, toUserId: string, amountCents: string) => `${fromUserId}-${toUserId}-${amountCents}`;
 
+/**
+ * Formats an ISO 8601 timestamp into a short relative time string (e.g., "5m ago").
+ *
+ * @param iso - The ISO 8601 timestamp to compare against the current time.
+ * @returns A concise relative time string:
+ * - `Xs ago` for seconds (minimum `1s`)
+ * - `Xm ago` for minutes (< 60 minutes)
+ * - `Xh ago` for hours (< 24 hours)
+ * - `Xd ago` for days (24 hours or more)
+ */
 function timeAgo(iso: string): string {
   const now = Date.now();
   const diff = Math.max(1, Math.floor((now - new Date(iso).getTime()) / 1000));
@@ -29,6 +39,16 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render settlement suggestions with filters, a recent reminders panel, and actions to confirm settlements or send reminders.
+ *
+ * @param groupId - Group identifier used when creating settlements and sending reminders
+ * @param currency - Currency code used to format suggestion amounts
+ * @param suggestions - Array of settlement suggestion DTOs to display and filter
+ * @param memberLookup - Map of user IDs to display info (name/email) used for payer/receiver labels and dropdown options
+ * @param initialReminderActivity - Initial list of activity events used to seed the recent reminder history
+ * @returns A React element containing the filters, recent reminders, and the list of settlement suggestion items with "Remind" and "Confirm" actions
+ */
 export function SettlementList({ groupId, currency, suggestions, memberLookup, initialReminderActivity }: SettlementListProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [reminderId, setReminderId] = useState<string | null>(null);
@@ -39,8 +59,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
   const { toast } = useToast();
   const router = useRouter();
 
-  const formatAmount = (cents: string) =>
-    (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency });
+  const formatAmount = (cents: string) => formatCurrencyFromCents(cents, currency as CurrencyCode);
 
   const labelForUser = (userId: string) => memberLookup[userId]?.name ?? userId;
 
@@ -219,7 +238,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
               return (
                 <div key={event.id} className="rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-background)]/70 px-4 py-3">
                   <p className="text-sm font-semibold text-[var(--fs-text-primary)]">
-                    {labelForUser(event.actorUserId)} reminded {labelForUser(payerId)} to pay {labelForUser(receiverId)}
+                    {(event.actorName ?? labelForUser(event.actorUserId))} reminded {labelForUser(payerId)} to pay {labelForUser(receiverId)}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-medium text-[var(--fs-text-muted)]">
                     <span>{formatAmount(amountCents)}</span>
@@ -264,7 +283,7 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
                 <p className="text-[11px] font-medium text-[var(--fs-text-muted)]">{formatAmount(item.amountCents)}</p>
                 {latestReminder ? (
                   <p className="mt-1 text-[11px] font-medium text-[var(--fs-text-muted)]">
-                    Last reminded {timeAgo(latestReminder.createdAt)} by {labelForUser(latestReminder.actorUserId)}
+                    Last reminded {timeAgo(latestReminder.createdAt)} by {latestReminder.actorName ?? labelForUser(latestReminder.actorUserId)}
                   </p>
                 ) : null}
               </div>
@@ -298,4 +317,3 @@ export function SettlementList({ groupId, currency, suggestions, memberLookup, i
     </div>
   );
 }
-

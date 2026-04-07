@@ -3,7 +3,7 @@ import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import type { ActivityDto, ActivityType } from '@fairshare/shared-types';
+import { formatCurrencyFromCents, type ActivityDto, type ActivityType } from '@fairshare/shared-types';
 import { groupService } from '../services/group.service';
 import { useToastStore } from '../store/toastStore';
 import { useAppTheme } from '../theme/useAppTheme';
@@ -34,7 +34,7 @@ const colorByType: Record<ActivityType, string> = {
 };
 
 const actionText = (activity: ActivityDto): string => {
-  const actor = activity.actorUserId;
+  const actor = activity.actorName ?? activity.actorUserId;
   switch (activity.type) {
     case 'expense_created':
       return `${actor} created an expense`;
@@ -45,9 +45,9 @@ const actionText = (activity: ActivityDto): string => {
     case 'settlement_created':
       return `${actor} recorded a settlement`;
     case 'settlement_reminder': {
-      const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : 'a member';
-      const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : 'another member';
-      return `${actor} reminded ${payerId} to pay ${receiverId}`;
+      const payerName = typeof activity.metadata?.payerName === 'string' ? activity.metadata.payerName : 'a member';
+      const receiverName = typeof activity.metadata?.receiverName === 'string' ? activity.metadata.receiverName : 'another member';
+      return `${actor} reminded ${payerName} to pay ${receiverName}`;
     }
     case 'member_joined':
       return `${actor} joined the group`;
@@ -61,6 +61,11 @@ const actionText = (activity: ActivityDto): string => {
 const extractAmountCents = (activity: ActivityDto): string | null => {
   const raw = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
   return typeof raw === 'string' ? raw : null;
+};
+
+const resolveActivityCurrency = (activity: ActivityDto) => {
+  const currency = activity.metadata?.currency;
+  return currency === 'USD' || currency === 'EUR' || currency === 'INR' ? currency : 'USD';
 };
 
 const relativeTime = (iso: string): string => {
@@ -77,6 +82,15 @@ const relativeTime = (iso: string): string => {
   return `${diffDay}d ago`;
 };
 
+/**
+ * Renders the Activity screen with a paginated, refreshable list of activity events for a group or the current user.
+ *
+ * The screen supports pull-to-refresh, infinite scroll pagination, animated item entry, and displays loading or empty states.
+ * Amounts and currencies are derived from activity metadata when available.
+ *
+ * @param route - Optional navigation route. If `route.params.groupId` is provided the screen shows that group's activity; otherwise it shows the current user's activity.
+ * @returns The rendered Activity screen React element.
+ */
 export function ActivityScreen({ route }: { route?: { params?: { groupId?: string } } }) {
   const groupId = route?.params?.groupId;
   const toast = useToastStore((state) => state.show);
@@ -125,7 +139,7 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
 
   const renderItem = ({ item, index }: { item: ActivityDto; index: number }) => {
     const amountCents = extractAmountCents(item);
-    const amountText = amountCents ? `$${(Number(amountCents) / 100).toFixed(2)}` : null;
+    const amountText = amountCents ? formatCurrencyFromCents(amountCents, resolveActivityCurrency(item)) : null;
     const iconColor = colorByType[item.type] ?? colors.primary;
 
     return (
@@ -148,7 +162,7 @@ export function ActivityScreen({ route }: { route?: { params?: { groupId?: strin
               {actionText(item)}
             </Text>
             <Text style={[styles.time, { color: colors.text_secondary }]}>
-              {relativeTime(item.createdAt)}
+              {item.groupName ? `${item.groupName} • ${relativeTime(item.createdAt)}` : relativeTime(item.createdAt)}
             </Text>
           </View>
           {amountText && (

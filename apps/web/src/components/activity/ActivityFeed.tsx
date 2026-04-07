@@ -2,7 +2,7 @@
 
 import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityDto, GroupDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { ActivitySquare, BadgeCheck, BellRing, Clock3, Mail, Receipt, RefreshCw, UsersRound } from 'lucide-react';
 import { useToast } from '../ui/Toaster';
 
@@ -28,8 +28,16 @@ const accentByType: Record<ActivityDto['type'], string> = {
   member_invited: '#EC4899',
 };
 
-function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): string {
-  const actor = userNameMap[activity.actorUserId] ?? activity.actorUserId.slice(0, 8);
+/**
+ * Generate a human-readable label describing an activity.
+ *
+ * Builds a concise sentence that identifies the actor and the action (e.g., "Alice created an expense").
+ *
+ * @param activity - The activity record; the label prefers `activity.actorName` and falls back to a truncated `actorUserId` when no name is present. For `settlement_reminder` it prefers payer/receiver names from `activity.metadata` and falls back to truncated IDs.
+ * @returns The resulting label string describing the activity
+ */
+function labelFor(activity: ActivityDto): string {
+  const actor = activity.actorName ?? activity.actorUserId.slice(0, 8);
   switch (activity.type) {
     case 'expense_created':
       return `${actor} created an expense`;
@@ -42,8 +50,8 @@ function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): s
     case 'settlement_reminder': {
       const payerId = typeof activity.metadata?.payerId === 'string' ? activity.metadata.payerId : '';
       const receiverId = typeof activity.metadata?.receiverId === 'string' ? activity.metadata.receiverId : '';
-      const payer = userNameMap[payerId] ?? payerId.slice(0, 8);
-      const receiver = userNameMap[receiverId] ?? receiverId.slice(0, 8);
+      const payer = typeof activity.metadata?.payerName === 'string' ? activity.metadata.payerName : (payerId ? payerId.slice(0, 8) : 'someone');
+      const receiver = typeof activity.metadata?.receiverName === 'string' ? activity.metadata.receiverName : (receiverId ? receiverId.slice(0, 8) : 'someone');
       return `${actor} reminded ${payer} to pay ${receiver}`;
     }
     case 'member_joined':
@@ -55,13 +63,26 @@ function labelFor(activity: ActivityDto, userNameMap: Record<string, string>): s
   }
 }
 
+/**
+ * Format an activity's monetary amount using cents and a currency code from its metadata.
+ *
+ * @param activity - Activity whose `metadata` should contain cents as a string (`amountCents` or `totalAmountCents`) and may include a `currency` code
+ * @returns A formatted currency string when cents are present as a string; `null` otherwise. Uses `metadata.currency` when it is `USD`, `EUR`, or `INR`; otherwise formats using `USD`.
+ */
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
-  if (!cents) return null;
-  const currency = typeof activity.metadata?.currency === 'string' ? activity.metadata.currency : 'USD';
-  return (Number(cents) / 100).toLocaleString(undefined, { style: 'currency', currency });
+  if (cents == null) return null;
+  const currency = activity.metadata?.currency;
+  const currencyOrDefault = currency === 'USD' || currency === 'EUR' || currency === 'INR' ? currency : 'USD';
+  return formatCurrencyFromCents(cents as string | number, currencyOrDefault);
 }
 
+/**
+ * Formats the elapsed time from an ISO timestamp into a compact "time ago" string.
+ *
+ * @param iso - An ISO 8601 timestamp string to compare against the current time
+ * @returns A compact elapsed time string: `Xs ago` for seconds, `Ym ago` for minutes, `Zh ago` for hours, or `Wd ago` for days
+ */
 function timeAgo(iso: string): string {
   const now = Date.now();
   const diff = Math.max(1, Math.floor((now - new Date(iso).getTime()) / 1000));
@@ -74,16 +95,26 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render an activity timeline with group filtering, incremental pagination, and status UI.
+ *
+ * Displays a header with the selected group label and a group selector, an activity list (or skeleton/no-activity state),
+ * and a "Load more" control when more pages are available. Selecting a group or loading more will fetch the corresponding
+ * page of activity from the API and update the displayed items.
+ *
+ * @param groups - List of groups available for filtering
+ * @param initialItems - Initial page of activity items to display
+ * @param initialCursor - Initial pagination cursor; `null` indicates no further pages
+ * @returns The ActivityFeed React element
+ */
 export function ActivityFeed({
   groups,
   initialItems,
   initialCursor,
-  userNameMap = {},
 }: {
   groups: GroupDto[];
   initialItems: ActivityDto[];
   initialCursor: number | null;
-  userNameMap?: Record<string, string>;
 }) {
   const { toast } = useToast();
   const [items, setItems] = useState<ActivityDto[]>(initialItems);
@@ -199,7 +230,7 @@ export function ActivityFeed({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[var(--fs-text-primary)] truncate">
-                    {labelFor(item, userNameMap)}
+                    {labelFor(item)}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-[var(--fs-text-muted)]">
                     <span className="flex items-center gap-1">
@@ -208,7 +239,7 @@ export function ActivityFeed({
                     </span>
                     {item.groupId ? (
                       <span className="px-2 py-0.5 rounded-lg border border-[var(--fs-border)] bg-[var(--fs-card)]">
-                        Group {item.groupId.slice(0, 6)}
+                        {item.groupName ?? `Group ${item.groupId.slice(0, 6)}`}
                       </span>
                     ) : null}
                   </div>

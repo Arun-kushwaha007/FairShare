@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ActivityDto, GroupDashboardDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDashboardDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import {
   ArrowUpRight,
   CreditCard,
@@ -17,15 +17,36 @@ import { GlassCard } from '../../components/ui/GlassCard';
 
 type Group = { id: string; name: string; currency: string };
 
+/**
+ * Format an amount in cents into a localized currency string.
+ *
+ * If `cents` or `currency` is missing, returns "$0.00". For currency codes "USD",
+ * "EUR", and "INR" the value is formatted using that currency; for any other code
+ * the value is formatted using "USD" as a fallback.
+ *
+ * @param cents - The amount in the smallest currency unit (e.g., cents) as a string or `null`
+ * @param currency - An ISO currency code (e.g., "USD", "EUR", "INR") or `null`
+ * @returns A formatted currency string (for example, "$1.23")
+ */
 function formatMoney(cents: string | null, currency: string | null): string {
   if (!cents || !currency) {
     return '$0.00';
   }
 
-  const amount = Number(cents) / 100;
-  return amount.toLocaleString(undefined, { style: 'currency', currency });
+  if (currency === 'USD' || currency === 'EUR' || currency === 'INR') {
+    return formatCurrencyFromCents(cents, currency);
+  }
+
+  return formatCurrencyFromCents(cents, 'USD');
 }
 
+/**
+ * Render the dashboard page showing account summaries, attention items, activity, charts, and group listings.
+ *
+ * Fetches dashboard and recent-activity data, derives view state (summary cards, attention queue, recent activity, and groups), and returns the assembled UI layout.
+ *
+ * @returns The dashboard page JSX element that displays summaries, an attention queue (when present), spending chart, quick actions, recent activity, and a list of groups.
+ */
 export default async function DashboardPage() {
   const [dashboard, recentActivityData] = await Promise.all([
     backendFetch<GroupDashboardDto>('/groups/dashboard'),

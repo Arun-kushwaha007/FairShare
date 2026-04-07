@@ -124,6 +124,8 @@ pnpm dev:mobile
 ### Web
 - Next.js dashboard and marketing pages
 - Theme is controlled via `data-theme` and local storage
+- Auth tokens for the web app are stored only in httpOnly cookies managed by `apps/web/app/api/auth/*`, `apps/web/src/lib/backend.ts`, and `apps/web/middleware.ts`
+- `localStorage` is not part of the web auth flow
 - Build: `pnpm --filter web build`
 
 ### Mobile

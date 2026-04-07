@@ -1,10 +1,18 @@
-import { ActivityDto, GroupDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
+import { ActivityDto, GroupDto } from '@fairshare/shared-types';
 import { DashboardLayout } from '../../../src/components/layout';
 import { ActivityFeed } from '../../../src/components/activity/ActivityFeed';
 import { backendFetch } from '../../../src/lib/backend';
 
 type ActivityResponse = { items: ActivityDto[]; nextCursor: number | null };
 
+/**
+ * Render the Activity page, fetching groups and an initial page of activity items before rendering the feed.
+ *
+ * If fetching groups or activity fails, errors are suppressed and the corresponding data defaults to an empty list
+ * (for groups) or an empty activity response with `items: []` and `nextCursor: null` (for activity).
+ *
+ * @returns A React element containing the dashboard-styled Activity page with the fetched groups and initial activity items.
+ */
 export default async function ActivityPage() {
   let groups: GroupDto[] = [];
   let activity: ActivityResponse = { items: [], nextCursor: null };
@@ -21,23 +29,6 @@ export default async function ActivityPage() {
     activity = { items: [], nextCursor: null };
   }
 
-  // Build a userId → name lookup from all group members
-  const userNameMap: Record<string, string> = {};
-  await Promise.all(
-    groups.map(async (group) => {
-      try {
-        const members = await backendFetch<GroupMemberSummaryDto[]>(`/groups/${group.id}/members`);
-        for (const member of members) {
-          if (!userNameMap[member.userId]) {
-            userNameMap[member.userId] = member.name;
-          }
-        }
-      } catch {
-        // skip if members can't be fetched
-      }
-    }),
-  );
-
   return (
     <DashboardLayout>
       <div className="space-y-10">
@@ -49,9 +40,8 @@ export default async function ActivityPage() {
           </p>
         </div>
 
-        <ActivityFeed groups={groups} initialItems={activity.items} initialCursor={activity.nextCursor} userNameMap={userNameMap} />
+        <ActivityFeed groups={groups} initialItems={activity.items} initialCursor={activity.nextCursor} />
       </div>
     </DashboardLayout>
   );
 }
-

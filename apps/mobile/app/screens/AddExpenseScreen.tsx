@@ -9,6 +9,7 @@ import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, FadeInDow
 import {
   EXPENSE_CATEGORIES,
   RECURRING_EXPENSE_FREQUENCIES,
+  formatCurrencyFromCents,
   type ExpenseCategory,
   type GroupDefaultSplitDto,
   type GroupMemberSummaryDto,
@@ -54,6 +55,17 @@ const STEPS = [
   { title: 'Review', subtitle: 'Vibe check before we post?' },
 ];
 
+/**
+ * Multi-step screen for creating an expense within a group.
+ *
+ * Renders a five-step flow to enter expense details, choose a payer, select participants,
+ * configure the split (equal/exact/percentage), optionally enable recurring settings,
+ * review the summary, and create the expense.
+ *
+ * @param route - Screen route with `params.groupId` identifying the target group
+ * @param navigation - Navigation object with `goBack()` for dismissing the screen
+ * @returns The React element for the Add Expense screen
+ */
 export function AddExpenseScreen({
   route,
   navigation,
@@ -542,7 +554,7 @@ export function AddExpenseScreen({
               <View style={styles.reviewItem}>
                 <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
                 <Text style={[typography.h1, { color: colors.primary }]}>
-                  {group?.currency === 'INR' ? 'Rs' : '$'}{(totalAmount / 100).toFixed(2)}
+                  {formatCurrencyFromCents(totalAmount, group?.currency ?? 'USD')}
                 </Text>
               </View>
               <View style={styles.reviewItem}>
@@ -572,7 +584,7 @@ export function AddExpenseScreen({
                       </Text>
                     </View>
                     <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
-                      {group?.currency === 'INR' ? 'Rs' : '$'}{(shareAmount / 100).toFixed(2)}
+                      {formatCurrencyFromCents(shareAmount, group?.currency ?? 'USD')}
                     </Text>
                   </View>
                 );

@@ -58,7 +58,7 @@ export const groupService = {
     (await api.get<GroupSummaryDto>(`/guest/groups/${token}/summary`)).data,
   guestActivity: async (token: string, cursor = 0, limit = 20) =>
     (
-      await api.get<ActivityDto[]>(`/guest/groups/${token}/activity`, {
+      await api.get<{ items: ActivityDto[]; nextCursor: number | null }>(`/guest/groups/${token}/activity`, {
         params: { cursor, limit },
       })
     ).data,

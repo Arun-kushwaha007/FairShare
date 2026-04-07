@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ExpenseDto } from '@fairshare/shared-types';
+import { ExpenseDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
 import { ExpenseDeleteButton } from './ExpenseDeleteButton';
 
@@ -23,6 +23,15 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/**
+ * Render a table row displaying an expense with actions to view/edit, upload/replace a receipt, and delete.
+ *
+ * @param expense - The expense DTO to display.
+ * @param payerName - Optional display name for the payer; when omitted a shortened payer ID is shown.
+ * @param members - Member list forwarded to the edit modal.
+ * @param isGuest - When true, disables action controls and renders the description as plain text.
+ * @returns The table row and its associated modals as a JSX element.
+ */
 export function ExpenseRow({ 
   expense, 
   payerName, 
@@ -38,8 +47,7 @@ export function ExpenseRow({
   const [openEdit, setOpenEdit] = useState(false);
 
   const formattedAmount = useMemo(() => {
-    const amount = Number(expense.totalAmountCents) / 100;
-    return amount.toLocaleString(undefined, { style: 'currency', currency: expense.currency });
+    return formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
   }, [expense.currency, expense.totalAmountCents]);
 
   return (

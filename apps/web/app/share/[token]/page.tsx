@@ -6,6 +6,7 @@ import {
   GroupSummaryDto,
   PaginatedExpensesResponseDto,
   ActivityDto,
+  formatCurrencyFromCents,
 } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -21,6 +22,17 @@ interface SharedGroupPageProps {
   }>;
 }
 
+/**
+ * Renders the shared group page for a guest accessing via a secure share token.
+ *
+ * Fetches group details, member summaries, recent expenses, group summary, and activity for the given token, computes the group's total spend, and returns the server-rendered guest UI that displays group information, members, and expenses.
+ *
+ * @param params - A promise resolving to an object containing the share `token`.
+ * @returns The server-rendered React element for the shared group view.
+ *
+ * @remarks
+ * If fetching or processing fails, the page responds with a 404 via Next.js `notFound()`.
+ */
 export default async function SharedGroupPage({ params }: SharedGroupPageProps) {
   const { token } = await params;
 
@@ -37,7 +49,7 @@ export default async function SharedGroupPage({ params }: SharedGroupPageProps) 
     // Note: If members list is protected, we might need a guest version of that too.
     // Let's assume for now we can fetch it or we'll add a guest endpoint.
 
-    const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
+    const totalExpensesCents = expenses.items.reduce((sum, expense) => sum + BigInt(expense.totalAmountCents), 0n);
 
     return (
       <GuestLayout>
@@ -66,7 +78,7 @@ export default async function SharedGroupPage({ params }: SharedGroupPageProps) 
                 <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-3 py-2 sm:px-4 sm:py-3 text-right">
                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Total spend</p>
                    <p className="text-lg font-extrabold text-[var(--fs-text-primary)]">
-                     {totalExpenses.toLocaleString(undefined, { style: 'currency', currency: group.currency })}
+                     {formatCurrencyFromCents(totalExpensesCents, group.currency)}
                    </p>
                 </div>
               </div>
@@ -86,6 +98,7 @@ export default async function SharedGroupPage({ params }: SharedGroupPageProps) 
                 expenses={expenses.items as ExpenseDto[]} 
                 members={members} 
                 isGuest={true}
+                totalRecordsLabel={expenses.nextCursor !== null ? `${expenses.items.length}+` : String(expenses.items.length)}
               />
             </div>
 

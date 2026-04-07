@@ -7,6 +7,7 @@ import {
   GroupSummaryDto,
   PaginatedExpensesResponseDto,
   RecurringExpenseDto,
+  formatCurrencyFromCents,
 } from '@fairshare/shared-types';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
@@ -21,6 +22,12 @@ interface GroupDetailPageProps {
   }>;
 }
 
+/**
+ * Renders the group detail dashboard for a specified group.
+ *
+ * @param params - An object containing `groupId` that identifies which group's data to load and display.
+ * @returns The page JSX for the group's detail dashboard, including the header (name, creation date, currency, member count, total spend), current user's balance pill, summary panel, recurring expenses, expense table, member list, and group actions.
+ */
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { groupId } = await params;
 
@@ -35,8 +42,9 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
       backendFetch<RecurringExpenseDto[]>(`/groups/${groupId}/recurring-expenses`),
     ]);
 
-    const totalExpenses = expenses.items.reduce((sum, expense) => sum + Number(expense.totalAmountCents), 0) / 100;
-    const netBalance = Number(summary.perUserOwedCents[currentUser.id] ?? '0') / 100;
+    const totalExpensesCents = expenses.items.reduce((sum, expense) => sum + BigInt(expense.totalAmountCents), 0n);
+    const netBalanceCents = BigInt(summary.perUserOwedCents[currentUser.id] ?? '0');
+    const netBalance = Number(netBalanceCents) / 100;
     const balanceLabel = netBalance > 0 ? 'You are owed' : netBalance < 0 ? 'You owe' : 'All settled';
     const balanceTone =
       netBalance > 0
@@ -58,7 +66,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 </p>
                 <div className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] ${balanceTone}`}>
                   <span>{balanceLabel}</span>
-                  <span>{Math.abs(netBalance).toLocaleString(undefined, { style: 'currency', currency: group.currency })}</span>
+                  <span>{formatCurrencyFromCents(netBalanceCents < 0n ? -netBalanceCents : netBalanceCents, group.currency)}</span>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3 w-full sm:w-auto">
@@ -73,7 +81,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-3 py-2 sm:px-4 sm:py-3 text-right">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">Total spend</p>
                   <p className="text-lg font-extrabold text-[var(--fs-text-primary)]">
-                    {totalExpenses.toLocaleString(undefined, { style: 'currency', currency: group.currency })}
+                    {formatCurrencyFromCents(totalExpensesCents, group.currency)}
                   </p>
                 </div>
               </div>
@@ -90,7 +98,11 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                 members={members}
               />
               <RecurringExpenseList recurringExpenses={recurringExpenses} members={members} currency={group.currency} />
-              <ExpenseTable expenses={expenses.items as ExpenseDto[]} members={members} />
+              <ExpenseTable
+                expenses={expenses.items as ExpenseDto[]}
+                members={members}
+                totalRecordsLabel={expenses.nextCursor !== null ? `${expenses.items.length}+` : String(expenses.items.length)}
+              />
             </div>
 
             <aside className="space-y-10">

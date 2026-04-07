@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
+import { EXPENSE_CATEGORIES, formatCurrencyFromCents, type ExpenseCategory, type ExpenseDto } from '@fairshare/shared-types';
 import dynamic from 'next/dynamic';
 import { Pencil } from 'lucide-react';
 import { ExpenseDeleteButton } from './ExpenseDeleteButton';
@@ -22,6 +22,13 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/**
+ * Render an expense detail card that displays expense information and provides inline editing, deletion, and receipt upload/preview.
+ *
+ * @param expense - Expense DTO used to populate the card (description, category, amounts, dates, payer, receipt info, etc.)
+ * @param receiptUrl - Public URL for a receipt preview image, or `null` when no public preview is available
+ * @returns A JSX element containing the interactive expense detail UI
+ */
 export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto; receiptUrl: string | null }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -31,10 +38,7 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
   const router = useRouter();
   const { toast } = useToast();
 
-  const amount = (Number(expense.totalAmountCents) / 100).toLocaleString(undefined, {
-    style: 'currency',
-    currency: expense.currency,
-  });
+  const amount = formatCurrencyFromCents(expense.totalAmountCents, expense.currency);
 
   const saveEdit = async () => {
     if (!description.trim() || description.trim().length < 2) {

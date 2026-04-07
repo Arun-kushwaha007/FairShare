@@ -1,10 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { ActivityDto } from '@fairshare/shared-types';
+import { ActivityDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { Clock, Receipt, Users, Plus, Trash2, UserPlus, Milestone, ArrowUpRight, BellRing, ActivitySquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+/**
+ * Selects the icon component and Tailwind color classes for a given activity type.
+ *
+ * @param type - Activity event type used to determine the icon and color scheme
+ * @returns An object containing `Icon` (the React icon component) and `color` (a Tailwind CSS class string)
+ */
 function getIconForType(type: ActivityDto['type']) {
   switch (type) {
     case 'expense_created': return { Icon: Plus, color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
@@ -17,14 +23,32 @@ function getIconForType(type: ActivityDto['type']) {
   }
 }
 
+/**
+ * Formats the monetary amount found in an activity's metadata.
+ *
+ * Reads `amountCents` or `totalAmountCents` from `activity.metadata` and formats it using the
+ * metadata `currency` when it is `USD`, `EUR`, or `INR`; otherwise formats using `USD`.
+ *
+ * @param activity - The activity object whose metadata may contain the amount and currency
+ * @returns The formatted currency string when a valid amount is present, or `null` when not
+ */
 function formatAmount(activity: ActivityDto): string | null {
   const raw = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
   if (typeof raw !== 'string') {
     return null;
   }
-  return `$${(Number(raw) / 100).toFixed(2)}`;
+  const currency = activity.metadata?.currency;
+  return currency === 'USD' || currency === 'EUR' || currency === 'INR'
+    ? formatCurrencyFromCents(raw, currency)
+    : formatCurrencyFromCents(raw, 'USD');
 }
 
+/**
+ * Selects a concise primary label for an activity based on its type.
+ *
+ * @param activity - The activity object whose `type` determines the label
+ * @returns A short human-readable label corresponding to `activity.type` (for example: "Expense added", "Settlement completed", "Member joined", or "Activity update" when the type is unrecognized)
+ */
 function labelForActivity(activity: ActivityDto): string {
   switch (activity.type) {
     case 'expense_created':
@@ -46,6 +70,12 @@ function labelForActivity(activity: ActivityDto): string {
   }
 }
 
+/**
+ * Produce a concise subtitle describing an activity, including a formatted amount when available.
+ *
+ * @param activity - The activity record to generate the subtitle for
+ * @returns A short subtitle string for the given activity. If the activity contains a monetary amount, the formatted amount is included in the returned text; otherwise a fixed descriptive phrase is returned.
+ */
 function subtitleForActivity(activity: ActivityDto): string {
   const amount = formatAmount(activity);
   switch (activity.type) {
@@ -67,6 +97,15 @@ function subtitleForActivity(activity: ActivityDto): string {
   }
 }
 
+/**
+ * Render a live activity list showing recent ActivityDto events with icons, timestamps, and optional formatted amounts.
+ *
+ * Displays each activity with a type-specific icon and color, a primary label, a time, a contextual subtitle, and (on wider screens) a formatted amount and badge. When `items` is empty or not an array, shows a dashed empty state panel labeled `NO_SIGNAL_DETECTED`.
+ *
+ * @param items - Optional array of activity items to display; non-array values are treated as an empty list.
+ * @param groupId - Group identifier appended to the timeline link as the `groupId` query parameter.
+ * @returns The rendered activity list UI element.
+ */
 export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto[]; groupId?: string }) {
   const safeItems = Array.isArray(items) ? items : [];
 
@@ -139,4 +178,3 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
     </div>
   );
 }
-
