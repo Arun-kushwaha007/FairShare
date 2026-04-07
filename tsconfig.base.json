@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -16,9 +16,6 @@
     "resolveJsonModule": true,
     "declaration": true,
     "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "@fairshare/shared-types": ["packages/shared-types/src/index.ts"]
-    }
+    "ignoreDeprecations": "6.0"
   }
 }
