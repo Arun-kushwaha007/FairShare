@@ -17,6 +17,16 @@ type SettlementListProps = {
 
 const suggestionKey = (fromUserId: string, toUserId: string, amountCents: string) => `${fromUserId}-${toUserId}-${amountCents}`;
 
+/**
+ * Formats an ISO 8601 timestamp into a short relative time string (e.g., "5m ago").
+ *
+ * @param iso - The ISO 8601 timestamp to compare against the current time.
+ * @returns A concise relative time string:
+ * - `Xs ago` for seconds (minimum `1s`)
+ * - `Xm ago` for minutes (< 60 minutes)
+ * - `Xh ago` for hours (< 24 hours)
+ * - `Xd ago` for days (24 hours or more)
+ */
 function timeAgo(iso: string): string {
   const now = Date.now();
   const diff = Math.max(1, Math.floor((now - new Date(iso).getTime()) / 1000));
@@ -30,16 +40,14 @@ function timeAgo(iso: string): string {
 }
 
 /**
- * Render a list of settlement suggestions with controls to filter by payer/receiver/query, confirm a settlement, and send reminders.
+ * Render settlement suggestions with filters, a recent reminders panel, and actions to confirm settlements or send reminders.
  *
- * Displays a header with suggestion counts, filter inputs (search, payer, receiver, reset), a "Recent reminders" card when available, and the filtered suggestion items each with "Remind" and "Confirm" actions.
- *
- * @param groupId - Identifier for the group; used when creating settlements or sending reminders
+ * @param groupId - Group identifier used when creating settlements and sending reminders
  * @param currency - Currency code used to format suggestion amounts
- * @param suggestions - Array of settlement suggestion DTOs to display
- * @param memberLookup - Map of user IDs to display info (name/email) used to label payers and receivers
- * @param initialReminderActivity - Initial list of activity events used to seed reminder history
- * @returns A React element containing the settlement suggestions list, filters, recent reminders, and action buttons for reminding and confirming settlements
+ * @param suggestions - Array of settlement suggestion DTOs to display and filter
+ * @param memberLookup - Map of user IDs to display info (name/email) used for payer/receiver labels and dropdown options
+ * @param initialReminderActivity - Initial list of activity events used to seed the recent reminder history
+ * @returns A React element containing the filters, recent reminders, and the list of settlement suggestion items with "Remind" and "Confirm" actions
  */
 export function SettlementList({ groupId, currency, suggestions, memberLookup, initialReminderActivity }: SettlementListProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);

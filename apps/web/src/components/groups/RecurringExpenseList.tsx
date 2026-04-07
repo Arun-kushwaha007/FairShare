@@ -81,6 +81,15 @@ function formatGeneratedLabel(lastGeneratedAt?: string | null): string {
   return `Last generated ${new Date(lastGeneratedAt).toLocaleDateString()}`;
 }
 
+/**
+ * Render the recurring bills list with sections (overdue, today, upcoming), per-item status, and controls to edit or remove recurring expenses.
+ *
+ * @param recurringExpenses - Array of recurring expense records to display
+ * @param members - Group member summaries used to resolve payer names
+ * @param currency - Currency code used to format amounts
+ * @param onChanged - Optional callback invoked after a successful update or removal
+ * @returns A React element rendering the recurring expenses UI
+ */
 export function RecurringExpenseList({ recurringExpenses, members, currency, onChanged }: RecurringExpenseListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);

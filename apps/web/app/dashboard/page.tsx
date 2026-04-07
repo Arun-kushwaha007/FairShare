@@ -18,14 +18,14 @@ import { GlassCard } from '../../components/ui/GlassCard';
 type Group = { id: string; name: string; currency: string };
 
 /**
- * Format an amount given in cents into a localized currency string.
+ * Format an amount in cents into a localized currency string.
  *
- * If `cents` or `currency` is missing, returns "$0.00". For supported currency codes
- * "USD", "EUR", and "INR" the value is formatted using that currency; for any other
- * currency code the value is formatted using "USD" as a fallback.
+ * If `cents` or `currency` is missing, returns "$0.00". For currency codes "USD",
+ * "EUR", and "INR" the value is formatted using that currency; for any other code
+ * the value is formatted using "USD" as a fallback.
  *
- * @param cents - The amount in the smallest currency unit (cents) as a string, or `null`
- * @param currency - An ISO currency code (e.g., "USD", "EUR", "INR"), or `null`
+ * @param cents - The amount in the smallest currency unit (e.g., cents) as a string or `null`
+ * @param currency - An ISO currency code (e.g., "USD", "EUR", "INR") or `null`
  * @returns A formatted currency string (for example, "$1.23")
  */
 function formatMoney(cents: string | null, currency: string | null): string {

@@ -11,13 +11,11 @@ interface MoneyTextProps {
 }
 
 /**
- * Render a Text element showing a formatted currency amount.
+ * Renders a Text element that displays a currency amount formatted from a cents string and sets the accessibility label to the same formatted string.
  *
- * @param cents - Amount in cents as a string (e.g., `"150"` for $1.50)
- * @param size - One of `'sm' | 'md' | 'lg'`; controls the text font size
- * @param variant - One of `'default' | 'success' | 'danger'`; controls the text color
- * @param currency - Currency code used for formatting (defaults to `'USD'`)
- * @returns A React Native Text element displaying the formatted currency string; the same string is used for the accessibility label
+ * @param cents - Amount in cents as a string (for example, `"150"` represents $1.50)
+ * @param currency - ISO currency code used for formatting (defaults to `'USD'`)
+ * @returns A React element that renders the formatted currency string
  */
 export function MoneyText({ cents, size = 'md', variant = 'default', currency = 'USD' }: MoneyTextProps) {
   const { colors } = useAppTheme();

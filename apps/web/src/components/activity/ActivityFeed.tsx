@@ -64,12 +64,10 @@ function labelFor(activity: ActivityDto): string {
 }
 
 /**
- * Format an activity's monetary amount using cents and currency from its metadata.
+ * Format an activity's monetary amount using cents and a currency code from its metadata.
  *
- * Uses `metadata.amountCents` or `metadata.totalAmountCents` (preferring `amountCents`) and the optional `metadata.currency`.
- *
- * @param activity - Activity object whose `metadata` should contain a string cents value and optional currency
- * @returns A formatted currency string when cents are present as a string; `null` if no string cents value is available. Values with currency `USD`, `EUR`, or `INR` are formatted with that currency; other currencies are formatted as `USD`.
+ * @param activity - Activity whose `metadata` should contain cents as a string (`amountCents` or `totalAmountCents`) and may include a `currency` code
+ * @returns A formatted currency string when cents are present as a string; `null` otherwise. Uses `metadata.currency` when it is `USD`, `EUR`, or `INR`; otherwise formats using `USD`.
  */
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;

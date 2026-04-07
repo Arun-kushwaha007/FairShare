@@ -1,11 +1,11 @@
 import { BalanceDto, CurrencyCode, GroupMemberSummaryDto, GroupSummaryDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 
 /**
- * Compute the total balance in cents for a given user.
+ * Calculate the total amount in cents for the specified user.
  *
- * @param balances - Array of ledger balance entries to consider; each entry's `amountCents` is included when its `userId` matches `userId`
- * @param userId - The user identifier whose balances will be summed
- * @returns The sum of `amountCents` for all balances with the given `userId`
+ * @param balances - Ledger balance entries to sum
+ * @param userId - User identifier to match against each entry's `userId`
+ * @returns The sum of `amountCents` for all entries whose `userId` matches `userId`
  */
 function getNetBalanceCents(balances: BalanceDto[], userId: string) {
   return balances

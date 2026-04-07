@@ -25,8 +25,8 @@ interface GroupDetailPageProps {
 /**
  * Renders the group detail dashboard for a specified group.
  *
- * @param params - A Promise that resolves to an object containing `groupId`, used to fetch all data for the group.
- * @returns The page JSX showing the group header (name, creation date, currency, member count, total spend), current user's balance status, summary panel, recurring expenses, expense table, member list, and group actions.
+ * @param params - An object containing `groupId` that identifies which group's data to load and display.
+ * @returns The page JSX for the group's detail dashboard, including the header (name, creation date, currency, member count, total spend), current user's balance pill, summary panel, recurring expenses, expense table, member list, and group actions.
  */
 export default async function GroupDetailPage({ params }: GroupDetailPageProps) {
   const { groupId } = await params;

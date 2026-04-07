@@ -30,6 +30,12 @@ function getReceiptUrl(fileKey?: string | null): string | null {
   return `${base.replace(/\/$/, '')}/${fileKey}`;
 }
 
+/**
+ * Infers a file extension for an image asset from its filename or MIME type.
+ *
+ * @param asset - The ImagePicker asset to inspect (may include `fileName` and `mimeType`)
+ * @returns The inferred file extension in lowercase (e.g., `png`, `heic`, `jpg`), or `undefined` if no information is available
+ */
 function inferExtension(asset: ImagePicker.ImagePickerAsset): string | undefined {
   const fileName = asset.fileName ?? '';
   const fileExtension = fileName.includes('.') ? fileName.split('.').pop() : undefined;

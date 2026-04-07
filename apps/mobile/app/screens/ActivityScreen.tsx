@@ -83,13 +83,13 @@ const relativeTime = (iso: string): string => {
 };
 
 /**
- * Render the Activity screen showing a scrollable, paginated list of activity events for a specific group or the current user.
+ * Renders the Activity screen with a paginated, refreshable list of activity events for a group or the current user.
  *
- * The screen loads the first page on mount, supports pull-to-refresh and infinite scroll pagination, animates item entry,
- * and displays loading or empty states as appropriate. Amounts and currencies are resolved from activity metadata when available.
+ * The screen supports pull-to-refresh, infinite scroll pagination, animated item entry, and displays loading or empty states.
+ * Amounts and currencies are derived from activity metadata when available.
  *
- * @param route - Optional navigation route; if `route.params.groupId` is provided the screen shows that group's activity, otherwise it shows the current user's activity.
- * @returns The rendered Activity screen element.
+ * @param route - Optional navigation route. If `route.params.groupId` is provided the screen shows that group's activity; otherwise it shows the current user's activity.
+ * @returns The rendered Activity screen React element.
  */
 export function ActivityScreen({ route }: { route?: { params?: { groupId?: string } } }) {
   const groupId = route?.params?.groupId;

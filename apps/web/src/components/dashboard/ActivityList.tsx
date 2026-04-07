@@ -5,6 +5,12 @@ import { ActivityDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 import { Clock, Receipt, Users, Plus, Trash2, UserPlus, Milestone, ArrowUpRight, BellRing, ActivitySquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+/**
+ * Selects the icon component and Tailwind color classes for a given activity type.
+ *
+ * @param type - Activity event type used to determine the icon and color scheme
+ * @returns An object containing `Icon` (the React icon component) and `color` (a Tailwind CSS class string)
+ */
 function getIconForType(type: ActivityDto['type']) {
   switch (type) {
     case 'expense_created': return { Icon: Plus, color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
@@ -64,6 +70,12 @@ function labelForActivity(activity: ActivityDto): string {
   }
 }
 
+/**
+ * Produce a concise subtitle describing an activity, including a formatted amount when available.
+ *
+ * @param activity - The activity record to generate the subtitle for
+ * @returns A short subtitle string for the given activity. If the activity contains a monetary amount, the formatted amount is included in the returned text; otherwise a fixed descriptive phrase is returned.
+ */
 function subtitleForActivity(activity: ActivityDto): string {
   const amount = formatAmount(activity);
   switch (activity.type) {
