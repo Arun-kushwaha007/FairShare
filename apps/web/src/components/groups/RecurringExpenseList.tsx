@@ -197,6 +197,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 placeholder="Amount"
               />
               <select
+                title="Category"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={category}
                 onChange={(event) => setCategory(event.target.value as ExpenseCategory | '')}
@@ -209,6 +210,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 ))}
               </select>
               <select
+                title="Frequency"
                 className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-card)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value as RecurringExpenseFrequency)}
