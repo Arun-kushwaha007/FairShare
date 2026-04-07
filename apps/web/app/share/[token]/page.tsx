@@ -22,6 +22,17 @@ interface SharedGroupPageProps {
   }>;
 }
 
+/**
+ * Renders the shared group page for a guest accessing via a secure share token.
+ *
+ * Fetches group details, member summaries, recent expenses, group summary, and activity for the given token, computes the group's total spend, and returns the server-rendered guest UI that displays group information, members, and expenses.
+ *
+ * @param params - A promise resolving to an object containing the share `token`.
+ * @returns The server-rendered React element for the shared group view.
+ *
+ * @remarks
+ * If fetching or processing fails, the page responds with a 404 via Next.js `notFound()`.
+ */
 export default async function SharedGroupPage({ params }: SharedGroupPageProps) {
   const { token } = await params;
 

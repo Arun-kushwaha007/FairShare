@@ -80,6 +80,15 @@ const getBalanceStatus = (value: number) => {
   return 'All settled';
 };
 
+/**
+ * Screen component that displays a group's details, balances, expenses, recurring bills, members, and related actions.
+ *
+ * Loads group data and expenses, provides filtering and grouping of expenses, editing/removing recurring bills, exporting CSV, and navigation to related screens.
+ *
+ * @param route - Route object whose `params.groupId` selects the group to show
+ * @param navigation - Navigation object used to navigate to other screens (e.g., AddExpense, ExpenseDetail, GroupMembers)
+ * @returns The rendered Group detail screen element
+ */
 export function GroupDetailScreen({
   route,
   navigation,

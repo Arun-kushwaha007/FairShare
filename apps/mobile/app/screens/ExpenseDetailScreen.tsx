@@ -43,6 +43,15 @@ function inferExtension(asset: ImagePicker.ImagePickerAsset): string | undefined
   return 'jpg';
 }
 
+/**
+ * Render the expense detail screen allowing viewing, editing, and receipt upload for a single expense.
+ *
+ * Fetches and displays an expense by `route.params.expenseId`, provides inline editing of description and category,
+ * and supports attaching or replacing a receipt image with size and permission checks.
+ *
+ * @param route - Navigation route object whose `params.expenseId` is the ID of the expense to display
+ * @returns A React element that renders the expense detail screen
+ */
 export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: string } } }) {
   const [loading, setLoading] = React.useState(true);
   const [expense, setExpense] = React.useState<ExpenseDto | null>(null);

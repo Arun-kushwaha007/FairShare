@@ -1,11 +1,32 @@
 import { BalanceDto, CurrencyCode, GroupMemberSummaryDto, GroupSummaryDto, formatCurrencyFromCents } from '@fairshare/shared-types';
 
+/**
+ * Compute the total balance in cents for a given user.
+ *
+ * @param balances - Array of ledger balance entries to consider; each entry's `amountCents` is included when its `userId` matches `userId`
+ * @param userId - The user identifier whose balances will be summed
+ * @returns The sum of `amountCents` for all balances with the given `userId`
+ */
 function getNetBalanceCents(balances: BalanceDto[], userId: string) {
   return balances
     .filter((balance) => balance.userId === userId)
     .reduce((sum, balance) => sum + Number(balance.amountCents), 0);
 }
 
+/**
+ * Renders a summary panel showing group financial metrics and the viewer's balance.
+ *
+ * Displays four summary cards: the viewer's balance (with contextual label and color),
+ * total settled volume, largest single expense, and the top spender's name.
+ *
+ * @param currency - Currency code used to format displayed amounts
+ * @param summary - Group summary values (e.g., `totalSettledCents`, `largestExpenseCents`, `topSpenderUserId`)
+ * @param balances - Ledger balances used to compute the viewer's net balance
+ * @param currentUserId - ID of the current viewer; when absent, the component treats the viewer as a guest
+ * @param members - Group member summaries used to resolve the top spender's name
+ * @param isGuest - When true, the viewer is treated as a guest and their balance is shown as zero
+ * @returns A React element containing the styled group summary panel with the four metric cards
+ */
 export function GroupSummaryPanel({
   currency,
   summary,

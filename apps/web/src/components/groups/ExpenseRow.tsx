@@ -23,6 +23,15 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/**
+ * Render a table row displaying an expense with actions to view/edit, upload/replace a receipt, and delete.
+ *
+ * @param expense - The expense DTO to display.
+ * @param payerName - Optional display name for the payer; when omitted a shortened payer ID is shown.
+ * @param members - Member list forwarded to the edit modal.
+ * @param isGuest - When true, disables action controls and renders the description as plain text.
+ * @returns The table row and its associated modals as a JSX element.
+ */
 export function ExpenseRow({ 
   expense, 
   payerName, 

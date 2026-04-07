@@ -5,6 +5,14 @@ import { backendFetch } from '../../../src/lib/backend';
 
 type ActivityResponse = { items: ActivityDto[]; nextCursor: number | null };
 
+/**
+ * Render the Activity page, fetching groups and an initial page of activity items before rendering the feed.
+ *
+ * If fetching groups or activity fails, errors are suppressed and the corresponding data defaults to an empty list
+ * (for groups) or an empty activity response with `items: []` and `nextCursor: null` (for activity).
+ *
+ * @returns A React element containing the dashboard-styled Activity page with the fetched groups and initial activity items.
+ */
 export default async function ActivityPage() {
   let groups: GroupDto[] = [];
   let activity: ActivityResponse = { items: [], nextCursor: null };

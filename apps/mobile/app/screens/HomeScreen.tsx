@@ -100,6 +100,14 @@ const subtitleForActivity = (activity: ActivityDto): string => {
   }
 };
 
+/**
+ * Renders the app's dashboard home screen with summary, quick actions, attention items, and recent activity.
+ *
+ * Loads user summary, recent activities, and per-group attention items on mount; displays a balance card, quick action tiles, a "Needs Attention" list (when present), and a recent activity feed with navigation handlers for related screens.
+ *
+ * @param navigation - React Navigation prop used to navigate to other screens (e.g., 'AddExpense', 'Groups', 'SettleUp', 'GroupDetail', 'Activity', 'Profile')
+ * @returns The Home screen React element
+ */
 export function HomeScreen({ navigation }: { navigation: any }) {
   const user = useAuthStore((state) => state.user);
   const groups = useGroupStore((state) => state.groups);

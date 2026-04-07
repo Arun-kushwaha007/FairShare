@@ -17,6 +17,15 @@ function getIconForType(type: ActivityDto['type']) {
   }
 }
 
+/**
+ * Formats the monetary amount found in an activity's metadata.
+ *
+ * Reads `amountCents` or `totalAmountCents` from `activity.metadata` and formats it using the
+ * metadata `currency` when it is `USD`, `EUR`, or `INR`; otherwise formats using `USD`.
+ *
+ * @param activity - The activity object whose metadata may contain the amount and currency
+ * @returns The formatted currency string when a valid amount is present, or `null` when not
+ */
 function formatAmount(activity: ActivityDto): string | null {
   const raw = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
   if (typeof raw !== 'string') {
@@ -28,6 +37,12 @@ function formatAmount(activity: ActivityDto): string | null {
     : formatCurrencyFromCents(raw, 'USD');
 }
 
+/**
+ * Selects a concise primary label for an activity based on its type.
+ *
+ * @param activity - The activity object whose `type` determines the label
+ * @returns A short human-readable label corresponding to `activity.type` (for example: "Expense added", "Settlement completed", "Member joined", or "Activity update" when the type is unrecognized)
+ */
 function labelForActivity(activity: ActivityDto): string {
   switch (activity.type) {
     case 'expense_created':
@@ -70,6 +85,15 @@ function subtitleForActivity(activity: ActivityDto): string {
   }
 }
 
+/**
+ * Render a live activity list showing recent ActivityDto events with icons, timestamps, and optional formatted amounts.
+ *
+ * Displays each activity with a type-specific icon and color, a primary label, a time, a contextual subtitle, and (on wider screens) a formatted amount and badge. When `items` is empty or not an array, shows a dashed empty state panel labeled `NO_SIGNAL_DETECTED`.
+ *
+ * @param items - Optional array of activity items to display; non-array values are treated as an empty list.
+ * @param groupId - Group identifier appended to the timeline link as the `groupId` query parameter.
+ * @returns The rendered activity list UI element.
+ */
 export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto[]; groupId?: string }) {
   const safeItems = Array.isArray(items) ? items : [];
 

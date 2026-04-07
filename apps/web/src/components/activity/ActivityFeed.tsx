@@ -28,6 +28,14 @@ const accentByType: Record<ActivityDto['type'], string> = {
   member_invited: '#EC4899',
 };
 
+/**
+ * Generate a human-readable label describing an activity.
+ *
+ * Builds a concise sentence that identifies the actor and the action (e.g., "Alice created an expense").
+ *
+ * @param activity - The activity record; the label prefers `activity.actorName` and falls back to a truncated `actorUserId` when no name is present. For `settlement_reminder` it prefers payer/receiver names from `activity.metadata` and falls back to truncated IDs.
+ * @returns The resulting label string describing the activity
+ */
 function labelFor(activity: ActivityDto): string {
   const actor = activity.actorName ?? activity.actorUserId.slice(0, 8);
   switch (activity.type) {
@@ -55,6 +63,14 @@ function labelFor(activity: ActivityDto): string {
   }
 }
 
+/**
+ * Format an activity's monetary amount using cents and currency from its metadata.
+ *
+ * Uses `metadata.amountCents` or `metadata.totalAmountCents` (preferring `amountCents`) and the optional `metadata.currency`.
+ *
+ * @param activity - Activity object whose `metadata` should contain a string cents value and optional currency
+ * @returns A formatted currency string when cents are present as a string; `null` if no string cents value is available. Values with currency `USD`, `EUR`, or `INR` are formatted with that currency; other currencies are formatted as `USD`.
+ */
 function formatAmount(activity: ActivityDto): string | null {
   const cents = activity.metadata?.amountCents ?? activity.metadata?.totalAmountCents;
   if (typeof cents !== 'string') return null;
@@ -64,6 +80,12 @@ function formatAmount(activity: ActivityDto): string | null {
     : formatCurrencyFromCents(cents, 'USD');
 }
 
+/**
+ * Formats the elapsed time from an ISO timestamp into a compact "time ago" string.
+ *
+ * @param iso - An ISO 8601 timestamp string to compare against the current time
+ * @returns A compact elapsed time string: `Xs ago` for seconds, `Ym ago` for minutes, `Zh ago` for hours, or `Wd ago` for days
+ */
 function timeAgo(iso: string): string {
   const now = Date.now();
   const diff = Math.max(1, Math.floor((now - new Date(iso).getTime()) / 1000));
@@ -76,6 +98,18 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render an activity timeline with group filtering, incremental pagination, and status UI.
+ *
+ * Displays a header with the selected group label and a group selector, an activity list (or skeleton/no-activity state),
+ * and a "Load more" control when more pages are available. Selecting a group or loading more will fetch the corresponding
+ * page of activity from the API and update the displayed items.
+ *
+ * @param groups - List of groups available for filtering
+ * @param initialItems - Initial page of activity items to display
+ * @param initialCursor - Initial pagination cursor; `null` indicates no further pages
+ * @returns The ActivityFeed React element
+ */
 export function ActivityFeed({
   groups,
   initialItems,

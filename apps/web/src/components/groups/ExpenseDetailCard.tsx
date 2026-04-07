@@ -22,6 +22,13 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/**
+ * Render an expense detail card that displays expense information and provides inline editing, deletion, and receipt upload/preview.
+ *
+ * @param expense - Expense DTO used to populate the card (description, category, amounts, dates, payer, receipt info, etc.)
+ * @param receiptUrl - Public URL for a receipt preview image, or `null` when no public preview is available
+ * @returns A JSX element containing the interactive expense detail UI
+ */
 export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto; receiptUrl: string | null }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);

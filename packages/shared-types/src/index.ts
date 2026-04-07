@@ -5,6 +5,13 @@ const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
   INR: '₹',
 };
 
+/**
+ * Normalize a cents amount input into a trimmed string representing whole cents.
+ *
+ * @param amountCents - A `bigint`, `number`, or `string` representing cents. If a `number`, it must be an integer; if a `string`, surrounding whitespace will be trimmed.
+ * @returns The normalized string representation of whole cents.
+ * @throws Error if `amountCents` is a `number` that is not an integer.
+ */
 function normalizeCentsInput(amountCents: bigint | number | string): string {
   if (typeof amountCents === 'bigint') {
     return amountCents.toString();
@@ -20,6 +27,14 @@ function normalizeCentsInput(amountCents: bigint | number | string): string {
   return amountCents.trim();
 }
 
+/**
+ * Format a whole-cents monetary value into a currency string with symbol, thousands separators, and two decimal places.
+ *
+ * @param amountCents - The amount in whole cents (`bigint | number | string`). If a `number` is provided it must be an integer; `string` inputs are trimmed.
+ * @param currency - The target currency code used to pick the symbol (defaults to `'USD'`).
+ * @returns The formatted currency string including the currency symbol, grouped thousands, a decimal point, and exactly two fractional digits; a leading `-` is preserved for negative values.
+ * @throws If `amountCents` is a `number` that is not an integer.
+ */
 export function formatCurrencyFromCents(amountCents: bigint | number | string, currency: CurrencyCode = 'USD'): string {
   const normalized = normalizeCentsInput(amountCents);
   const negative = normalized.startsWith('-');

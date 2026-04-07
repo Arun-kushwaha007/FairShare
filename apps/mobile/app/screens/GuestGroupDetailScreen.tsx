@@ -12,6 +12,17 @@ import { ExpenseCard } from '../components/ExpenseCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { useToastStore } from '../store/toastStore';
 
+/**
+ * Render a view-only detail screen for a shared group link.
+ *
+ * Fetches group details, summary statistics, recent expenses, members, and recent activity for the guest token;
+ * displays loading and error states, a read-only UI with stats, recent expenses, and activity history,
+ * and offers a prompt to register. On fetch failure a toast is shown and navigation goes back.
+ *
+ * @param route - The navigation route; expects `route.params.token` containing the shared guest token.
+ * @param navigation - Navigation object used to go back on error and navigate to the Register screen.
+ * @returns A `JSX.Element` representing the guest group detail screen.
+ */
 export function GuestGroupDetailScreen({ route, navigation }: { route: any; navigation: any }) {
   const { token } = route.params;
   const { colors, typography, shadows } = useAppTheme();

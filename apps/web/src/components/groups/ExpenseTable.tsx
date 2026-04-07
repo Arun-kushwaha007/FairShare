@@ -21,6 +21,17 @@ const categoryLabels: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/**
+ * Render an expense history table with client-side filtering by search text, payer, category, and optional start/end dates.
+ *
+ * Filters the provided expenses according to the current UI controls (query, payer, category, start/end date), displays filter controls, a record summary (using `totalRecordsLabel` when provided), and a row for each filtered expense.
+ *
+ * @param expenses - Full list of expenses to display and filter
+ * @param members - Group members used to populate the payer selector and resolve payer names
+ * @param isGuest - Optional flag forwarded to each expense row to adjust row rendering for guest users
+ * @param totalRecordsLabel - Optional label to use for the total-records portion of the summary display
+ * @returns The rendered expense table and its filter controls as a JSX element
+ */
 export function ExpenseTable({ expenses, members, isGuest = false, totalRecordsLabel }: ExpenseTableProps) {
   const [query, setQuery] = useState('');
   const [payerId, setPayerId] = useState('');

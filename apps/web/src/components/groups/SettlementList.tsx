@@ -29,6 +29,18 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render a list of settlement suggestions with controls to filter by payer/receiver/query, confirm a settlement, and send reminders.
+ *
+ * Displays a header with suggestion counts, filter inputs (search, payer, receiver, reset), a "Recent reminders" card when available, and the filtered suggestion items each with "Remind" and "Confirm" actions.
+ *
+ * @param groupId - Identifier for the group; used when creating settlements or sending reminders
+ * @param currency - Currency code used to format suggestion amounts
+ * @param suggestions - Array of settlement suggestion DTOs to display
+ * @param memberLookup - Map of user IDs to display info (name/email) used to label payers and receivers
+ * @param initialReminderActivity - Initial list of activity events used to seed reminder history
+ * @returns A React element containing the settlement suggestions list, filters, recent reminders, and action buttons for reminding and confirming settlements
+ */
 export function SettlementList({ groupId, currency, suggestions, memberLookup, initialReminderActivity }: SettlementListProps) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [reminderId, setReminderId] = useState<string | null>(null);
