@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -81,5 +81,10 @@ export class GroupsController {
     @Body('enabled') enabled: boolean,
   ) {
     return this.groupsService.toggleShare(id, user.sub, enabled);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return this.groupsService.delete(id, user.sub);
   }
 }

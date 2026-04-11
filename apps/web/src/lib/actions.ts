@@ -370,3 +370,23 @@ export async function deleteExpenseAction(expenseId: string) {
 
   return { success: true };
 }
+
+export async function deleteGroupAction(groupId: string) {
+  const token = (await cookies()).get(authCookies.accessToken)?.value;
+
+  const response = await fetch(`${getBackendBaseUrl()}/groups/${groupId}`, {
+    method: 'DELETE',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    return { success: false, message: data?.message ?? 'Failed to delete group' };
+  }
+
+  return { success: true };
+}

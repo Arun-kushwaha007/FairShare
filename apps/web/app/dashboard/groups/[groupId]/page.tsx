@@ -112,6 +112,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               <Suspense fallback={<div className="h-40 rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] animate-pulse" />}>
                 <GroupActions
                   groupId={groupId}
+                  groupName={group.name}
                   currency={group.currency}
                   members={members}
                   shareEnabled={group.shareEnabled}
