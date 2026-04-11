@@ -7,7 +7,7 @@ import Link from 'next/link';
 export function GuestLayout({ children }: { children: ReactNode }) {
   return (
     <AppLayout>
-      <div className="relative min-h-screen bg-[#030303] overflow-hidden">
+      <div className="relative min-h-screen bg-[var(--fs-background)] text-[var(--fs-text-primary)] overflow-hidden">
         {/* Cinematic Backdrop */}
         <GridBackground />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/[0.01] to-transparent" />

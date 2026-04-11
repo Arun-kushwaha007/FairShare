@@ -11,11 +11,11 @@ export function GridBackground() {
         }}
       />
       {/* Vertical fade (top & bottom) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#030303] via-transparent to-[#030303]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[var(--fs-background)] via-transparent to-[var(--fs-background)]" />
       {/* Radial fade from center */}
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 40%, transparent 0%, #030303 100%)' }}
+        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 40%, transparent 0%, var(--fs-background) 100%)' }}
       />
     </div>
   );

@@ -22,7 +22,7 @@ export function GlassCard({
   const baseClasses =
     'glass-panel relative overflow-hidden rounded-3xl text-[var(--fs-text-primary)] shadow-2xl';
   const hoverClasses = hoverable
-    ? 'transition-all duration-300 hover:-translate-y-1 hover:border-white/15'
+    ? 'transition-all duration-300 hover:-translate-y-1 hover:border-[var(--fs-primary)]/20'
     : '';
 
   return (
@@ -34,9 +34,9 @@ export function GlassCard({
       className={`${baseClasses} ${hoverClasses} ${className}`}
       {...props}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/8 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--fs-primary)]/8 via-transparent to-transparent pointer-events-none" />
       <div className="relative z-10 p-5 md:p-7">{children}</div>
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--fs-border)] to-transparent" />
     </motion.div>
   );
 }

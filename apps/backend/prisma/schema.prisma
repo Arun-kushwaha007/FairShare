@@ -67,6 +67,7 @@ model Group {
   shareToken         String?           @unique
   shareEnabled       Boolean           @default(false)
   createdAt          DateTime          @default(now())
+  deletedAt          DateTime?
   creator            User              @relation("group_creator", fields: [createdBy], references: [id])
   members            GroupMember[]
   expenses           Expense[]

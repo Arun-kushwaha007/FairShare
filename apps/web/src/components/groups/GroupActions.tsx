@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CurrencyCode, GroupDefaultSplitDto, GroupMemberSummaryDto } from '@fairshare/shared-types';
 import Link from 'next/link';
-import { Download, PlusCircle, Scale, Share2, Wallet } from 'lucide-react';
+import { Download, PlusCircle, Scale, Share2, Wallet, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { exportBalancesCsvAction, exportExpensesCsvAction, toggleGroupShareAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
@@ -14,8 +14,14 @@ const CreateExpenseModal = dynamic(
   { ssr: false },
 );
 
+const DeleteGroupModal = dynamic(
+  () => import('./DeleteGroupModal').then((mod) => mod.DeleteGroupModal),
+  { ssr: false },
+);
+
 type GroupActionsProps = {
   groupId: string;
+  groupName: string;
   currency: CurrencyCode;
   members: GroupMemberSummaryDto[];
   shareEnabled: boolean;
@@ -25,6 +31,7 @@ type GroupActionsProps = {
 
 export function GroupActions({
   groupId,
+  groupName,
   currency,
   members,
   shareEnabled,
@@ -32,6 +39,7 @@ export function GroupActions({
   defaultSplitPreference,
 }: GroupActionsProps) {
   const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [exportingExpenses, setExportingExpenses] = useState(false);
   const [exportingBalances, setExportingBalances] = useState(false);
   const [togglingShare, setTogglingShare] = useState(false);
@@ -182,6 +190,15 @@ export function GroupActions({
           <div className="rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] px-4 py-3 text-sm font-medium text-[var(--fs-text-muted)]">
             Invite teammates from the member panel to keep your ledger accurate.
           </div>
+
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-500/10 transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete group
+          </button>
         </div>
       </div>
 
@@ -196,6 +213,13 @@ export function GroupActions({
           setOpen(false);
           router.refresh();
         }}
+      />
+
+      <DeleteGroupModal
+        groupId={groupId}
+        groupName={groupName}
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
       />
     </>
   );

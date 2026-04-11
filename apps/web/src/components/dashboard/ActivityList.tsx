@@ -110,15 +110,15 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.01] p-4 sm:p-6 transition-all hover:bg-white/[0.02]">
+    <div className="group relative overflow-hidden rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-surface)] p-4 sm:p-6 transition-all hover:shadow-lg shadow-[var(--fs-shadow-soft)]">
       <div className="flex items-center justify-between gap-3 mb-5 sm:mb-8">
         <div>
-          <h2 className="text-sm font-black italic tracking-tight text-white uppercase">Live Signals</h2>
-          <p className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mt-0.5">Real-time ledger audit</p>
+          <h2 className="text-sm font-black italic tracking-tight text-[var(--fs-text-primary)] uppercase">Live Signals</h2>
+          <p className="text-[10px] font-bold tracking-widest text-[var(--fs-text-muted)] uppercase mt-0.5">Real-time ledger audit</p>
         </div>
         <Link
           href={`/dashboard/activity?groupId=${encodeURIComponent(groupId)}`}
-          className="group/link flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-colors"
+          className="group/link flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--fs-text-muted)] hover:text-[var(--fs-text-primary)] transition-colors"
         >
           Timeline <ArrowUpRight size={12} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
         </Link>
@@ -142,23 +142,23 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
               </div>
 
               <div className="flex-grow min-w-0">
-                <p className="text-xs font-black tracking-tight text-white group-hover:text-purple-400 transition-colors truncate">
+                <p className="text-xs font-black tracking-tight text-[var(--fs-text-primary)] group-hover:text-[var(--fs-primary)] transition-colors truncate">
                   {labelForActivity(item)}
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--fs-text-muted)]">
                     {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <div className="h-0.5 w-0.5 rounded-full bg-zinc-800" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 truncate">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--fs-text-secondary)] truncate">
                     {subtitleForActivity(item)}
                   </p>
                 </div>
               </div>
 
               <div className="hidden sm:flex flex-col items-end gap-2">
-                {amount ? <span className="text-[11px] font-black text-white">{amount}</span> : null}
-                <div className="h-8 w-8 rounded-full border border-white/5 flex items-center justify-center text-[8px] font-black text-zinc-700 uppercase">
+                {amount ? <span className="text-[11px] font-black text-[var(--fs-text-primary)]">{amount}</span> : null}
+                <div className="h-8 w-8 rounded-full border border-[var(--fs-border)] flex items-center justify-center text-[8px] font-black text-[var(--fs-text-muted)] uppercase">
                   FS
                 </div>
               </div>
@@ -167,11 +167,11 @@ export function ActivityList({ items = [], groupId = '' }: { items?: ActivityDto
         })}
 
         {safeItems.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-white/5 p-10 text-center">
-            <div className="mx-auto w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-zinc-800 mb-4">
+          <div className="rounded-2xl border border-dashed border-[var(--fs-border)] p-10 text-center">
+            <div className="mx-auto w-10 h-10 rounded-full border border-[var(--fs-border)] flex items-center justify-center text-[var(--fs-text-muted)] mb-4">
               <Milestone size={18} />
             </div>
-            <p className="text-[10px] font-black tracking-widest text-zinc-700 uppercase">NO_SIGNAL_DETECTED</p>
+            <p className="text-[10px] font-black tracking-widest text-[var(--fs-text-muted)] uppercase">NO_SIGNAL_DETECTED</p>
           </div>
         )}
       </div>

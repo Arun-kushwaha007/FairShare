@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { glassPanel } from './layoutStyles';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 function titleFromPath(pathname: string): string {
   if (pathname === '/dashboard') return 'Dashboard';
@@ -29,7 +30,10 @@ export function Topbar({ rightSlot }: { rightSlot?: React.ReactNode }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-4 sm:gap-6">{rightSlot}</div>
+      <div className="flex items-center gap-4 sm:gap-6">
+        <ThemeToggle />
+        {rightSlot}
+      </div>
     </header>
   );
 }
