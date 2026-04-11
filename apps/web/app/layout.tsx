@@ -50,7 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style id="fs-theme-vars">{themeStylesheet}</style>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen bg-black text-white selection:bg-yellow-400 selection:text-black">
+      <body className="min-h-screen selection:bg-[var(--fs-primary)] selection:text-white">
+
         <Providers>
           <Navbar />
           <div>{children}</div>
