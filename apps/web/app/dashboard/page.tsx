@@ -59,13 +59,16 @@ export default async function DashboardPage() {
   const totalBalanceCents = dashboard.totalBalanceCents;
   const isPositive = Number(totalBalanceCents) >= 0;
 
+  const primaryCurrency = groups[0]?.currency ?? 'USD';
+  const totalBalanceLabel = groups.length > 1 ? 'Multi-Crew Balance' : 'Total Balance';
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           <SummaryCard
-            title="Total Balance"
-            value={formatMoney(totalBalanceCents, 'USD')}
+            title={totalBalanceLabel}
+            value={formatMoney(totalBalanceCents, primaryCurrency)}
             icon="dollar"
             change="Live"
             trend={isPositive ? 'up' : 'down'}

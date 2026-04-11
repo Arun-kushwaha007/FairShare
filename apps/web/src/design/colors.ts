@@ -30,6 +30,7 @@ export const colors: Record<ColorMode, {
   background: string;
   surface: string;
   card: string;
+  cardSolid: string;
   primary: string;
   primaryHover: string;
   accent: string;
@@ -50,6 +51,7 @@ export const colors: Record<ColorMode, {
     background: palette.champagne,
     surface: palette.porcelain,
     card: 'rgba(255, 255, 255, 0.7)',
+    cardSolid: palette.porcelain,
     primary: palette.royalPurple,
     primaryHover: palette.royalPurpleDeep,
     accent: palette.royalGold,
@@ -70,6 +72,7 @@ export const colors: Record<ColorMode, {
     background: palette.obsidian,
     surface: palette.graphite,
     card: 'rgba(255, 255, 255, 0.05)',
+    cardSolid: '#1E1E26',
     primary: palette.royalPurpleBright,
     primaryHover: '#7C3AED',
     accent: palette.softGold,
