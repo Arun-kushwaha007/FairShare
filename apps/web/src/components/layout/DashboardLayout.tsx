@@ -1,15 +1,22 @@
+'use client';
 import { ReactNode } from 'react';
 import { AppLayout } from './AppLayout';
 import { Sidebar } from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { Topbar } from './Topbar';
 import { shellPadding } from './layoutStyles';
+import { useThemeMode } from '../theme/ThemeProvider';
 import { GridBackground } from '../../../components/home';
 
 export function DashboardLayout({ children, topbarRight }: { children: ReactNode; topbarRight?: ReactNode }) {
+  const { resolved } = useThemeMode();
+
   return (
     <AppLayout>
-      <div className="relative min-h-screen bg-[var(--fs-background)] transition-colors duration-500 overflow-hidden">
+      <div 
+        className="relative min-h-screen bg-[var(--fs-background)] transition-colors duration-500 overflow-hidden"
+        data-theme={resolved}
+      >
 
         {/* Cinematic Backdrop */}
         <GridBackground />

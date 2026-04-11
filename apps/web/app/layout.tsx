@@ -7,23 +7,6 @@ import { themeStylesheet } from '../src/design/theme';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 
-const themeInitScript = `
-(function() {
-  try {
-    const storageKey = 'fs-theme';
-    const stored = localStorage.getItem(storageKey);
-    const mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
-    document.documentElement.dataset.theme = resolved;
-    document.body.dataset.theme = resolved;
-  } catch (_) {
-    document.documentElement.dataset.theme = 'light';
-    document.body.dataset.theme = 'light';
-  }
-})();
-`;
-
 export const metadata: Metadata = {
   title: 'FairShare - Smart Expense Sharing',
   description: 'Split group expenses without confusion. FairShare helps friends, roommates, and teams track shared spending and settle up faster.',
@@ -45,13 +28,11 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-displ
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
       <head>
         <style id="fs-theme-vars">{themeStylesheet}</style>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen selection:bg-[var(--fs-primary)] selection:text-white">
-
         <Providers>
           <Navbar />
           <div>{children}</div>
@@ -61,3 +42,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

@@ -72,9 +72,8 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* System Info */}
         <div className="mt-auto pt-6 border-t border-[var(--fs-border)]">
-          <div className="bg-[var(--fs-background)] px-4 py-3 rounded-2xl border border-[var(--fs-border)]">
+          <div className="bg-[var(--fs-card)] px-4 py-3 rounded-2xl border border-[var(--fs-border)] shadow-sm">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-bold text-[var(--fs-text-muted)] uppercase">System</span>
               <div className="flex items-center gap-1.5">

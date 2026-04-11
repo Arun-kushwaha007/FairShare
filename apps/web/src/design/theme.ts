@@ -96,7 +96,7 @@ export function buildThemeCss(mode: ColorMode): string {
   return cssFromVars(themeVars[mode]);
 }
 
-export const themeStylesheet = `:root{${buildThemeCss('light')}}[data-theme=\"dark\"]{${buildThemeCss('dark')}}`;
+export const themeStylesheet = `:root{${buildThemeCss('dark')}}[data-theme=\"light\"]{${buildThemeCss('light')}}`;
 
 export const motion = {
   transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
