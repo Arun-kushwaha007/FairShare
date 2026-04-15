@@ -50,14 +50,14 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter backend prisma:generate
 
+      - name: Build
+        run: pnpm build
+
       - name: Lint
         run: pnpm lint
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build
 
       - name: Start Database Services
         run: docker compose up -d
@@ -67,7 +67,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
           JWT_SECRET: supersecret
           STRIPE_SECRET_KEY: test_key
-        run: pnpm --filter backend prisma:migrate
+        run: pnpm --filter backend exec prisma db push
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
