@@ -17,8 +17,8 @@
   }
 
   body {
-    background-color: var(--fs-background);
-    color: var(--fs-text-primary);
+    background-color: #030303;
+    color: white;
     font-family: var(--fs-font-sans);
     @apply transition-colors duration-300;
   }

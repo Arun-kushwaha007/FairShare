@@ -20,13 +20,9 @@ function getSystemTheme(): ResolvedTheme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function resolveAndApplyTheme(mode: ThemeMode): ResolvedTheme {
-  const resolved: ResolvedTheme = mode === 'system' ? getSystemTheme() : mode;
-  if (typeof document !== 'undefined') {
-    document.documentElement.dataset.theme = resolved;
-    document.body.dataset.theme = resolved;
-  }
-  return resolved;
+function resolveTheme(mode: ThemeMode): ResolvedTheme {
+  if (mode === 'system') return getSystemTheme();
+  return mode;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -42,14 +38,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const stored = readStored();
     setModeState(stored);
-    setResolved(resolveAndApplyTheme(stored));
+    setResolved(resolveTheme(stored));
   }, []);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = () => {
       if (mode === 'system') {
-        setResolved(resolveAndApplyTheme('system'));
+        setResolved(resolveTheme('system'));
       }
     };
     media.addEventListener('change', handler);
@@ -61,7 +57,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, next);
     }
-    setResolved(resolveAndApplyTheme(next));
+    setResolved(resolveTheme(next));
   };
 
   const value = useMemo(() => ({ mode, resolved, setMode }), [mode, resolved]);
