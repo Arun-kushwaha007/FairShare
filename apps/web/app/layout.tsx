@@ -7,6 +7,19 @@ import { themeStylesheet } from '../src/design/theme';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 
+const themeInitScript = `
+(function() {
+  try {
+    var storageKey = 'fs-theme';
+    var stored = localStorage.getItem(storageKey);
+    var mode = stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
+    document.documentElement.dataset.theme = resolved;
+  } catch (_) {}
+})();
+`;
+
 export const metadata: Metadata = {
   title: 'FairShare - Smart Expense Sharing',
   description: 'Split group expenses without confusion. FairShare helps friends, roommates, and teams track shared spending and settle up faster.',
@@ -31,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${manrope.variable} ${spaceGrotesk.variable}`}>
       <head>
         <style id="fs-theme-vars">{themeStylesheet}</style>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen selection:bg-[var(--fs-primary)] selection:text-white">
         <Providers>

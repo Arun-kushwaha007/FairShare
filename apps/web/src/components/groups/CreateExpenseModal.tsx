@@ -265,26 +265,27 @@ export function CreateExpenseModal({
     }
   };
 
-  if (!open) return null;
-
   return (
-    <Portal>
-      <div
-        className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 py-8 pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-3xl">
-          <motion.div
-            ref={modalRef}
-            tabIndex={-1}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-expense-title"
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card-solid)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
-          >
+    <AnimatePresence>
+      {open && (
+        <Portal>
+          <div
+            className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 py-8 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-3xl">
+              <motion.div
+                ref={modalRef}
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-expense-title"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card-solid)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
+              >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
@@ -588,5 +589,7 @@ export function CreateExpenseModal({
           </div>
         </div>
       </Portal>
-    );
+      )}
+    </AnimatePresence>
+  );
 }

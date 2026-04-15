@@ -2,10 +2,9 @@
 
 import { useThemeMode } from './ThemeProvider';
 import { Sun, Moon, Laptop } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export function ThemeToggle() {
-  const { mode, resolved, setMode } = useThemeMode();
+  const { mode, setMode } = useThemeMode();
 
   return (
     <div className="flex items-center gap-1 rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-surface)] p-1 backdrop-blur-md shadow-sm">

@@ -676,6 +676,19 @@ export class GroupsService {
   }
 
   async delete(groupId: string, actorUserId: string): Promise<{ success: true }> {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    if (group.deletedAt) {
+      throw new NotFoundException('Group has already been deleted');
+    }
+
     const membership = await this.prisma.groupMember.findUnique({
       where: {
         groupId_userId: {
