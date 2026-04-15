@@ -251,6 +251,7 @@ export class GroupsService {
   }
 
   async getDashboard(userId: string): Promise<GroupDashboardDto> {
+    const groups = await this.prisma.group.findMany({
       where: {
         members: {
           some: {

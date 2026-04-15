@@ -61,6 +61,14 @@ export class RedisService {
     }
   }
 
+  async invalidateUserDashboardCache(userId: string): Promise<void> {
+    try {
+      await this.redis.del(`user:${userId}:dashboard`);
+    } catch (error) {
+      this.logger.warn(`Redis invalidate skipped: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
+  }
+
   private async safeGet(key: string): Promise<string | null> {
     try {
       return await this.redis.get(key);
