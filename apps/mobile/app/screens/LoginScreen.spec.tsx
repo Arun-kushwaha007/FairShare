@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { render } from '@testing-library/react-native';
 import { PaperProvider } from 'react-native-paper';
 import { LoginScreen } from './LoginScreen';
@@ -11,6 +11,6 @@ describe('LoginScreen', () => {
       </PaperProvider>,
     );
 
-    expect(getByText('Login')).toBeTruthy();
+    expect(getByText('Sign In')).toBeTruthy();
   });
 });
