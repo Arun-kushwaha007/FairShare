@@ -9,7 +9,7 @@
     --fs-section-inline-wide: clamp(1.25rem, 3vw, 3rem);
     --fs-card-surface: color-mix(in srgb, var(--fs-surface) 90%, transparent);
     --fs-card-surface-strong: color-mix(in srgb, var(--fs-surface) 96%, transparent);
-    --fs-card-border-strong: color-mix(in srgb, var(--fs-border) 78%, white 22%);
+    --fs-card-border-strong: color-mix(in srgb, var(--fs-border) 78%, var(--fs-surface) 22%);
   }
 
   html {
@@ -17,8 +17,8 @@
   }
 
   body {
-    background-color: var(--fs-background);
-    color: var(--fs-text-primary);
+    background-color: #030303;
+    color: white;
     font-family: var(--fs-font-sans);
     @apply transition-colors duration-300;
   }
@@ -43,7 +43,7 @@
 
   .marketing-card:hover {
     box-shadow: var(--fs-shadow-elevated);
-    @apply -translate-y-1 border-white/15;
+    @apply -translate-y-1 border-[var(--fs-border)] shadow-xl;
   }
 
   .glass-panel {
@@ -102,12 +102,12 @@
     @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.25em];
     border: 1px solid color-mix(in srgb, var(--fs-primary) 28%, var(--fs-border) 72%);
     background-color: color-mix(in srgb, var(--fs-primary) 10%, var(--fs-surface) 90%);
-    color: color-mix(in srgb, white 84%, var(--fs-primary) 16%);
+    color: var(--fs-primary);
   }
 
   .neo-border {
-    border: 4px solid white;
-    box-shadow: 4px 4px 0px 0px rgba(255, 255, 255, 1);
+    border: 4px solid var(--fs-text-primary);
+    box-shadow: 4px 4px 0px 0px var(--fs-text-primary);
   }
 
   .neo-pop-hover {
@@ -144,9 +144,10 @@
 
   .grid-bg {
     background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      linear-gradient(to right, var(--fs-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--fs-border) 1px, transparent 1px);
     background-size: 40px 40px;
+    opacity: 0.15;
   }
 
   .glitch-text {

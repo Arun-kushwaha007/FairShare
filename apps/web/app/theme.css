@@ -1,5 +1,5 @@
-﻿:root { color-scheme: light; }
-[data-theme='dark'] { color-scheme: dark; }
+:root { color-scheme: dark; }
+[data-theme='light'] { color-scheme: light; }
 
 body {
   background: radial-gradient(1200px 600px at 10% 0%, color-mix(in srgb, var(--fs-primary) 15%, transparent), transparent 60%),

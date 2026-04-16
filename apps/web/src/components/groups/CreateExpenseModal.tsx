@@ -19,6 +19,7 @@ import { createExpenseAction, updateExpenseAction, updateGroupDefaultSplitAction
 import { equalShares, exactShares, percentageShares, sumShares } from '../../lib/split';
 import { useToast } from '../ui/Toaster';
 import { useModalFocusTrap } from '../ui/useModalFocusTrap';
+import { Portal } from '../ui/Portal';
 
 type CreateExpenseModalProps = {
   groupId: string;
@@ -267,26 +268,24 @@ export function CreateExpenseModal({
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
+        <Portal>
+          <div
             className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
           />
-          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
-            <motion.div
-              ref={modalRef}
-              tabIndex={-1}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="create-expense-title"
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
-            >
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 py-8 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-3xl">
+              <motion.div
+                ref={modalRef}
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-expense-title"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card-solid)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
+              >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--fs-text-muted)]">
@@ -318,7 +317,7 @@ export function CreateExpenseModal({
                     </label>
                     <input
                       data-autofocus="true"
-                      className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                      className="w-full rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)] placeholder:text-[var(--fs-text-muted)]/50"
                       placeholder="Team dinner, rideshare..."
                       value={description}
                       onChange={(event) => setDescription(event.target.value)}
@@ -332,7 +331,7 @@ export function CreateExpenseModal({
                         Amount ({currency})
                       </label>
                       <input
-                        className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                        className="w-full rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         type="number"
                         min="0"
                         step="0.01"
@@ -346,7 +345,7 @@ export function CreateExpenseModal({
                         Payer
                       </label>
                       <select
-                        className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                        className="w-full rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         value={payerId}
                         onChange={(event) => setPayerId(event.target.value)}
                       >
@@ -362,7 +361,7 @@ export function CreateExpenseModal({
                         Category
                       </label>
                       <select
-                        className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                        className="w-full rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] p-3 text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                         value={category}
                         onChange={(event) =>
                           setCategory(event.target.value as ExpenseCategory | '')
@@ -425,7 +424,7 @@ export function CreateExpenseModal({
                       {participantOptions.map((member) => (
                         <label
                           key={member.id}
-                          className="flex items-center justify-between rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)]/60 px-3 py-2 text-sm font-semibold text-[var(--fs-text-primary)]"
+                          className="flex items-center justify-between rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] px-3 py-2 text-sm font-semibold text-[var(--fs-text-primary)] transition-all hover:border-[var(--fs-primary)]/40"
                         >
                           <div className="flex items-center gap-2">
                             <input
@@ -505,7 +504,7 @@ export function CreateExpenseModal({
                               key={id}
                               type="number"
                               min="0"
-                              className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
+                              className="w-full rounded-xl border-2 border-[var(--fs-border)] bg-[var(--fs-surface)] p-2 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
                               placeholder={`Amount for ${member?.name ?? id}`}
                               value={exactByUser[id] ?? ''}
                               onChange={(event) =>
@@ -588,7 +587,8 @@ export function CreateExpenseModal({
               </form>
             </motion.div>
           </div>
-        </>
+        </div>
+      </Portal>
       )}
     </AnimatePresence>
   );

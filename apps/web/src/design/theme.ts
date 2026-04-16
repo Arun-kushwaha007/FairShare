@@ -47,6 +47,7 @@ export const themeVars: Record<ColorMode, ThemeVariableMap> = {
     '--fs-background': colors.light.background,
     '--fs-surface': colors.light.surface,
     '--fs-card': colors.light.card,
+    '--fs-card-solid': colors.light.cardSolid,
     '--fs-primary': colors.light.primary,
     '--fs-primary-hover': colors.light.primaryHover,
     '--fs-accent': colors.light.accent,
@@ -68,6 +69,7 @@ export const themeVars: Record<ColorMode, ThemeVariableMap> = {
     '--fs-background': colors.dark.background,
     '--fs-surface': colors.dark.surface,
     '--fs-card': colors.dark.card,
+    '--fs-card-solid': colors.dark.cardSolid,
     '--fs-primary': colors.dark.primary,
     '--fs-primary-hover': colors.dark.primaryHover,
     '--fs-accent': colors.dark.accent,
@@ -96,7 +98,7 @@ export function buildThemeCss(mode: ColorMode): string {
   return cssFromVars(themeVars[mode]);
 }
 
-export const themeStylesheet = `:root{${buildThemeCss('light')}}[data-theme=\"dark\"]{${buildThemeCss('dark')}}`;
+export const themeStylesheet = `:root{${buildThemeCss('dark')}}[data-theme=\"light\"]{${buildThemeCss('light')}}`;
 
 export const motion = {
   transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',

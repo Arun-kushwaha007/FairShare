@@ -50,14 +50,49 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter backend prisma:generate
 
+      - name: Build
+        run: pnpm build
+
       - name: Lint
         run: pnpm lint
 
       - name: Test
         run: pnpm test
 
-      - name: Build
-        run: pnpm build
+      - name: Start Database Services
+        run: docker compose up -d
+
+      - name: Migrate Database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          SUPABASE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          JWT_SECRET: supersecret
+          STRIPE_SECRET_KEY: test_key
+        run: pnpm --filter backend exec prisma db push
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E Tests
+        env:
+          CI: true
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          SUPABASE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          JWT_SECRET: supersecret
+          JWT_REFRESH_SECRET: refreshsecret
+          GOOGLE_CLIENT_ID: googleid
+          GOOGLE_CLIENT_SECRET: googlesecret
+          REDIS_URL: redis://localhost:6380
+          AWS_REGION: ap-south-1
+          S3_BUCKET: fairshare-test-bucket
+          STRIPE_SECRET_KEY: sk_test_key
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+        run: pnpm run e2e
 
       - name: Upload coverage
         if: always()

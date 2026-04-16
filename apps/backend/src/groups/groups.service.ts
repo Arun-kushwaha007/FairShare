@@ -83,6 +83,7 @@ export class GroupsService {
             userId,
           },
         },
+        deletedAt: null,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -235,7 +236,10 @@ export class GroupsService {
 
   async getUserSummary(userId: string): Promise<{ totalBalanceCents: string }> {
     const balances = await this.prisma.balance.findMany({
-      where: { userId },
+      where: { 
+        userId,
+        group: { deletedAt: null }
+      },
       select: { amountCents: true },
     });
 
@@ -254,6 +258,7 @@ export class GroupsService {
             userId,
           },
         },
+        deletedAt: null,
       },
       include: {
         _count: {
@@ -668,6 +673,48 @@ export class GroupsService {
         createdAt: activity.createdAt.toISOString(),
       },
     };
+  }
+
+  async delete(groupId: string, actorUserId: string): Promise<{ success: true }> {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    if (group.deletedAt) {
+      throw new NotFoundException('Group has already been deleted');
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: {
+          groupId,
+          userId: actorUserId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== 'OWNER') {
+      throw new ForbiddenException('Only the group owner can delete the group');
+    }
+
+    await this.prisma.group.update({
+      where: { id: groupId },
+      data: { 
+        deletedAt: new Date(),
+        shareEnabled: false,
+        shareToken: null
+      },
+    });
+
+    await this.redis.invalidateGroupCache(groupId);
+    await this.redis.invalidateUserDashboardCache(actorUserId);
+
+    return { success: true };
   }
 
   async resolvePendingInvites(userId: string, email: string): Promise<void> {
