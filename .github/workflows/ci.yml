@@ -81,7 +81,13 @@ jobs:
           SUPABASE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
           JWT_SECRET: supersecret
-          STRIPE_SECRET_KEY: test_key
+          JWT_REFRESH_SECRET: refreshsecret
+          GOOGLE_CLIENT_ID: googleid
+          GOOGLE_CLIENT_SECRET: googlesecret
+          REDIS_URL: redis://localhost:6380
+          AWS_REGION: ap-south-1
+          S3_BUCKET: fairshare-test-bucket
+          STRIPE_SECRET_KEY: sk_test_key
           NEXT_PUBLIC_APP_URL: http://localhost:3000
         run: pnpm run e2e
 
