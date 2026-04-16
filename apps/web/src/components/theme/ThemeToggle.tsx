@@ -10,7 +10,10 @@ export function ThemeToggle() {
   return (
     <div className="flex items-center gap-1 rounded-2xl border border-[var(--fs-border)] bg-[var(--fs-surface)] p-1 backdrop-blur-md shadow-sm">
       <button
+        type="button"
         onClick={() => setMode('light')}
+        aria-label="Light mode"
+        aria-pressed={mode === 'light'}
         className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
           mode === 'light'
             ? 'bg-[var(--fs-primary)] text-white shadow-md'
@@ -21,7 +24,10 @@ export function ThemeToggle() {
         <Sun size={16} />
       </button>
       <button
+        type="button"
         onClick={() => setMode('dark')}
+        aria-label="Dark mode"
+        aria-pressed={mode === 'dark'}
         className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
           mode === 'dark'
             ? 'bg-[var(--fs-primary)] text-white shadow-md'
@@ -32,7 +38,10 @@ export function ThemeToggle() {
         <Moon size={16} />
       </button>
       <button
+        type="button"
         onClick={() => setMode('system')}
+        aria-label="System preference"
+        aria-pressed={mode === 'system'}
         className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
           mode === 'system'
             ? 'bg-[var(--fs-primary)] text-white shadow-md'

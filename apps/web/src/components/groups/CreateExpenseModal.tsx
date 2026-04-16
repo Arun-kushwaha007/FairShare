@@ -284,7 +284,7 @@ export function CreateExpenseModal({
                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card-solid)] shadow-[var(--fs-shadow-elevated)] overflow-hidden"
+                className="w-full max-h-[90vh] overflow-y-auto rounded-3xl border border-[var(--fs-border)] bg-[var(--fs-card-solid)] shadow-[var(--fs-shadow-elevated)]"
               >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--fs-border)]">
                 <div>

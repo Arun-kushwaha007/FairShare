@@ -74,7 +74,9 @@ export function CreateGroupModal({ open, onClose, onCreated }: CreateGroupModalP
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
+              aria-label="Close"
               className="p-2 rounded-xl bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors text-[var(--fs-text-muted)]"
               title="Close"
             >

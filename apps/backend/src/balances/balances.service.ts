@@ -48,7 +48,7 @@ export class BalancesService {
         orderBy: [{ userId: 'asc' }, { counterpartyUserId: 'asc' }],
       }),
       this.prisma.group.findUnique({
-        where: { id: groupId },
+        where: { id: groupId, deletedAt: null },
         select: { currency: true },
       }),
     ]);

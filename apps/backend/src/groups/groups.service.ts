@@ -112,7 +112,7 @@ export class GroupsService {
     }
 
     const group = await this.prisma.group.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: { members: true },
     });
 
@@ -378,7 +378,7 @@ export class GroupsService {
     
     let shareToken = null;
     if (enabled) {
-      const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+      const group = await this.prisma.group.findUnique({ where: { id: groupId, deletedAt: null } });
       shareToken = group?.shareToken ?? randomBytes(16).toString('hex');
     }
     
@@ -417,10 +417,10 @@ export class GroupsService {
 
   async getGroupByShareToken(token: string): Promise<GroupDto> {
     const group = await this.prisma.group.findUnique({
-      where: { shareToken: token },
+      where: { shareToken: token, deletedAt: null },
       include: { members: true },
     });
-    
+
     if (!group || !group.shareEnabled) {
       throw new NotFoundException('Shared group not found');
     }
@@ -494,10 +494,14 @@ export class GroupsService {
       },
     });
 
-    const group = await this.prisma.group.findUniqueOrThrow({
-      where: { id: groupId },
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId, deletedAt: null },
       include: { members: true },
     });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
 
     await this.redis.invalidateGroupCache(groupId);
 
@@ -794,11 +798,12 @@ export class GroupsService {
   }
 
   private async assertMembership(groupId: string, userId: string): Promise<void> {
-    const membership = await this.prisma.groupMember.findUnique({
+    const membership = await this.prisma.groupMember.findFirst({
       where: {
-        groupId_userId: {
-          groupId,
-          userId,
+        groupId,
+        userId,
+        group: {
+          deletedAt: null,
         },
       },
     });

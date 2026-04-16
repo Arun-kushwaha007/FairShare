@@ -28,7 +28,7 @@ export function DeleteGroupModal({ groupId, groupName, open, onClose }: DeleteGr
       setIsDeleting(true);
       setError(null);
       const result = await deleteGroupAction(groupId);
-      
+
       if (!result.success) {
         throw new Error(result.message);
       }
@@ -39,6 +39,7 @@ export function DeleteGroupModal({ groupId, groupName, open, onClose }: DeleteGr
       router.refresh();
     } catch (err) {
       setError((err as Error).message || 'Failed to delete group');
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -53,6 +54,7 @@ export function DeleteGroupModal({ groupId, groupName, open, onClose }: DeleteGr
               tabIndex={-1}
               role="dialog"
               aria-modal="true"
+              aria-labelledby="delete-group-title"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -63,7 +65,9 @@ export function DeleteGroupModal({ groupId, groupName, open, onClose }: DeleteGr
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
+                  aria-label="Close"
                   className="p-2 rounded-xl bg-[var(--fs-background)] hover:bg-[var(--fs-background)]/70 transition-colors text-[var(--fs-text-muted)]"
                 >
                   <X className="h-5 w-5" />
@@ -71,7 +75,7 @@ export function DeleteGroupModal({ groupId, groupName, open, onClose }: DeleteGr
               </div>
 
               <div className="space-y-4 text-center sm:text-left">
-                <h3 className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
+                <h3 id="delete-group-title" className="text-2xl font-extrabold tracking-tight text-[var(--fs-text-primary)]">
                   Delete Group?
                 </h3>
                 <p className="text-sm font-medium text-[var(--fs-text-secondary)] leading-relaxed">
