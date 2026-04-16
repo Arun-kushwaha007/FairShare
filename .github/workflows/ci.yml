@@ -89,6 +89,9 @@ jobs:
           S3_BUCKET: fairshare-test-bucket
           STRIPE_SECRET_KEY: sk_test_key
           NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
         run: pnpm run e2e
 
       - name: Upload coverage
