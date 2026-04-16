@@ -65,6 +65,8 @@ jobs:
       - name: Migrate Database
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          SUPABASE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
           JWT_SECRET: supersecret
           STRIPE_SECRET_KEY: test_key
         run: pnpm --filter backend exec prisma db push
@@ -76,6 +78,8 @@ jobs:
         env:
           CI: true
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          SUPABASE_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
+          DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fairshare?schema=public
           JWT_SECRET: supersecret
           STRIPE_SECRET_KEY: test_key
           NEXT_PUBLIC_APP_URL: http://localhost:3000
