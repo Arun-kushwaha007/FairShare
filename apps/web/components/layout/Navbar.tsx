@@ -116,10 +116,10 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-3">
               <Link
-                href="#"
+                href="/login"
                 className="group relative flex h-11 items-center gap-2 overflow-hidden rounded-xl bg-white px-5 text-xs font-black uppercase tracking-widest text-black shadow-xl shadow-white/5 transition-all hover:scale-[1.02] active:scale-95"
               >
-                <span>Coming Soon!</span>
+                <span>Sign In</span>
                 <ArrowRight
                   size={14}
                   className="transition-transform group-hover:translate-x-0.5"

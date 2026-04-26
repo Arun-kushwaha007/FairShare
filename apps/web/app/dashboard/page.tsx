@@ -101,7 +101,7 @@ export default async function DashboardPage() {
         </div>
 
         {attentionItems.length > 0 ? (
-          <GlassCard className="p-5 sm:p-6 border-[var(--fs-border)] bg-[var(--fs-surface)] shadow-[var(--fs-shadow-soft)]">
+          <GlassCard id="attention-queue" className="p-5 sm:p-6 border-[var(--fs-border)] bg-[var(--fs-surface)] shadow-[var(--fs-shadow-soft)]">
             <div className="flex items-start justify-between gap-4 mb-5">
               <div>
                   <p className="text-[10px] font-bold tracking-widest text-[var(--fs-text-secondary)] uppercase">
@@ -188,12 +188,13 @@ export default async function DashboardPage() {
                     Distributed spending groups
                   </p>
                 </div>
-                <button
+                <Link
+                  href="/dashboard/groups/new"
                   title="Create New Crew"
                   className="h-8 w-8 flex items-center justify-center rounded-lg bg-purple-600/10 text-purple-400 border border-purple-500/20 hover:bg-purple-600 hover:text-white transition-all"
                 >
                   <Plus size={16} />
-                </button>
+                </Link>
               </div>
 
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
@@ -244,9 +245,9 @@ export default async function DashboardPage() {
               <p className="text-xs font-bold text-[var(--fs-primary)]/60 uppercase tracking-widest leading-relaxed">
                 Review the groups with pending settlements and due recurring bills first.
               </p>
-              <button className="w-full h-12 rounded-2xl bg-[var(--fs-primary)] text-[10px] font-black uppercase tracking-widest text-white hover:bg-[var(--fs-primary)]/80 transition-all">
+              <a href="#attention-queue" className="w-full flex items-center justify-center h-12 rounded-2xl bg-[var(--fs-primary)] text-[10px] font-black uppercase tracking-widest text-white hover:bg-[var(--fs-primary)]/80 transition-all">
                 Review attention queue
-              </button>
+              </a>
             </div>
           </div>
         </div>

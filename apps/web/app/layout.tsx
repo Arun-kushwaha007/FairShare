@@ -14,9 +14,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FairShare - Smart Expense Sharing',
     description: 'Split group expenses without confusion. FairShare helps groups track spending and settle balances faster.',
-    url: 'https://fairsharee.com',
+    url: 'https://fairshare.app',
     siteName: 'FairShare',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FairShare - Smart Expense Sharing',
+    description: 'Split group expenses without confusion. FairShare helps groups track spending and settle balances faster.',
   },
   icons: {
     icon: '/favicon.ico',

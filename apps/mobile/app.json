@@ -2,6 +2,7 @@
   "expo": {
     "name": "FairShare",
     "slug": "fairshare",
+    "scheme": "fairshare",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -9,9 +10,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fairshare.app"
     },
     "android": {
+      "package": "com.fairshare.app",
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       }
@@ -22,6 +25,12 @@
     "plugins": [
       "expo-secure-store",
       "expo-image-picker"
-    ]
+    ],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
   }
 }

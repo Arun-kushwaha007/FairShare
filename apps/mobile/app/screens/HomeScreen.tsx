@@ -149,7 +149,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
       );
     } catch (err) {
       console.error(err);
-      toast('Failed to sync your vibes');
+      toast('Could not load dashboard. Pull to refresh.');
     } finally {
       setLoading(false);
     }
@@ -160,13 +160,13 @@ export function HomeScreen({ navigation }: { navigation: any }) {
   }, [loadData]);
 
   const quickActions = [
-    { label: 'Split it', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => navigation.navigate('AddExpense', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Split it', icon: 'plus-circle-outline' as const, color: colors.primary, onPress: () => groups.length > 0 ? navigation.navigate('AddExpense', { groupId: groups[0].id }) : navigation.navigate('CreateGroup') },
     { label: 'Groups', icon: 'account-group-outline' as const, color: colors.accent, onPress: () => navigation.navigate('Groups') },
-    { label: 'Settle Up', icon: 'handshake-outline' as const, color: colors.success, onPress: () => navigation.navigate('SettleUp', { groupId: groups[0]?.id ?? '' }) },
+    { label: 'Settle Up', icon: 'handshake-outline' as const, color: colors.success, onPress: () => groups.length > 0 ? navigation.navigate('SettleUp', { groupId: groups[0].id }) : navigation.navigate('CreateGroup') },
   ];
 
   const totalBalance = Number(summary?.totalBalanceCents ?? 0) / 100;
-  const balanceLabel = totalBalance >= 0 ? 'Securing the bag' : 'Lowkey in debt';
+  const balanceLabel = totalBalance >= 0 ? 'Net positive' : 'Net balance owed';
   const balanceVariant = totalBalance >= 0 ? 'success' : 'danger';
   const balanceIcon = totalBalance >= 0 ? 'trending-up' : 'trending-down';
 
@@ -184,8 +184,8 @@ export function HomeScreen({ navigation }: { navigation: any }) {
             resizeMode="contain"
           />
           <View>
-            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Yo, welcome back</Text>
-            <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'Bestie'}</Text>
+            <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Welcome back</Text>
+            <Text style={[typography.h2, { color: colors.text_primary, marginTop: 2 }]}>{user?.name ?? 'there'}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
@@ -195,7 +195,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
 
       <Animated.View entering={FadeInDown.duration(400)} style={styles.summarySection}>
         <BalanceCard
-          title="The Bag"
+          title="Your Balance"
           amount={formatCurrencyFromCents(Math.round(Math.abs(totalBalance) * 100), 'USD')}
           subtitle={balanceLabel}
           variant={balanceVariant}
@@ -296,7 +296,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
           ))
         ) : (
           <Text style={[typography.bodyMedium, { color: colors.text_secondary, textAlign: 'center', marginTop: spacing.lg }]}>
-            {loading ? 'Syncing dashboard...' : 'No tea to spill yet.'}
+            {loading ? 'Loading...' : 'No recent activity yet.'}
           </Text>
         )}
       </View>
