@@ -145,7 +145,6 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         nextAttentionItems
           .filter((item) => item.settlementCount > 0 || item.dueRecurringCount > 0)
           .sort((a, b) => (b.settlementCount + b.dueRecurringCount) - (a.settlementCount + a.dueRecurringCount))
-          .slice(0, 4),
       );
     } catch (err) {
       console.error(err);
@@ -229,7 +228,7 @@ export function HomeScreen({ navigation }: { navigation: any }) {
         <>
           <SectionHeader title="Needs Attention" />
           <View style={styles.attentionList}>
-            {attentionItems.map((item, index) => (
+            {attentionItems.slice(0, 3).map((item, index) => (
               <Animated.View key={item.groupId} entering={FadeInDown.duration(400).delay(250 + index * 80)}>
                 <TouchableOpacity
                   activeOpacity={0.85}
@@ -269,6 +268,17 @@ export function HomeScreen({ navigation }: { navigation: any }) {
                 </TouchableOpacity>
               </Animated.View>
             ))}
+            {attentionItems.length > 3 && (
+              <Animated.View entering={FadeInDown.duration(400).delay(250 + 3 * 80)}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.attentionCard, { backgroundColor: colors.surface, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.lg }]}
+                  onPress={() => navigation.navigate('Groups')}
+                >
+                  <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 14 }}>View all {attentionItems.length} items in Groups</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            )}
           </View>
         </>
       ) : null}

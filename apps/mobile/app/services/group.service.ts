@@ -35,6 +35,8 @@ export const groupService = {
   remindSettlement: async (id: string, payload: RemindSettlementRequestDto) =>
     (await api.post<RemindSettlementResponseDto>(`/groups/${id}/remind-settlement`, payload)).data,
   balances: async (id: string) => (await api.get(`/groups/${id}/balances`)).data,
+  exportBalancesCsv: async (id: string) =>
+    (await api.get<string>(`/groups/${id}/balances/export.csv`)).data,
   userSummary: async () => (await api.get<{ totalBalanceCents: string }>('/groups/summary')).data,
   simplify: async (id: string) => (await api.get(`/groups/${id}/simplify`)).data,
   activity: async (id: string, cursor = 0, limit = 20) =>

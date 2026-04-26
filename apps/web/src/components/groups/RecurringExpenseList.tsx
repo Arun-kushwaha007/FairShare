@@ -14,6 +14,7 @@ import {
 import { Pencil, Trash2 } from 'lucide-react';
 import { deleteRecurringExpenseAction, updateRecurringExpenseAction } from '../../lib/actions';
 import { useToast } from '../ui/Toaster';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 type RecurringExpenseListProps = {
   recurringExpenses: RecurringExpenseDto[];
@@ -92,6 +93,7 @@ function formatGeneratedLabel(lastGeneratedAt?: string | null): string {
  */
 export function RecurringExpenseList({ recurringExpenses, members, currency, onChanged }: RecurringExpenseListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmRemovingId, setConfirmRemovingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
@@ -162,11 +164,6 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
   };
 
   const handleRemove = async (recurringExpenseId: string) => {
-    const confirmed = window.confirm('Remove this recurring bill? Future auto-created expenses will stop.');
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setRemovingId(recurringExpenseId);
       const result = await deleteRecurringExpenseAction(recurringExpenseId);
@@ -179,6 +176,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
       toast((error as Error).message || 'Failed to remove recurring bill', 'error');
     } finally {
       setRemovingId(null);
+      setConfirmRemovingId(null);
     }
   };
 
@@ -276,7 +274,7 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
                 </button>
                 <button
                   type="button"
-                  onClick={() => void handleRemove(item.id)}
+                  onClick={() => setConfirmRemovingId(item.id)}
                   disabled={removingId === item.id}
                   className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-2 text-rose-500 transition-colors hover:bg-rose-500/20 disabled:opacity-60"
                   title="Remove recurring bill"
@@ -332,6 +330,16 @@ export function RecurringExpenseList({ recurringExpenses, members, currency, onC
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmRemovingId !== null}
+        onClose={() => setConfirmRemovingId(null)}
+        onConfirm={() => confirmRemovingId && void handleRemove(confirmRemovingId)}
+        title="Remove Recurring Bill"
+        message="Are you sure you want to remove this recurring bill? Future auto-created expenses will stop."
+        confirmText="Remove"
+        isProcessing={removingId !== null}
+      />
     </section>
   );
 }

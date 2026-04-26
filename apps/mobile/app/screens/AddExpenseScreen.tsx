@@ -497,35 +497,37 @@ export function AddExpenseScreen({
       case 3:
         return (
           <Animated.View key="step3" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-            <View style={styles.defaultSplitSection}>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>Default split</Text>
-                <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Save the current split setup for this group.</Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+              <View style={styles.defaultSplitSection}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>Default split</Text>
+                  <Text style={[typography.bodyMedium, { color: colors.text_secondary }]}>Save the current split setup for this group.</Text>
+                </View>
+                <View style={styles.defaultSplitActions}>
+                  <Button variant="secondary" onPress={() => void resetDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
+                    Reset
+                  </Button>
+                  <Button variant="primary" onPress={() => void saveDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
+                    Save Default
+                  </Button>
+                </View>
               </View>
-              <View style={styles.defaultSplitActions}>
-                <Button variant="secondary" onPress={() => void resetDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
-                  Reset
-                </Button>
-                <Button variant="primary" onPress={() => void saveDefaultSplit()} loading={savingDefault} style={styles.defaultSplitButton}>
-                  Save Default
-                </Button>
-              </View>
-            </View>
-            <SplitSelector
-              members={members}
-              splitType={splitType}
-              selectedParticipantIds={selectedParticipantIds}
-              exactByUser={exactByUser}
-              percentagesByUser={percentagesByUser}
-              onSplitTypeChange={setSplitType}
-              onParticipantsChange={setSelectedParticipantIds}
-              onExactChange={(userId, value) =>
-                setExactByUser((state) => ({ ...state, [userId]: value }))
-              }
-              onPercentageChange={(userId, value) =>
-                setPercentagesByUser((state) => ({ ...state, [userId]: value }))
-              }
-            />
+              <SplitSelector
+                members={members}
+                splitType={splitType}
+                selectedParticipantIds={selectedParticipantIds}
+                exactByUser={exactByUser}
+                percentagesByUser={percentagesByUser}
+                onSplitTypeChange={setSplitType}
+                onParticipantsChange={setSelectedParticipantIds}
+                onExactChange={(userId, value) =>
+                  setExactByUser((state) => ({ ...state, [userId]: value }))
+                }
+                onPercentageChange={(userId, value) =>
+                  setPercentagesByUser((state) => ({ ...state, [userId]: value }))
+                }
+              />
+            </ScrollView>
           </Animated.View>
         );
 
@@ -534,62 +536,64 @@ export function AddExpenseScreen({
         const shares = totalAmount > 0 ? buildShares(totalAmount) : {};
         return (
           <Animated.View key="step4" entering={enterAnim} exiting={exitAnim} style={styles.stepContent}>
-            <Card variant="elevated" style={styles.reviewCard}>
-              <View style={styles.reviewItem}>
-                <Text style={[typography.caption, { color: colors.muted }]}>DESCRIPTION</Text>
-                <Text style={[typography.h3, { color: colors.text_primary }]}>{watchedDescription}</Text>
-              </View>
-              <View style={styles.reviewItem}>
-                <Text style={[typography.caption, { color: colors.muted }]}>CATEGORY</Text>
-                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
-                  {category ? categoryLabels[category] : 'Uncategorized'}
-                </Text>
-              </View>
-              <View style={styles.reviewItem}>
-                <Text style={[typography.caption, { color: colors.muted }]}>RECURRING</Text>
-                <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
-                  {recurringEnabled ? recurringFrequencyLabels[recurringFrequency] : 'One-time'}
-                </Text>
-              </View>
-              <View style={styles.reviewItem}>
-                <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
-                <Text style={[typography.h1, { color: colors.primary }]}>
-                  {formatCurrencyFromCents(totalAmount, group?.currency ?? 'USD')}
-                </Text>
-              </View>
-              <View style={styles.reviewItem}>
-                <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
-                <View style={styles.payerRow}>
-                  <Avatar name={payerMember?.name ?? 'U'} size={24} />
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
+              <Card variant="elevated" style={styles.reviewCard}>
+                <View style={styles.reviewItem}>
+                  <Text style={[typography.caption, { color: colors.muted }]}>DESCRIPTION</Text>
+                  <Text style={[typography.h3, { color: colors.text_primary }]}>{watchedDescription}</Text>
+                </View>
+                <View style={styles.reviewItem}>
+                  <Text style={[typography.caption, { color: colors.muted }]}>CATEGORY</Text>
                   <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
-                    {payerMember?.name ?? 'Unknown'}
+                    {category ? categoryLabels[category] : 'Uncategorized'}
                   </Text>
                 </View>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              <Text style={[typography.caption, { color: colors.muted, marginBottom: spacing.md }]}>
-                SPLITS ({splitType.toUpperCase()})
-              </Text>
-              {selectedParticipantIds.map((userId) => {
-                const member = members.find((m) => m.userId === userId);
-                const shareAmount = shares[userId] ?? 0;
-                return (
-                  <View key={userId} style={styles.splitRow}>
-                    <View style={styles.splitUserCol}>
-                      <Avatar name={member?.name ?? 'U'} size={20} />
-                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>
-                        {member?.name ?? 'Unknown'}
-                      </Text>
-                    </View>
-                    <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
-                      {formatCurrencyFromCents(shareAmount, group?.currency ?? 'USD')}
+                <View style={styles.reviewItem}>
+                  <Text style={[typography.caption, { color: colors.muted }]}>RECURRING</Text>
+                  <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                    {recurringEnabled ? recurringFrequencyLabels[recurringFrequency] : 'One-time'}
+                  </Text>
+                </View>
+                <View style={styles.reviewItem}>
+                  <Text style={[typography.caption, { color: colors.muted }]}>TOTAL AMOUNT</Text>
+                  <Text style={[typography.h1, { color: colors.primary }]}>
+                    {formatCurrencyFromCents(totalAmount, group?.currency ?? 'USD')}
+                  </Text>
+                </View>
+                <View style={styles.reviewItem}>
+                  <Text style={[typography.caption, { color: colors.muted }]}>PAID BY</Text>
+                  <View style={styles.payerRow}>
+                    <Avatar name={payerMember?.name ?? 'U'} size={24} />
+                    <Text style={[typography.bodyLarge, { color: colors.text_primary, fontWeight: '700' }]}>
+                      {payerMember?.name ?? 'Unknown'}
                     </Text>
                   </View>
-                );
-              })}
-            </Card>
+                </View>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                <Text style={[typography.caption, { color: colors.muted, marginBottom: spacing.md }]}>
+                  SPLITS ({splitType.toUpperCase()})
+                </Text>
+                {selectedParticipantIds.map((userId) => {
+                  const member = members.find((m) => m.userId === userId);
+                  const shareAmount = shares[userId] ?? 0;
+                  return (
+                    <View key={userId} style={styles.splitRow}>
+                      <View style={styles.splitUserCol}>
+                        <Avatar name={member?.name ?? 'U'} size={20} />
+                        <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '600' }]}>
+                          {member?.name ?? 'Unknown'}
+                        </Text>
+                      </View>
+                      <Text style={[typography.bodyMedium, { color: colors.text_primary, fontWeight: '800' }]}>
+                        {formatCurrencyFromCents(shareAmount, group?.currency ?? 'USD')}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </Card>
+            </ScrollView>
           </Animated.View>
         );
       }

@@ -4,21 +4,25 @@ import { SectionContainer } from '../../components/layout/SectionContainer';
 
 export const metadata: Metadata = {
   title: 'Privacy | FairShare',
-  description: 'FairShare privacy overview for the web demo experience.',
+  description: 'FairShare privacy overview.',
 };
 
 const sections = [
   {
-    title: 'What we collect',
-    body: 'Account details, group activity, expense data, and uploaded receipt metadata needed to operate shared-expense features.',
+    title: 'Information We Collect',
+    body: 'We collect information you provide directly to us, such as when you create or modify your account, request on-demand services, contact customer support, or otherwise communicate with us. This information may include: name, email, phone number, postal address, profile picture, payment method, and other information you choose to provide.',
   },
   {
-    title: 'How we use it',
-    body: 'To authenticate users, calculate balances, sync activity across your groups, and support receipt uploads and notifications.',
+    title: 'How We Use Your Information',
+    body: 'We may use the information we collect to provide, maintain, and improve our services, including to process transactions, send related information (such as confirmations and receipts), authenticate users, and send technical notices or administrative messages.',
   },
   {
-    title: 'What this demo means',
-    body: 'This repository is a development build. Do not treat local demo environments as a production-grade compliance deployment.',
+    title: 'Information Sharing',
+    body: 'We do not sell your personal information. We may share your information with vendors, consultants, and other service providers who need access to such information to carry out work on our behalf, or when required by law or to protect our rights.',
+  },
+  {
+    title: 'Data Security',
+    body: 'We take reasonable measures to help protect information about you from loss, theft, misuse and unauthorized access, disclosure, alteration and destruction.',
   },
 ];
 
@@ -32,10 +36,10 @@ export default function PrivacyPage() {
           Privacy
         </div>
         <h1 className="hero-title mb-6 text-5xl font-black italic tracking-tighter text-white md:text-7xl lg:text-[6rem] uppercase">
-          DATA WITH <span className="text-purple-600">CONTEXT.</span>
+          YOUR DATA, <span className="text-purple-600">PROTECTED.</span>
         </h1>
         <p className="mx-auto max-w-3xl text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 md:text-base">
-          A concise privacy overview for the current FairShare web experience.
+          Our commitment to your privacy and data security.
         </p>
       </SectionContainer>
 
@@ -49,9 +53,9 @@ export default function PrivacyPage() {
           ))}
 
           <section className="glass-panel border border-white/10 bg-white/[0.03] p-8 md:p-10">
-            <h2 className="mb-4 text-2xl font-black uppercase italic tracking-tight text-white md:text-3xl">Questions</h2>
+            <h2 className="mb-4 text-2xl font-black uppercase italic tracking-tight text-white md:text-3xl">Contact Us</h2>
             <p className="mb-6 text-sm font-medium leading-7 text-zinc-300 md:text-base">
-              For repo-level questions, use the contact flow in the site footer or review the code paths that handle auth, storage, and notifications.
+              If you have any questions about this Privacy Policy or how we handle your data, please contact us.
             </p>
             <Link href="/contact" className="inline-flex rounded-2xl border border-white/10 bg-white px-6 py-3 text-sm font-black uppercase tracking-[0.2em] text-black transition hover:scale-[1.02]">
               Contact

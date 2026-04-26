@@ -6,6 +6,7 @@ import { Providers } from '../src/components/Providers';
 import { themeStylesheet } from '../src/design/theme';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import { CookieConsent } from '../src/components/ui/CookieConsent';
 
 export const metadata: Metadata = {
   title: 'FairShare - Smart Expense Sharing',
@@ -17,11 +18,20 @@ export const metadata: Metadata = {
     url: 'https://fairshare.app',
     siteName: 'FairShare',
     type: 'website',
+    images: [
+      {
+        url: 'https://fairshare.app/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'FairShare - Smart Expense Sharing',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'FairShare - Smart Expense Sharing',
     description: 'Split group expenses without confusion. FairShare helps groups track spending and settle balances faster.',
+    images: ['https://fairshare.app/og-image.png'],
   },
   icons: {
     icon: '/favicon.ico',
@@ -42,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <div>{children}</div>
           <Footer />
+          <CookieConsent />
         </Providers>
       </body>
     </html>

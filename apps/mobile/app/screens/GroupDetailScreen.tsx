@@ -359,7 +359,7 @@ export function GroupDetailScreen({
     try {
       setExporting(true);
       const csv = await expenseService.exportCsv(route.params.groupId);
-      const fileName = `fairshare-${route.params.groupId}.csv`;
+      const fileName = `fairshare-expenses-${route.params.groupId}.csv`;
       const targetPath = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(targetPath, csv, {
         encoding: FileSystem.EncodingType.UTF8,
@@ -381,6 +381,37 @@ export function GroupDetailScreen({
       toast('CSV exported');
     } catch {
       toast('Failed to export CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportBalancesCsv = async () => {
+    try {
+      setExporting(true);
+      const csv = await groupService.exportBalancesCsv(route.params.groupId);
+      const fileName = `fairshare-balances-${route.params.groupId}.csv`;
+      const targetPath = `${FileSystem.cacheDirectory ?? FileSystem.documentDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(targetPath, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(targetPath, {
+          mimeType: 'text/csv',
+          dialogTitle: 'Export balances CSV',
+          UTI: 'public.comma-separated-values-text',
+        });
+      } else {
+        await Share.share({
+          title: 'FairShare Balances CSV Export',
+          message: csv,
+        });
+      }
+
+      toast('Balances CSV exported');
+    } catch {
+      toast('Failed to export balances CSV');
     } finally {
       setExporting(false);
     }
@@ -551,7 +582,8 @@ export function GroupDetailScreen({
         <View style={styles.actionRow}>
           <Button variant="primary" onPress={() => navigation.navigate('AddExpense', { groupId: route.params.groupId })} style={styles.actionButton}>Add Expense</Button>
           <Button variant="secondary" onPress={() => navigation.navigate('SettleUp', { groupId: route.params.groupId })} style={styles.actionButton}>Settle Up</Button>
-          <Button variant="secondary" onPress={() => void handleExportCsv()} loading={exporting} style={styles.actionButton}>Export CSV</Button>
+          <Button variant="secondary" onPress={() => void handleExportCsv()} loading={exporting} style={styles.actionButton}>Export Expenses</Button>
+          <Button variant="secondary" onPress={() => void handleExportBalancesCsv()} loading={exporting} style={styles.actionButton}>Export Balances</Button>
         </View>
 
         {renderExpenseSection('Today', groupedExpenses.today, 300)}
