@@ -173,6 +173,13 @@ export default function WaitlistPage() {
                         </div>
                       </div>
 
+                      <div className="flex items-start gap-3 py-1">
+                        <input type="checkbox" className="mt-1 h-3.5 w-3.5 rounded border-white/10 bg-white/5 checked:bg-purple-600 transition-all cursor-pointer" id="terms" required />
+                        <label htmlFor="terms" className="text-[11px] font-medium text-zinc-500 leading-normal cursor-pointer hover:text-zinc-300 transition-colors text-left">
+                          By joining the queue, you agree to our <a href="/terms" className="text-white hover:underline">Terms of Service</a> and <a href="/privacy" className="text-white hover:underline">Privacy Policy</a>.
+                        </label>
+                      </div>
+
                       <div className="pt-4">
                         <AccentButton 
                           type="submit"

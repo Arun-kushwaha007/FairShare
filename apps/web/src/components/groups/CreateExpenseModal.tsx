@@ -204,23 +204,43 @@ export function CreateExpenseModal({
     setError('');
     const totalCents = Math.round(Number(amount || 0) * 100);
 
-    if (!description.trim() || totalCents <= 0 || participants.length === 0) {
-      setError('Add a description, amount, and at least one participant.');
+    if (!description.trim()) {
+      setError('Description is required.');
+      return;
+    }
+
+    if (description.length > 255) {
+      setError('Description cannot exceed 255 characters.');
+      return;
+    }
+
+    if (totalCents <= 0) {
+      setError('Amount must be greater than 0.');
+      return;
+    }
+
+    if (participants.length === 0) {
+      setError('Select at least one participant.');
       return;
     }
 
     let shares: Record<string, number>;
-    if (splitType === 'equal') {
-      shares = equalShares(totalCents, participants);
-    } else if (splitType === 'exact') {
-      shares = exactShares(participants, exactByUser);
-    } else {
-      shares = percentageShares(totalCents, participants, percentagesByUser);
-    }
+    try {
+      if (splitType === 'equal') {
+        shares = equalShares(totalCents, participants);
+      } else if (splitType === 'exact') {
+        shares = exactShares(participants, exactByUser);
+      } else {
+        shares = percentageShares(totalCents, participants, percentagesByUser);
+      }
 
-    const diff = totalCents - sumShares(shares);
-    if (diff !== 0 && participants.length > 0) {
-      shares[participants[0]] = (shares[participants[0]] ?? 0) + diff;
+      const diff = totalCents - sumShares(shares);
+      if (diff !== 0 && participants.length > 0) {
+        shares[participants[0]] = (shares[participants[0]] ?? 0) + diff;
+      }
+    } catch (err) {
+      setError((err as Error).message || 'Invalid split configuration.');
+      return;
     }
 
     const splits = participants.map((userId) => ({
@@ -321,6 +341,7 @@ export function CreateExpenseModal({
                       placeholder="Team dinner, rideshare..."
                       value={description}
                       onChange={(event) => setDescription(event.target.value)}
+                      maxLength={255}
                       required
                     />
                   </div>

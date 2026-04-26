@@ -45,6 +45,10 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
       toast('Description must be at least 2 characters', 'error');
       return;
     }
+    if (description.length > 255) {
+      toast('Description cannot exceed 255 characters', 'error');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -112,6 +116,7 @@ export function ExpenseDetailCard({ expense, receiptUrl }: { expense: ExpenseDto
               <input
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
+                maxLength={255}
                 className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-background)] p-3 text-sm text-[var(--fs-text-primary)] outline-none focus:border-[var(--fs-primary)]"
               />
             </div>

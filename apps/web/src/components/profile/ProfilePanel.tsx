@@ -4,7 +4,10 @@ import Link from 'next/link';
 import { AuthUserDto } from '@fairshare/shared-types';
 import { LogOut, ShieldCheck, LifeBuoy, Settings, ChevronRight, User, Command } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import { motion } from 'framer-motion';
+import { useToast } from '../ui/Toaster';
+import { useState } from 'react';
+import { deleteAccountAction } from '../../lib/actions';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../../components/ui/GlassCard';
 import { fadeUp, staggerContainer } from '../../../components/home/motion-variants';
 
@@ -18,6 +21,35 @@ function initials(name?: string | null) {
 export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | null }) {
   const { user, logout, loading } = useAuth();
   const currentUser = user ?? fallbackUser;
+  const { toast } = useToast();
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation.toLowerCase() !== 'delete my account') {
+      toast('Please type "delete my account" to confirm', 'error');
+      return;
+    }
+    
+    setIsDeleting(true);
+    try {
+      const result = await deleteAccountAction();
+      if (result.success) {
+        toast('Account successfully scheduled for deletion');
+        await logout();
+      } else {
+        toast(result.message || 'Failed to delete account', 'error');
+      }
+    } catch (err) {
+      toast('An unexpected error occurred', 'error');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteConfirmation('');
+    }
+  };
 
   const actionItems = [
     {
@@ -128,6 +160,86 @@ export function ProfilePanel({ fallbackUser }: { fallbackUser: AuthUserDto | nul
           </GlassCard>
         </button>
       </div>
+      {/* ── Danger Zone ── */}
+      <div className="pt-8">
+        <GlassCard className="p-6 border-rose-500/20 bg-rose-500/5 shadow-[var(--fs-shadow-soft)]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <h2 className="text-lg font-black italic tracking-tighter text-rose-500 uppercase">
+                Danger Zone
+              </h2>
+              <p className="text-[12px] font-medium text-[var(--fs-text-muted)] max-w-xl">
+                Permanently delete your account and anonymize all associated personal data. This action cannot be undone.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              disabled={loading || isDeleting}
+              className="px-6 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold tracking-widest uppercase text-xs transition-colors"
+            >
+              Delete Account
+            </button>
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* ── Delete Account Modal ── */}
+      <AnimatePresence>
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md overflow-hidden rounded-3xl border border-rose-500/20 bg-[var(--fs-surface)] p-6 shadow-2xl"
+            >
+              <div className="mb-6 flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+                  <ShieldCheck size={32} />
+                </div>
+                <h3 className="text-xl font-black italic tracking-tighter text-[var(--fs-text-primary)] uppercase">
+                  Delete Account
+                </h3>
+                <p className="mt-2 text-sm text-[var(--fs-text-muted)]">
+                  This will permanently anonymize your data and remove your access to all groups. To proceed, please type <span className="font-bold text-rose-500">delete my account</span> below.
+                </p>
+              </div>
+
+              <input
+                type="text"
+                placeholder="delete my account"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                className="w-full rounded-xl border border-[var(--fs-border)] bg-[var(--fs-bg)] px-4 py-3 text-center font-bold tracking-widest uppercase text-[var(--fs-text-primary)] outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 placeholder:text-[var(--fs-text-muted)]/50"
+              />
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-xl bg-[var(--fs-bg)] py-3 font-bold tracking-widest text-[var(--fs-text-primary)] transition-colors hover:bg-[var(--fs-border)] uppercase text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting || deleteConfirmation.toLowerCase() !== 'delete my account'}
+                  className="flex-1 rounded-xl bg-rose-500 py-3 font-bold tracking-widest text-white transition-colors hover:bg-rose-600 disabled:opacity-50 uppercase text-xs"
+                >
+                  {isDeleting ? 'Deleting...' : 'Confirm'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
