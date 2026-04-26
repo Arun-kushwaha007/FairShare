@@ -529,7 +529,22 @@ export class GroupsService {
     dto: InviteMemberDto,
   ): Promise<{ success: true }> {
     await this.assertMembership(groupId, actorUserId);
+    
+    // Rate limit: 10 invites per hour per user
+    const userInviteCount = await this.redis.incrementInviteRateLimit(actorUserId);
+    if (userInviteCount > 10) {
+      throw new ForbiddenException('You have exceeded your invite limit (10 per hour)');
+    }
+
     const email = dto.email.toLowerCase();
+
+    // Check pending invites limit
+    const pendingCount = await this.prisma.groupInvite.count({
+      where: { groupId },
+    });
+    if (pendingCount >= 20) {
+      throw new ForbiddenException('This group has too many pending invites (max 20)');
+    }
 
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {

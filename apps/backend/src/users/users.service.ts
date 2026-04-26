@@ -33,4 +33,40 @@ export class UsersService {
 
     return { success: true };
   }
+
+  async updateProfile(userId: string, data: { name?: string; avatarUrl?: string }): Promise<AuthUserDto> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+    };
+  }
+
+  async deleteAccount(userId: string): Promise<{ success: true }> {
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Revoke refresh tokens
+      await tx.refreshToken.deleteMany({ where: { userId } });
+      
+      // 2. Remove push tokens
+      await tx.pushToken.deleteMany({ where: { userId } });
+      
+      // 3. Anonymize user info
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          email: `deleted-${userId}@fairshare.app`,
+          name: 'Deleted User',
+          passwordHash: '',
+          avatarUrl: null,
+        },
+      });
+    });
+
+    return { success: true };
+  }
 }

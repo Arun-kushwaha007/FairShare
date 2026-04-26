@@ -55,7 +55,7 @@ export class ReceiptsService {
       expenseId,
     });
 
-    const uploadUrl = await this.s3.getPresignedUploadUrl(fileKey, RECEIPT_MIME_TYPES[extension]);
-    return { uploadUrl, fileKey };
+    const { url: uploadUrl, fields: uploadFields } = await this.s3.getPresignedUploadUrl(fileKey, RECEIPT_MIME_TYPES[extension]);
+    return { uploadUrl, uploadFields, fileKey };
   }
 }

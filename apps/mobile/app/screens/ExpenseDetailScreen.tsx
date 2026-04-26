@@ -140,13 +140,24 @@ export function ExpenseDetailScreen({ route }: { route: { params: { expenseId: s
 
       const extension = inferExtension(asset);
       const presign = await expenseService.createReceiptUploadUrl(route.params.expenseId, extension);
-      const uploadBody = await fetch(asset.uri).then((response) => response.blob());
+      const formData = new FormData();
+      if (presign.uploadFields) {
+        Object.entries(presign.uploadFields).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+      }
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName || 'receipt.jpg',
+        type: asset.mimeType || 'image/jpeg',
+      } as any);
+
       const uploadResponse = await fetch(presign.uploadUrl, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
-          'Content-Type': asset.mimeType ?? 'image/jpeg',
+          'Content-Type': 'multipart/form-data',
         },
-        body: uploadBody,
+        body: formData,
       });
 
       if (!uploadResponse.ok) {

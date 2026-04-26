@@ -78,10 +78,17 @@ export function ReceiptUploadModal({
       return;
     }
 
+    const formData = new FormData();
+    if (presign.presign.uploadFields) {
+      Object.entries(presign.presign.uploadFields).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+    }
+    formData.append('file', file);
+
     const response = await fetch(presign.presign.uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      body: file,
+      method: 'POST',
+      body: formData,
     }).catch(() => null);
 
     if (!response || !response.ok) {

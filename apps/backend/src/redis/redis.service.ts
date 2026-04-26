@@ -69,6 +69,51 @@ export class RedisService {
     }
   }
 
+  async incrementFailedLogin(email: string): Promise<number> {
+    try {
+      const key = `login:fail:${email}`;
+      const count = await this.redis.incr(key);
+      if (count === 1) {
+        await this.redis.expire(key, 15 * 60); // 15 minutes
+      }
+      return count;
+    } catch (error) {
+      this.logger.warn(`Redis incr skipped for login:fail:${email}`);
+      return 0; // Fallback to allow if Redis is down
+    }
+  }
+
+  async clearFailedLogin(email: string): Promise<void> {
+    try {
+      await this.redis.del(`login:fail:${email}`);
+    } catch (error) {
+      this.logger.warn(`Redis del skipped for login:fail:${email}`);
+    }
+  }
+
+  async getFailedLoginCount(email: string): Promise<number> {
+    try {
+      const count = await this.redis.get(`login:fail:${email}`);
+      return count ? parseInt(count, 10) : 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  async incrementInviteRateLimit(userId: string): Promise<number> {
+    try {
+      const key = `invite:rate:${userId}`;
+      const count = await this.redis.incr(key);
+      if (count === 1) {
+        await this.redis.expire(key, 60 * 60); // 1 hour
+      }
+      return count;
+    } catch (error) {
+      this.logger.warn(`Redis incr skipped for invite:rate:${userId}`);
+      return 0;
+    }
+  }
+
   private async safeGet(key: string): Promise<string | null> {
     try {
       return await this.redis.get(key);

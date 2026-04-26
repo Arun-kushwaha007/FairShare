@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 import { GroupsModule } from '../groups/groups.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GroupsModule } from '../groups/groups.module';
     PrismaModule,
     PassportModule,
     GroupsModule,
+    RedisModule,
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       inject: [AppConfigService],

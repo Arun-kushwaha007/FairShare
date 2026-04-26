@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { setActiveUsers } from '../observability/metrics';
+import { RedisService } from '../redis/redis.service';
 
 import { GroupsService } from '../groups/groups.service';
 
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: AppConfigService,
     private readonly groupsService: GroupsService,
+    private readonly redisService: RedisService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokensDto> {
@@ -65,18 +67,27 @@ export class AuthService {
     const email = dto.email.toLowerCase();
     this.logger.log(`Login attempt email=${email}`);
 
+    const failedCount = await this.redisService.getFailedLoginCount(email);
+    if (failedCount >= 5) {
+      this.logger.warn(`Login failed rate-limit email=${email}`);
+      throw new UnauthorizedException('Too many failed attempts. Try again in 15 minutes.');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
+      await this.redisService.incrementFailedLogin(email);
       this.logger.warn(`Login failed user-not-found email=${email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const valid = await compare(dto.password, user.passwordHash);
     if (!valid) {
+      await this.redisService.incrementFailedLogin(email);
       this.logger.warn(`Login failed invalid-password userId=${user.id}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    await this.redisService.clearFailedLogin(email);
     this.logger.log(`Login success userId=${user.id} email=${email}`);
     return this.issueTokens(user.id, user.email);
   }

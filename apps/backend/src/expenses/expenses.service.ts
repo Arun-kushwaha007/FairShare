@@ -41,7 +41,7 @@ export class ExpensesService {
     if (idempotencyKey) {
       const existingByKey = await this.prisma.expense.findUnique({
         where: { idempotencyKey },
-        include: { splits: true, receipt: true },
+        include: { splits: true, receipt: true, payer: { select: { name: true } } },
       });
       if (existingByKey) {
         return this.toExpenseDto(existingByKey);
@@ -84,7 +84,7 @@ export class ExpensesService {
       if (idempotencyKey && this.isUniqueConstraintError(error)) {
         const existing = await this.prisma.expense.findUnique({
           where: { idempotencyKey },
-          include: { splits: true, receipt: true },
+          include: { splits: true, receipt: true, payer: { select: { name: true } } },
         });
         if (existing) {
           return this.toExpenseDto(existing);
@@ -112,7 +112,7 @@ export class ExpensesService {
     } else {
       const rows = await this.prisma.expense.findMany({
         where: { groupId },
-        include: { splits: true, receipt: true },
+        include: { splits: true, receipt: true, payer: { select: { name: true } } },
         orderBy: { createdAt: 'desc' },
       });
       expenses = rows.map((row) => this.toExpenseDto(row));
@@ -185,7 +185,7 @@ export class ExpensesService {
   }
 
   async getById(id: string): Promise<ExpenseDto> {
-    const expense = await this.prisma.expense.findUnique({ where: { id }, include: { splits: true, receipt: true } });
+    const expense = await this.prisma.expense.findUnique({ where: { id }, include: { splits: true, receipt: true, payer: { select: { name: true } } } });
     if (!expense) {
       throw new NotFoundException('Expense not found');
     }
@@ -200,7 +200,7 @@ export class ExpensesService {
         description: dto.description,
         category: dto.category,
       },
-      include: { splits: true, receipt: true },
+      include: { splits: true, receipt: true, payer: { select: { name: true } } },
     });
 
     await this.activityService.log({
@@ -533,7 +533,7 @@ export class ExpensesService {
 
     return tx.expense.findUniqueOrThrow({
       where: { id: createdExpense.id },
-      include: { splits: true, receipt: true },
+      include: { splits: true, receipt: true, payer: { select: { name: true } } },
     });
   }
 
@@ -692,11 +692,15 @@ export class ExpensesService {
     receipt: {
       fileKey: string;
     } | null;
+    payer?: {
+      name: string;
+    } | null;
   }): ExpenseDto {
     return {
       id: expense.id,
       groupId: expense.groupId,
       payerId: expense.payerId,
+      payerName: expense.payer?.name,
       description: expense.description,
       totalAmountCents: expense.totalAmountCents.toString(),
       currency: expense.currency as 'USD' | 'EUR' | 'INR',

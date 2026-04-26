@@ -228,6 +228,7 @@ export interface ExpenseDto {
   id: string;
   groupId: string;
   payerId: string;
+  payerName?: string;
   description: string;
   totalAmountCents: string;
   currency: CurrencyCode;
@@ -284,6 +285,7 @@ export interface SettlementDto {
 
 export interface PresignedReceiptUrlResponseDto {
   uploadUrl: string;
+  uploadFields?: Record<string, string>;
   fileKey: string;
 }
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppConfigModule } from './config/app-config.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,6 +22,7 @@ import { HealthModule } from './health/health.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { JobsModule } from './jobs/jobs.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { JobsModule } from './jobs/jobs.module';
         limit: 100,
       },
     ]),
+    ScheduleModule.forRoot(),
     AppConfigModule,
     PrismaModule,
     RedisModule,
@@ -42,6 +45,7 @@ import { JobsModule } from './jobs/jobs.module';
     HealthModule,
     PaymentsModule,
     JobsModule,
+    CronModule,
     ObservabilityModule,
     ActivityModule,
     AuthModule,
