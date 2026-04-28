@@ -1,16 +1,21 @@
-import { Body, Controller, Get, Logger, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { AppConfigService } from '../config/app-config.service';
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config: AppConfigService,
+  ) {}
 
   @Get('csrf-token')
   getCsrfToken(@Req() req: Request & { csrfToken?: () => string }) {
@@ -43,6 +48,28 @@ export class AuthController {
     const payload = await this.authService.googleLogin(dto);
     this.authService.setRefreshTokenCookie(res, payload.refreshToken);
     return payload;
+  }
+
+  @Get('google')
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth() {
+    // Redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuthRedirect(@Req() req: Request & { user: any }, @Res() res: Response) {
+    this.logger.log(`GET /auth/google/callback email=${req.user.email}`);
+    const payload = await this.authService.googleLogin({
+      email: req.user.email,
+      name: req.user.name,
+      avatarUrl: req.user.avatarUrl,
+    });
+    this.authService.setRefreshTokenCookie(res, payload.refreshToken);
+    
+    // Redirect back to frontend dashboard
+    const frontendUrl = this.config.corsOrigins[0]; // Usually the web frontend is first
+    res.redirect(`${frontendUrl}/dashboard`);
   }
 
   @Post('refresh')
