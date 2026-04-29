@@ -67,9 +67,13 @@ export class AuthController {
     });
     this.authService.setRefreshTokenCookie(res, payload.refreshToken);
     
-    // Redirect back to frontend dashboard
+    // Redirect to frontend callback to set Next.js cookies
     const frontendUrl = this.config.corsOrigins[0]; // Usually the web frontend is first
-    res.redirect(`${frontendUrl}/dashboard`);
+    const redirectUrl = new URL(`${frontendUrl}/api/auth/google/callback`);
+    redirectUrl.searchParams.set('accessToken', payload.accessToken);
+    redirectUrl.searchParams.set('refreshToken', payload.refreshToken);
+    
+    res.redirect(redirectUrl.toString());
   }
 
   @Post('refresh')
